@@ -62,7 +62,8 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  gapfind               -- find gaps in structure"
   puts "  full_length_model     -- generate a complete template model"
   puts "  abinitio              -- run Rosetta abinitio structure prediction"
-  puts "  analyze      -- analyze results of Rosetta abinitio structure prediction"
+  puts "  insertion             -- run Rosetta structure prediction for insertion folding"
+  puts "  analyze               -- analyze results of Rosetta abinitio structure prediction"
   return
 
 }
@@ -87,6 +88,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::abinitio $args]
   } elseif { $command == "analyze" } {
     return [eval ::MODELMAKER::analyze $args]
+  } elseif { $command == "insertion" } {
+    return [eval ::MODELMAKER::insertion $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -94,6 +97,133 @@ proc ::MODELMAKER::modelmaker { args } {
 
   return
 
+}
+
+
+proc ::MODELMAKER::insertion_usage  { } {
+  variable DefaultNStruct
+  variable DefaultFragPath
+  puts "Usage: modelmaker insertion -model <full length template pdb> -fragfiles <list of fragment files> \
+    -sel <list of atomselection texts with selections to fold> -fasta <fasta file> \
+     ?options?"
+  puts "Options:"
+  puts "  -fragpath   <path to fragment files> (default: $DefaultFragPath)> "
+  puts "  -jobname    <name prefix for job> (default: taken from -model)> "
+  puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
+}
+
+
+proc ::MODELMAKER::insertion { args } {
+  variable rosettaEXE
+  variable rosettadbpath
+  variable DefaultNStruct
+  variable rosettaPath
+  variable DefaultFragPath
+ #These need to be changed in the underlying package to refer to the variable instead.
+#e.g., $::MODELMAKER::rosettaDBpath
+#instead of using these 'global' variables which gets confusing and dangerous.
+ global rosettapath
+ global tempPath
+ global tempdir
+ global rosettaDBpath
+ global platform
+
+#$::env(PATH)
+
+  #I don't understand why we need these in the underlying package or why
+#there are assumptions about things living in a "full_length_model" folder
+#elsewhere, even if we set if differently here. The method should just take a filename/path and not care.
+#Just go with this for now
+#for testing.
+  #set tempPath [pwd]/full_length_model
+  #set tempdir [pwd]/full_length_model
+ 
+  set rosettapath $rosettaPath
+  set rosettaDBpath $rosettadbpath
+  set platform $rosettaEXE
+
+  set nargs [llength [lindex $args 0]]
+  if {$nargs == 0} {
+    insertion_usage
+    error ""
+  }
+
+  foreach {name val} $args {
+    switch -- $name {
+      -jobname { set arg(jobname) $val }
+      -model { set arg(model) $val }
+      -sel { set arg(sel) $val }
+      -fasta { set arg(fasta) $val }
+      -fragfiles { set arg(fragfiles) $val }
+      -fragpath { set arg(fragpath) $val }
+      -nstruct { set arg(nstruct) $val }
+    }
+  }
+
+  if { [info exists arg(model)] } {
+    #set model $arg(model)
+  #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
+  #extension. Need to change RosettaVMD to not require this. 
+    set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
+  } else {
+    error "A full model pdb file must be specified!"
+  }
+  
+  if { [info exists arg(sel)] } {
+    set sel [list $arg(sel)]
+  } else {
+    error "An atomselection text must be specified!"
+  }
+  
+  if { [info exists arg(fragfiles)] } {
+    set fragfiles $arg(fragfiles)
+  } else {
+    error "At least one fragment file must be specified!"
+  }
+  
+  if { [info exists arg(fasta)] } {
+  #NOTE: Right now, because of RosettaVMD package, this needs to be the fasta name without the .fasta
+  #extension. Need to change RosettaVMD to not require this. 
+    set fasta [string range $arg(fasta) 0 [expr [string last ".fasta" $arg(fasta)] - 1 ]]
+  #  set fasta $arg(fasta)
+  } else {
+    error "A fasta file must be specified!"
+  }
+
+  #I don't understand why we need to give the path. Like with other files I've mentioned,
+# the function should just take the file names/paths as the same argument. I sort of understand
+#if you have a LOT of fragfiles and you just want to name them in -fragfiles and then give one
+#directory to their location here, so maybe this is fine, but I put in a default directory because
+ #it shouldn't be required, only optional.
+  if { [info exists arg(fragpath)] } {
+    set fragpath $arg(fragpath)
+  } else {
+    set fragpath $DefaultFragPath
+    #error "A path to the fragment files must be specified!"
+  }
+
+
+  if { [info exists arg(nstruct)] } {
+    set nstruct $arg(nstruct)
+  } else {
+    set nstruct $DefaultNStruct
+  }
+  
+  if { [info exists arg(jobname)] } {
+    set jobname $arg(jobname)
+  } else {
+    set jobname $model
+  }
+
+  set modelPath [file dirname $arg(model)]
+  if { $modelPath == "." } {
+    set tempPath [pwd]  
+  } else {
+    set tempPath $modelPath
+  }
+#start_rosetta_insertion rpn11_insertion rpn11_yeast_23-306_complete [list "resid 138 to 157"] [list "rpn11_yeast_23-306_frag9" "rpn11_yeast_23-306_frag3"] [pwd]/input rpn11_yeast_23-306 $nstruct
+start_rosetta_insertion $jobname $model $sel $fragfiles $fragpath $fasta $nstruct
+  
 }
 
 proc ::MODELMAKER::abinitio_usage { } {
@@ -174,7 +304,6 @@ proc ::MODELMAKER::abinitio { args } {
   #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
   #extension. Need to change RosettaVMD to not require this. 
     set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
-    puts "$model"
   } else {
     error "A full model pdb file must be specified!"
   }
@@ -311,9 +440,7 @@ proc ::MODELMAKER::analyze { args } {
   
 #This is pretty cumbersome for the user and fairly opaque. Will have to find a succinct way of listing the
 #possibilities and summarizing functionality in the usage command...
- #Also, like fragment files, is a list of lists but we are making it only one list here. 
-#i.e., the user says { ss 196 284 "A" }  or {fragfile1 fragfile 2}. I *think* I can
-#allow for the list of lists functionality, but the user will have to do somehing like
+ #Also, like fragment files, is a list of lists so the user will have to do somehing like
 #{{fragfile1 fragfile2}} if they want just one list....
   if { [info exists arg(comps)] } {
     set comps $arg(comps)
@@ -472,20 +599,7 @@ proc ::MODELMAKER::full_length_model { args } {
 #    set output $template
 #  }
   
-  #set exec_args  "-in:file:fasta $name.fasta
-  #  -loops:frag_files ${name}_frag9 ${name}_frag3 none
-  #  -loops:frag_sizes 9 3 1
-  #  -in:file::s $template
-  #  -overwrite "
-  #exec full_length_model.$rosettaEXE $exec_args
   
-  
-  #Below works but not with the type of user input behavior that is nice for them
-  #exec full_length_model.$rosettaEXE -in:file:fasta $name.fasta \
-    -loops:frag_files ${name}_frag9 ${name}_frag3 none \
-    -loops:frag_sizes 9 3 1 \
-    -in:file::s $template \
-    -overwrite
  
   #this assume only 9 and 3 length fragment files and in a specific order. Can
   #we implement some logic to look at the provided files and determine what all we have?

@@ -995,10 +995,10 @@ $rosettapath/minirosetta.$platform \\
 	-nstruct $nstruct \\
 	-overwrite
 
-mkdir intermediates
-mv loops_closed*.pdb ./intermediates/
-mv *.sc ./sc_out/
-mv $jobname*.pdb ./pdb_out/
+#mkdir intermediates
+#mv loops_closed*.pdb ./intermediates/
+#mv *.sc ./sc_out/
+#mv $jobname*.pdb ./pdb_out/
 
 "
 }
