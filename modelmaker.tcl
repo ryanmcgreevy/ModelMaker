@@ -52,6 +52,7 @@ namespace eval ::MODELMAKER {
   variable DefaultResStart 1
   variable DefaultFragPath [pwd]
   variable DefaultAlignTemplate "all"
+  variable DefaultInsertion "no"
 }
 
 proc modelmaker { args } { return [eval ::MODELMAKER::modelmaker $args] }
@@ -384,6 +385,7 @@ proc ::MODELMAKER::abinitio { args } {
 proc ::MODELMAKER::analyze_usage { } {
   variable DefaultCluster
   variable DefaultAlignTemplate
+  variable DefaultInsertion
 
   puts "Usage: modelmaker analyze -model <full length template pdb>  -nstruct <number of structures to analyze> \
     -comps <list of analysis tasks> ?options?"
@@ -392,6 +394,7 @@ proc ::MODELMAKER::analyze_usage { } {
   puts "  -bestN      <best N structures to analyze> (default: same as -nstruct)> "
   puts "  -align_template      <selection text of template PDB for alignment> (default: $DefaultAlignTemplate)> "
   puts "  -align_rosetta       <selection text of predicted models for alignment> (default: taken from -align_template)> "
+  puts "  -insertion   <analyzing output from insertion? 'yes' or 'no'> (default: $DefaultInsertion)"
 #hide these until wider functionality
 #  puts "  -cluster    <run on cluster flag (0 or 1)> (default: $DefaultCluster)> "
 
@@ -403,6 +406,7 @@ proc ::MODELMAKER::analyze { args } {
   variable DefaultCluster
   variable rosettaPath
   variable DefaultAlignTemplate
+  variable DefaultInsertion
 
   set nargs [llength [lindex $args 0]]
   if {$nargs == 0} {
@@ -412,14 +416,15 @@ proc ::MODELMAKER::analyze { args } {
 
   foreach {name val} $args {
     switch -- $name {
-      -jobname { set arg(jobname) $val }
-      -model   { set arg(model) $val }
-      -nstruct { set arg(nstruct) $val }
-      -cluster { set arg(cluster) $val }
-      -bestN   { set arg(bestN) $val }
+      -jobname          { set arg(jobname) $val }
+      -model            { set arg(model) $val }
+      -nstruct          { set arg(nstruct) $val }
+      -cluster          { set arg(cluster) $val }
+      -bestN            { set arg(bestN) $val }
       -align_template   { set arg(align_template) $val }
       -align_rosetta    { set arg(align_rosetta) $val }
-      -comps    { set arg(comps) $val }
+      -comps            { set arg(comps) $val }
+      -insertion        { set arg(insertion) $val }
     }
   }
 
@@ -471,6 +476,12 @@ proc ::MODELMAKER::analyze { args } {
   } else {
     set jobname $model
   }
+
+  if { [info exists arg(insertion)] } {
+    set insertion $arg(insertion)
+  } else {
+    set insertion $DefaultInsertion
+  }
   
   if { [info exists arg(cluster)] } {
     set cluster $arg(cluster)
@@ -509,11 +520,25 @@ proc ::MODELMAKER::analyze { args } {
   set platform $rosettaEXE
   
   set packagePath $::env(RosettaVMDDIR)
+
+#assumes in PATH which should be reasonable
   set vmdexe "vmd"
   set gnuplotexe "gnuplot"
 
+  switch $insertion {
+    "yes" {
+      set modelname "$model\_S"
+      set insert_model $model 
+    }
+    "no"  { 
+      set modelname $model
+      set insert_model "" 
+    }  
+  }
+  puts "MODEL: $model  INSERT_MODEL: $insert_model"
   #jobname mol bestN nstruct cluster align_template align_rosetta analysis_components
-  analyze_abinitio $jobname $model $bestN $nstruct $cluster $align_template $align_rosetta $comps
+  analyze_abinitio $jobname $modelname $bestN $nstruct $cluster $align_template \
+    $align_rosetta $comps {*}$insert_model
 }
 
 proc ::MODELMAKER::renumber { sel start } {

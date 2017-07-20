@@ -447,7 +447,6 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta ns
 	file rename {*}[glob loops_closed*.pdb] intermediates/
   file rename {*}[glob *.sc] sc_out/
 
-  #this should get changed to remove the _S rosetta adds to make analysis easier
 	file rename {*}[glob *.pdb] pdb_out/
   
   puts $output
