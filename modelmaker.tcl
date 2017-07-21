@@ -223,8 +223,18 @@ proc ::MODELMAKER::insertion { args } {
     set tempPath $modelPath
   }
 #start_rosetta_insertion rpn11_insertion rpn11_yeast_23-306_complete [list "resid 138 to 157"] [list "rpn11_yeast_23-306_frag9" "rpn11_yeast_23-306_frag3"] [pwd]/input rpn11_yeast_23-306 $nstruct
-start_rosetta_insertion $jobname $model $sel $fragfiles $fragpath $fasta $nstruct
-  
+  start_rosetta_insertion $jobname $model $sel $fragfiles $fragpath $fasta $nstruct
+  set temp_mol [mol new $arg(model)]
+  set temp_sel [atomselect $temp_mol all]
+  set resstart [lindex [lsort -integer [$temp_sel get resid]] 0]
+   
+  foreach pdb [glob "rosetta_output_$jobname/pdb_out/*"] {
+    set full_mol [mol new $pdb]
+    set full_sel [atomselect $full_mol all]
+    renumber $full_sel $resstart
+    $full_sel writepdb $pdb
+    mol delete $full_mol
+  }
 }
 
 proc ::MODELMAKER::abinitio_usage { } {
