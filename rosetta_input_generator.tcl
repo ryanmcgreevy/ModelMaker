@@ -948,8 +948,8 @@ $rosettapath/rosetta_scripts.$platform \\
     -ignore_zero_occupancy false\\
     -overwrite
 
-mv \${JOBNAME}*.pdb ./pdb_out/
-mv *.sc ./sc_out/
+#mv \${JOBNAME}*.pdb ./pdb_out/
+#mv *.sc ./sc_out/
 
 "
 }
