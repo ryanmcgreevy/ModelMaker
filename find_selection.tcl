@@ -16,13 +16,13 @@ proc find_selection {args} \
 #config should contain bb and chi settings for span for each selection, such as [list {0 1} {1 1}]
 # first: chi, second: bb
 proc ::FindSelection::find_selection {MOL selections config {offset 4} args} \
-{	
+{
 	puts "Trying to find selections."
 	puts $selections
 	set seltexts []
 	foreach seltext $selections {
-		lappend seltexts $seltext	
-	}	
+		lappend seltexts $seltext
+	}
 	set searchmol [mol new $MOL.pdb]
 
 	set final_spans []
@@ -32,7 +32,7 @@ proc ::FindSelection::find_selection {MOL selections config {offset 4} args} \
 		set vmd_resids [lsort -unique -integer [$searchsel get residue]]
 		set ros_resids []
 		foreach vmd_resid $vmd_resids {
-			lappend ros_resids [expr $vmd_resid +1]	
+			lappend ros_resids [expr $vmd_resid +1]
 		}
 		set counter -1
 		set span_closed 1
@@ -50,8 +50,8 @@ proc ::FindSelection::find_selection {MOL selections config {offset 4} args} \
 				set current_span []
 				set counter [lindex $ros_resids $i]
 				lappend current_span $counter
-			} 
-	
+			}
+
 			if {$i == [expr [llength $ros_resids] -1]} {
 				lappend current_span $counter
 				lappend all_spans $current_span
@@ -63,7 +63,7 @@ proc ::FindSelection::find_selection {MOL selections config {offset 4} args} \
 		}
 		lappend final_spans $all_spans
 	}
-	
+
 	set out_ros [open "$MOL-spans.txt" w]
 	set span_config []
 	set single_spans []
@@ -135,9 +135,9 @@ proc ::FindSelection::find_selection {MOL selections config {offset 4} args} \
 			} else {
 				append exclude_string "$current_start-$i"
 			}
-			
+
 			# puts "$current_start-$i"
-		} 
+		}
 	}
 
 	set current_start 1
@@ -171,7 +171,7 @@ proc ::FindSelection::find_selection {MOL selections config {offset 4} args} \
 		if {$i == $tot_resnum && $i != $before_end} {
 			append constraint "{$current_start $i}"
 			# puts "$current_start-$i"
-		} 
+		}
 	}
 
 
@@ -185,5 +185,5 @@ proc ::FindSelection::find_selection {MOL selections config {offset 4} args} \
 	mol delete $searchmol
 	close $out_ros
 	puts "finished finding selections."
-	return [list $out_spans $exclude_string $chain_config $constraint]
+  return [list $out_spans [string range $exclude_string 0 [expr $end-1]] $chain_config $constraint]
 }
