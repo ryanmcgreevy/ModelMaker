@@ -85,13 +85,13 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 		exec mkdir -p OUTPUT_FILES
 		set output [exec "[pwd]/$jobname.sh" "$jobname" "$mol.pdb" >> rosetta_log_$jobname.log &]
 		set current [exec ls -1v pdb_out | wc -l]
-    while {$current < $nstruct} {
+		while {$current < $nstruct} {
 			set n 5
 			puts "Files are not yet available."
 			puts "Current number: [exec ls -1v pdb_out | wc -l] - [expr double($current)/($nstruct) * 100.0] %"
 			after [expr {int($n * 1000)}]
 			set current [exec ls -1v pdb_out | wc -l]	
-      if {$cluster} {
+			if {$cluster} {
 				set logfile [open "rosetta_log_$jobname.log" r]
 				set dt [read $logfile]
 				close $logfile
@@ -304,13 +304,13 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles fragpath ns
 	}
 
 	# Cleanup input file
-	exec sed -i -e {s/HSD/HIS/g} $mol.pdb
-	exec sed -i -e {s/HSE/HIS/g} $mol.pdb
-	exec sed -i -e {s/HSP/HIS/g} $mol.pdb
+	exec sed -i -e {s/HSD/HIS/g} full_length_model/$mol.pdb
+	exec sed -i -e {s/HSE/HIS/g} full_length_model/$mol.pdb
+	exec sed -i -e {s/HSP/HIS/g} full_length_model/$mol.pdb
 
 	
 	# MOL selections config {offset 4}
-	set find_sel [find_selection $mol $selections $find_cfg 0]
+	set find_sel [find_selection full_length_model/$mol $selections $find_cfg 0]
 	set spans [lindex $find_sel 0]
 	set exclude [lindex $find_sel 1]
 	set chains [lindex $find_sel 2]
@@ -325,7 +325,7 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles fragpath ns
 	foreach seltext $selections {
 		lappend seltexts $seltext	
 	}	
-	set searchmol [mol new $mol.pdb]
+	set searchmol [mol new full_length_model/$mol.pdb]
 
 	set chain_idents {}
 	foreach findseltext $seltexts {
@@ -338,7 +338,6 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles fragpath ns
 	mol delete all
 	######################
 
-	global tempdir
 	global username
 	puts "Rosetta abinitio started."
 # 	rosetta_abinitio {jobname MOL fragfiles fragpath nstruct cluster nPerTask test configuration}
@@ -352,14 +351,13 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles fragpath ns
 	exec mkdir -p pdb_out
 	exec mkdir -p OUTPUT_FILES
 	set output [exec "[pwd]/$jobname.sh" "$jobname" "$mol.pdb" >> rosetta_log_$jobname.log &]
-#	set current [exec ls -1v pdb_out | wc -l]
-  set current [llength [glob -nocomplain *.pdb ] ]
+	set current [exec ls -1v pdb_out | wc -l]
 	while {$current < $nstruct} {
 		set n 5
 		puts "Files are not yet available."
-		puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
+		puts "Current number: [exec ls -1v pdb_out | wc -l] - [expr double($current)/($nstruct) * 100.0] %"
 		after [expr {int($n * 1000)}]
-  	set current [llength [glob -nocomplain *.pdb] ]
+		set current [exec ls -1v pdb_out | wc -l]
 		if {$cluster} {
 			set logfile [open "rosetta_log_$jobname.log" r]
 			set dt [read $logfile]
@@ -374,10 +372,7 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles fragpath ns
 			}
 		}	
 	}
-	file rename {*}[glob *.sc] sc_out/
-	file rename {*}[glob *.pdb] pdb_out/
-	
-  puts $output
+	puts $output
 	puts "Rosetta abinitio finished."
 	cd ..	
 }
@@ -407,7 +402,6 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta ns
 
 	set ros_config [list $chains $spans $exclude]
 
-	global tempdir
 	global username
 	puts "Rosetta insertion folding started."
 	rosetta_insertion $jobname $mol $fragfiles $fasta $fragpath $nstruct $cluster $nPerTask $ros_config
@@ -418,16 +412,13 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta ns
 	exec mkdir -p pdb_out
 	exec mkdir -p OUTPUT_FILES
 	set output [exec "[pwd]/$jobname.sh" >> rosetta_log_$jobname.log &]
-	#set current [exec ls -1v pdb_out | wc -l]
-  set current [llength [glob -nocomplain $jobname*.pdb ] ]
+	set current [exec ls -1v pdb_out | wc -l]
 	while {$current < $nstruct} {
-		set n 5
+		set n 20
 		puts "Files are not yet available."
-	#	puts "Current number: [exec ls -1v pdb_out | wc -l] - [expr double($current)/($nstruct) * 100.0] %"
-		puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
+		puts "Current number: [exec ls -1v pdb_out | wc -l] - [expr double($current)/($nstruct) * 100.0] %"
 		after [expr {int($n * 1000)}]
-#		set current [exec ls -1v pdb_out | wc -l]
-    set current [llength [glob -nocomplain $jobname*.pdb ] ]
+		set current [exec ls -1v pdb_out | wc -l]
 		if {$cluster} {
 			set logfile [open "rosetta_log_$jobname.log" r]
 			set dt [read $logfile]
@@ -442,14 +433,7 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta ns
 			}
 		}	
 	}
-  
-  file mkdir intermediates	
-	file rename {*}[glob loops_closed*.pdb] intermediates/
-  file rename {*}[glob *.sc] sc_out/
-
-	file rename {*}[glob *.pdb] pdb_out/
-  
-  puts $output
+	puts $output
 	puts "Rosetta insertion folding finished."
 	cd ..	
 
@@ -469,20 +453,27 @@ proc analyze_abinitio {jobname mol bestN nstruct cluster align_template align_ro
 	exec mkdir -p pdb_out_aligned
 
 	if {!$cluster} {
-		#start end MOL tempdir tempMol sel_temp sel_rosetta
 		if {$insertion != 0} {
 			align_rosetta_local 1 $nstruct ${jobname}_$mol $tempdir $insertion $align_template $align_rosetta	
 		} else {
 			align_rosetta_local 1 $nstruct ${jobname}_$mol $tempdir $mol $align_template $align_rosetta
 		}
 	} else {
-		puts "cluster alignment"
-		align_rosetta_cluster 1 $nstruct ${jobname}_$mol $tempdir $mol $align_template $align_rosetta
+		if {$insertion != 0} {
+			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $tempdir $insertion $align_template $align_rosetta	
+		} else {
+			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $tempdir $mol $align_template $align_rosetta
+		}
 	}
 
 	#SCORING MOL max_structures cluster?
+	# extra variable to run scoring on cluster folded insertion runs
+	set extra 0
+	if {$insertion != 0} {
+		set extra $mol
+	}
 	
-	score_abinitio $jobname ${jobname}_$mol $bestN $cluster
+	score_abinitio $jobname ${jobname}_$mol $bestN $cluster $extra
 
 	# ANALYSIS
 	exec mkdir -p analysis
@@ -498,12 +489,21 @@ proc analyze_abinitio {jobname mol bestN nstruct cluster align_template align_ro
 			cluster {
 				set start [lindex $ana 1]
 				set end [lindex $ana 2]
+				set cluster_number [lindex $ana 4]
 				exec mkdir -p cluster_${start}_$end
 				exec cp ${jobname}_${mol}_rosetta_scoring_min_$bestN.pdb cluster_${start}_$end
 				cd cluster_${start}_${end}
 				#CLUSTER INPUT
 				make_cluster_input $prefix $start $end $bestN
-				run_clustering $prefix $start $end $bestN
+				# run_vmd_clustering $mol $start $end $bestN 0.25 $cluster_number
+				# TODO: refine clustering settings!
+				if {$cluster} {
+					run_clustering $prefix $start $end $bestN
+				} else {
+					run_rosetta_clustering $mol $start $end $bestN -1 $cluster_number
+				}
+				# run_rosetta_clustering $mol $start $end $bestN -1 $cluster_number
+				# run_clustering $prefix $start $end $bestN
 				cd ..
 			}
 			ss {
@@ -559,11 +559,7 @@ proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res 
 	global rosettapath
 	global rosettaDBpath
 	global platform
-	global inputfolder
 	set scores {}
-	if {$pdbfolder == 0} {
-		set pdbfolder $inputfolder
-	}
 
 	### normal MDFF rosetta run
 	if {$bestN > 0 && !$cascade} {
@@ -609,6 +605,10 @@ proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res 
 			cd ..
 		}
 	} elseif {$bestN == 0} {
+		global inputfolder
+		if {$pdbfolder == 0} {
+			set pdbfolder $inputfolder
+		}	
 		# for normal MDFF run or cascade mdff run, input files should be in inputfolder
 		puts [pwd]
 		set folder mdff_${jobname}
@@ -642,11 +642,35 @@ proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res 
 			analyze_mdff $prefix mdff_${prefix}_step[llength $config] $mapname $res $ch_seg
 			puts "Analysis finished."
 		} else {
-			puts "please specify a configuration!!!"
+			# puts "please specify a configuration!!!"
+			puts "Normal MDFF run, without scoring or cascade"
+			exec cp $inputfolder/$mol.pdb .
+
+			exec cp $inputfolder/$mapname.dx .
+
+			#arguments: jobname MOL mapname fixedselection gscale minSteps num ch_seg topdir topfile parfile
+			auto_mdff_init ${jobname} $prefix $mapname $fixedselection $gscale $minSteps $num $ch_seg $mutations $topdir $topfiles $parfiles
+
+			exec sed -i -e "s/dcdfreq.*/dcdfreq\ ${dcdfreq}/g" mdff_template.namd
+			puts "Starting NAMD with job $jobname"
+			exec $path/namd2 $namdArgs mdff_${jobname}-step1.namd > mdff_${jobname}-step1.log
+			puts "NAMD finished"
+
+			puts "Analysis started."
+			analyze_mdff $prefix mdff_${jobname}-step1 $mapname $res $ch_seg
+			puts "Analysis finished."
+
+			set outname mdff_${jobname}-step1.dcd-last
+
+			exec sed -i -e {s/HSD/HIS/g} $outname.pdb
 		}
 
 		cd ..
 	} elseif {$bestN > 0 && $cascade} {
+		global inputfolder
+		if {$pdbfolder == 0} {
+			set pdbfolder $inputfolder
+		}
 		for {set i 1} {$i <= $bestN} {incr i} {
 			set folder mdff_${jobname}_$i
 			set prefix ${jobname}_${mol}_best$i

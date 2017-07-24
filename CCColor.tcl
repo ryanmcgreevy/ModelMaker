@@ -16,7 +16,7 @@ proc cccolor {args} \
 #####################
 # input files
 ####################
-proc ::CCColor::cccolor {MOL mapname resolution threshold spacing cutoff ss_on res_on gen_sel res_sel {bb_only 0} args} {
+proc ::CCColor::cccolor {MOL mapname resolution threshold spacing cutoff ss_on res_on gen_sel res_sel {tempfolder "/usr/tmp"} {bb_only 0} args} {
 	#################
 	# Program settings
 	#################
@@ -41,7 +41,8 @@ proc ::CCColor::cccolor {MOL mapname resolution threshold spacing cutoff ss_on r
 	set dens_mol [mol new $mapname.dx]
 
 	#source getSS.tcl
-	getSS $MOL.ss $pdb segname /usr/tmp
+	
+	getSS $MOL.ss $pdb segname $tempfolder
 	assignSS $MOL.ss $pdb segname
 
 	set chains [lindex [list [lsort -unique [$atomSel get fragment]]] 0]
@@ -75,8 +76,8 @@ proc ::CCColor::cccolor {MOL mapname resolution threshold spacing cutoff ss_on r
 					puts $log [$ssSel num]
 					#    volmap mask $ssSel -o mask.dx -cutoff $cutoff
 					#   volutil -mult ${emdbName}_density.dx mask.dx -o compare.dx
-					#    set CCSS [mdff ccc $ssSel -i $dens_mol -res $resolution -spacing $spacing]
-					set CCSS [mdffi cc $ssSel -mol $dens_mol -res $resolution -spacing $spacing -thresholddensity $threshold]
+					set CCSS [mdff ccc $ssSel -i $mapname.dx -res $resolution -spacing $spacing -thresholddensity $threshold]
+					# set CCSS [mdffi cc $ssSel -mol $dens_mol -res $resolution -spacing $spacing -thresholddensity $threshold]
 					#set CCSS 0.0
 					set str [string range "$CCSS" 1 3]
 					if {[string equal $str "nan"] || [string equal $str "NaN"]} {
@@ -113,7 +114,8 @@ proc ::CCColor::cccolor {MOL mapname resolution threshold spacing cutoff ss_on r
 
 						#volmap mask $resSel -o mask.dx -cutoff $cutoff
 						#volutil -mult ${emdbName}_density.dx mask.dx -o compare.dx
-						set CCres [mdffi cc $resSel -mol $dens_mol -res $resolution -spacing $spacing -thresholddensity $threshold]
+						set CCres [mdff ccc $resSel -i $mapname.dx -res $resolution -spacing $spacing -thresholddensity $threshold]
+						# set CCres [mdffi cc $resSel -mol $dens_mol -res $resolution -spacing $spacing -thresholddensity $threshold]
 						set str [string range "$CCres" 1 3]
 						if {[string equal $str "nan"] || [string equal $str "NaN"]} {
 							$resSel set beta -1.0

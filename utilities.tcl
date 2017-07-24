@@ -27,6 +27,16 @@ proc run_clustering {args} \
 	return [eval ::RosettaUtilities::run_clustering $args]
 }
 
+proc run_vmd_clustering {args} \
+{
+	return [eval ::RosettaUtilities::run_vmd_clustering $args]
+}
+
+proc run_rosetta_clustering {args} \
+{
+	return [eval ::RosettaUtilities::run_rosetta_clustering $args]
+}
+
 proc read_cluster_file  {args} \
 {
 	return [eval ::RosettaUtilities::read_cluster_file $args]
@@ -74,8 +84,8 @@ proc ::RosettaUtilities::align_rosetta_local {start end MOL tempdir tempMol sel_
 
 proc ::RosettaUtilities::align_rosetta_cluster {start end MOL tempdir tempMol sel_temp sel_rosetta} \
 {
-	mol new $tempdir/$tempMol.pdb
-	set temp [atomselect 0 "($sel_temp) and backbone and noh"]
+	set tempmol [mol new $tempdir/$tempMol.pdb]
+	set temp [atomselect $tempmol "($sel_temp) and backbone and noh"]
 
 	for {set x $start} {$x<=$end} {incr x} {
 		if { [file exists "./pdb_out/${MOL}${x}_0001.pdb"] == 1} {
@@ -147,6 +157,92 @@ proc ::RosettaUtilities::run_clustering {mol start end bestN} \
     read_cluster_file $mol $bestN $number
 }
 
+proc ::RosettaUtilities::run_vmd_clustering {mol start end bestN cutoff cluster_number} \
+{
+	puts "VMD clustering"
+	#VMD rmsd based clustering
+	package require math::statistics
+	set clust_num $cluster_number ;# number of clusters
+	# set cutoff 0.25 ;# RMSD within each cluster
+	
+	# open a file to write the output text to
+	set log [open cluster_out.txt w+]
+	
+	# loading the predicted structures sorted by the rosetta energy scoring script to VMD and creating the defined atom selections
+	# mol new ${MOL}_rosetta_scoring_min_${max_structures}.pdb waitfor all
+	set cl_mol [mol new cluster_input_${start}_${end}_${bestN}.pdb waitfor all]
+	set clustList [measure cluster [atomselect $cl_mol "protein and backbone"] num $clust_num distfunc rmsd cutoff $cutoff first 0 last -1 step 1]
+	puts $log $clustList
+	# performing a RMSD based cluster analysis
+	for {set j 0} {$j < [expr [llength $clustList] -1]} {incr j} {
+		set a [lindex [lindex $clustList $j] 0]
+		set a1 [expr $a+1]
+		set index [mol new cluster_input_${start}_${end}_${bestN}.pdb first $a last $a waitfor all]
+		set l  [llength [lindex $clustList $j] ]
+		puts $log "------------------------------------------"
+		puts $log "Cluster $j $l"
+		set l1 [expr $l-1]
+		set clustList_aux [lindex $clustList $j]
+		for {set i 1} {$i < $l} {incr i} {
+			set x [lindex $clustList_aux $i]
+			set x1 [expr $x+1]
+			puts "x $x1"
+			puts "l $l"
+			mol addfile cluster_input_${start}_${end}_${bestN}.pdb first $x last $x waitfor all
+		}
+  		# write the structures of each cluster to a seperate pdb file
+  		animate write pdb cluster_$j.pdb beg 0 end $l1 skip 1 $index
+  		animate dup frame $l1 $index
+  		# calculate the representative structure of each cluster and write it to a pdb file
+  		set sel [atomselect top "all"]
+  		set av_struct [atomselect top all frame $l]
+  		set av [measure avpos $sel]
+  		set a [$av_struct set {x y z} $av]
+  		set numframe [molinfo top get numframes]
+  		set rmsd ""
+  		for {set frame 0} {$frame < [expr $numframe -1]} {incr frame} {
+  			$sel frame $frame
+  			lappend rmsd [format %.2f [measure rmsd $sel $av_struct]]
+  		}
+		$av_struct delete
+	
+		set min [math::statistics::min $rmsd]
+		set minframe [lsearch $rmsd $min]
+		mol delete all
+		mol new cluster_input_${start}_${end}_${bestN}.pdb waitfor all
+		animate write pdb cluster_rep_${j}.pdb beg [lindex $clustList_aux $minframe] end [lindex $clustList_aux $minframe]
+	
+		puts $log "Cluster $j {$clustList_aux}"
+		puts $log "Cluster $j representative [lindex $clustList_aux $minframe]"
+		puts $log "Cluster $j {$min}"
+		puts $log "------------------------------------------"
+		puts $log "animate write pdb cluster_${j}_rep.pdb beg [lindex $clustList_aux $minframe] end [lindex $clustList_aux $minframe]"
+	}
+	close $log
+}
+
+proc run_rosetta_clustering {mol start end bestN radius cluster_max} \
+{
+	puts "running Rosetta clustering"
+	global rosettapath
+	global rosettaDBpath
+	global platform
+	set cl_mol [mol new cluster_input_${start}_${end}_${bestN}.pdb waitfor all]
+	set f [molinfo $cl_mol get numframes]
+	set pdblist [open "pdblist" "w"]
+	set blacklist {}
+	for {set i 0} {$i < $f} {incr i} {
+		animate write pdb "cluster_single_${start}_${end}_${bestN}_${i}.pdb" beg $i end $i
+		puts $pdblist "cluster_single_${start}_${end}_${bestN}_${i}.pdb"
+		lappend blacklist "cluster_single_${start}_${end}_${bestN}_${i}.pdb"
+	}
+	close $pdblist
+	exec $rosettapath/cluster.$platform -database $rosettaDBpath -in:file:l pdblist -in:file:fullatom -cluster:radius $radius -cluster:limit_clusters $cluster_max > cluster.log
+	foreach item $blacklist {
+		exec rm $item
+	}
+	exec rm pdblist
+}
 
 proc ::RosettaUtilities::read_cluster_file {MOL max_structures max_cluster} \
 {

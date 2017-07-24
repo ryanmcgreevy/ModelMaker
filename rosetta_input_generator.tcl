@@ -14,13 +14,13 @@
 
 namespace eval ::RosettaInputGenerator {
     namespace export refine_with_rosetta
-    # namespace export refine_sidechains_rosetta
+    namespace export refine_sidechains_rosetta
     namespace export rosetta_abinitio
-
+    
 	# Set up Variable
 	set version 0.1
 	set packageDescription "RosettaInputGenerator Plugin"
-
+ 
     # Variable for the path of the script
     variable home [file join [pwd] [file dirname [info script]]]
 }
@@ -31,10 +31,10 @@ proc refine_with_rosetta {args} \
 	return [eval ::RosettaInputGenerator::refine_with_rosetta $args]
 }
 
-#proc refine_sidechains_rosetta {args} \
-#{
-#	return [eval ::RosettaInputGenerator::refine_sidechains_rosetta $args]
-#}
+proc refine_sidechains_rosetta {args} \
+{
+	return [eval ::RosettaInputGenerator::refine_sidechains_rosetta $args]
+}
 
 proc rosetta_abinitio {args} \
 {
@@ -110,7 +110,7 @@ proc ::RosettaInputGenerator::refine_with_rosetta {jobname MOL mapname res score
 		set cart [::RosettaInputGenerator::make_cart_sample [list cen5_50 $score_dens cen cen dens_soft auto density %%rms%% 200 0 0 25 4 7 25 "$exclude"]]
 		append tot $cart
 	}
-
+	
 	# append tot [::RosettaInputGenerator::make_full_atom_mover "fullatom"]
 
 	# set fr [::RosettaInputGenerator::make_fastrelax relax 1 [list {"Chain" 1 0 0}]]
@@ -119,7 +119,7 @@ proc ::RosettaInputGenerator::refine_with_rosetta {jobname MOL mapname res score
 	set cst [::RosettaInputGenerator::make_coord_cst [list coordcst 20 CA $anchor_residue 0] $conv_anchor_spans]
 	append tot $cst
 
-# "centroid" , "coordcst" "cenmin"
+# "centroid" , "coordcst" "cenmin" 
 	lappend allMovers "setupdens" "loaddens" "coordcst" "relaxcart";#
 	if {$cartesianSampler} {
 		lappend allMovers "coordcst" "cen5_50" "coordcst" "relaxcart";
@@ -158,7 +158,7 @@ proc ::RosettaInputGenerator::refine_with_rosetta {jobname MOL mapname res score
 		puts "Preparing $nstruct structures on cluster. $tasks tasks with $nPerTask structures each."
 		set bashscript [::RosettaInputGenerator::make_cluster_script 25 1.5 $res $mapname.mrc $jobname $nstruct $tasks $nPerTask]
 	}
-
+	
 
 	set script [open "$jobname.sh" w]
 	puts $script $bashscript
@@ -225,7 +225,7 @@ proc ::RosettaInputGenerator::rosetta_basic_refinement {jobname MOL nstruct clus
 		# set cart [::RosettaInputGenerator::make_cart_sample [list cen5_50 $score_dens cen cen dens_soft auto density %%rms%% 200 0 0 25 4 7 25 "$exclude"]]
 		# append tot $cart
 	# }
-
+	
 	# append tot [::RosettaInputGenerator::make_full_atom_mover "fullatom"]
 
 	# set fr [::RosettaInputGenerator::make_fastrelax relax 1 [list {"Chain" 1 0 0}]]
@@ -237,7 +237,7 @@ proc ::RosettaInputGenerator::rosetta_basic_refinement {jobname MOL nstruct clus
 	set fr [make_fastrelax relax 1 $converted]
 	append tot $fr
 
-# "centroid" , "coordcst" "cenmin"
+# "centroid" , "coordcst" "cenmin" 
 	lappend allMovers "coordcst" "relax";#
 
 	append tot "</MOVERS>\n"
@@ -275,7 +275,7 @@ proc ::RosettaInputGenerator::rosetta_basic_refinement {jobname MOL nstruct clus
 		# puts "Preparing $nstruct structures on cluster. $tasks tasks with $nPerTask structures each."
 		# set bashscript [::RosettaInputGenerator::make_cluster_script 25 1.5 $res $mapname.mrc $jobname $nstruct $tasks $nPerTask]
 	}
-
+	
 
 	set script [open "$jobname.sh" w]
 	puts $script $bashscript
@@ -383,7 +383,7 @@ proc ::RosettaInputGenerator::rosetta_basic_refinement {jobname MOL nstruct clus
 # 		puts "Preparing $nstruct structures on cluster. $tasks tasks with $nPerTask structures each."
 # 		set bashscript [make_cluster_script 25 1.5 $res $mapname.mrc $jobname $nstruct $tasks $nPerTask]
 # 	}
-
+	
 
 # 	set script [open "$jobname.sh" w]
 # 	puts $script $bashscript
@@ -430,7 +430,7 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath n
 
 	#LOAD SCRFXNS
 	#puts [make_default_scfxn]
-
+	
 	#append tot [make_default_scfxn]
 
 	#RESIDUE SELECTORS
@@ -477,16 +477,16 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath n
 
 	#lappend allMovers "coordcst"
 
-
+	
 	#lappend allMovers "relax"
 
-
+	
 	#lappend allMovers "cen5_50"
 
-
+	
 	#lappend allMovers "relaxcart"
 
-
+	
 	#lappend allMovers "cenmin"
 
 	append tot "</MOVERS>\n"
@@ -524,7 +524,7 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath n
 	} elseif {!$test && !$cluster} {
 		set bashscript [make_abinitio_local_script $jobname $nstruct]
 	}
-
+	
 
 	set script [open "$jobname.sh" w]
 	puts $script $bashscript
@@ -595,14 +595,14 @@ proc ::RosettaInputGenerator::rosetta_insertion {jobname MOL fragfiles fasta fra
 
 }
 
-#<CartesianSampler name=cen5_50 automode_scorecut=-0.5 scorefxn=cen mcscorefxn=cen
-#fascorefxn=dens_soft strategy="auto" fragbias="density" rms=%%rms%% ncycles=200 fullatom=0
+#<CartesianSampler name=cen5_50 automode_scorecut=-0.5 scorefxn=cen mcscorefxn=cen 
+#fascorefxn=dens_soft strategy="auto" fragbias="density" rms=%%rms%% ncycles=200 fullatom=0 
 #bbmove=0 nminsteps=25 temp=4 fraglens=7 nfrags=25 residues_to_exclude="50-116"/>
 # usage
 
 
 #<Chain number=1 chi=0 bb=0 />
-#<Span begin=1 end=61 chi=1 bb=1 />
+#<Span begin=1 end=61 chi=1 bb=1 /> 
 # <Jump number=1 setting=0/>
 # each component has to be like:
 #
@@ -620,19 +620,19 @@ proc ::RosettaInputGenerator::make_movemap {components} \
 				if {[llength $comp] != 4} {
 					wrong_input "chain length"
 				}
-				append out "<Chain number=\"[lindex $comp 1]\" chi=\"[lindex $comp 2]\" bb=\"[lindex $comp 3]\" /> \n"
+				append out "<Chain number=[lindex $comp 1] chi=[lindex $comp 2] bb=[lindex $comp 3] /> \n"
 			}
 			"Span" {
 				if {[llength $comp] != 5} {
 					wrong_input "span length"
 				}
-				append out "<Span begin=\"[lindex $comp 1]\" end=\"[lindex $comp 2]\" chi=\"[lindex $comp 3]\" bb=\"[lindex $comp 4]\" /> \n"
+				append out "<Span begin=[lindex $comp 1] end=[lindex $comp 2] chi=[lindex $comp 3] bb=[lindex $comp 4] /> \n"
 			}
 			"Jump" {
 				if {[llength $comp] != 3} {
 					wrong_input
 				}
-				append out "<Jump number=\"[lindex $comp 1]\" setting=\"[lindex $comp 2]\" /> \n"
+				append out "<Jump number=[lindex $comp 1] setting=[lindex $comp 2] /> \n"
 			}
 			default {
 				::RosettaInputGenerator::wrong_input
@@ -643,7 +643,7 @@ proc ::RosettaInputGenerator::make_movemap {components} \
 	return $out
 }
 
-#<CoordinateCst name=coordcst stddev=20 atom=CA anchor_res=90 jump=0  >
+#<CoordinateCst name=coordcst stddev=20 atom=CA anchor_res=90 jump=0  > 
 #<Span begin=66 end=104 />
 #</CoordinateCst>
 # usage:
@@ -655,12 +655,12 @@ proc ::RosettaInputGenerator::make_coord_cst {config spans} \
 	if {[llength $config] != 5} {
 		::RosettaInputGenerator::wrong_input
 	}
-	append out "<CoordinateCst name=\"[lindex $config 0]\" stddev=\"[lindex $config 1]\" atom=\"[lindex $config 2]\" anchor_res=\"[lindex $config 3]\" jump=\"[lindex $config 4]\"> \n"
+	append out "<CoordinateCst name=[lindex $config 0] stddev=[lindex $config 1] atom=[lindex $config 2] anchor_res=[lindex $config 3] jump=[lindex $config 4]> \n"
 	foreach span $spans {
 		if {[llength $span] != 2} {
 			::RosettaInputGenerator::wrong_input
 		}
-		append out "<Span begin=\"[lindex $span 0]\" end=\"[lindex $span 1]\" /> \n"
+		append out "<Span begin=[lindex $span 0] end=[lindex $span 1] /> \n"
 	}
 	append out "</CoordinateCst> \n"
 	return $out
@@ -675,7 +675,7 @@ proc ::RosettaInputGenerator::make_coord_cst {config spans} \
 proc ::RosettaInputGenerator::make_fastrelax {name repeats movemap_comps} \
 {
 	set out ""
-	append out "<FastRelax name=\"$name\" repeats=\"$repeats\">\n"
+	append out "<FastRelax name=$name repeats=$repeats>\n"
 	append out [::RosettaInputGenerator::make_movemap $movemap_comps]
 	append out "</FastRelax>\n"
 	return $out
@@ -691,10 +691,10 @@ proc ::RosettaInputGenerator::make_fastrelax {name repeats movemap_comps} \
 proc ::RosettaInputGenerator::make_abscript_mover {name cycles fraglist} \
 {
 	set out ""
-	append out "<AbscriptMover name=\"$name\" cycles=\"$cycles\" >\n"
+	append out "<AbscriptMover name=$name cycles=$cycles >\n"
 	foreach frag $fraglist {
 		set name [lindex $frag 0]
-		append out "<Fragments large_frags=\"[lindex $frag 0]\" small_frags=\"[lindex $frag 1]\" selector=\"[lindex $frag 2]\" /> \n"
+		append out "<Fragments large_frags=\"[lindex $frag 0]\" small_frags=\"[lindex $frag 1]\" selector=[lindex $frag 2] /> \n"
 	}
 	append out "</AbscriptMover> \n"
 	return $out
@@ -708,12 +708,12 @@ proc ::RosettaInputGenerator::make_abscript_mover {name cycles fraglist} \
 proc ::RosettaInputGenerator::make_environment {name autocut registerList applyList} \
 {
 	set out ""
-	append out "<Environment name=\"$name\" auto_cut=\"$autocut\"> \n"
+	append out "<Environment name=$name auto_cut=$autocut> \n"
 	foreach reg $registerList {
-		append out "<Register mover=\"$reg\" />\n"
+		append out "<Register mover=$reg />\n"
 	}
 	foreach app $applyList {
-		append out "<Apply mover=\"$app\" />\n"
+		append out "<Apply mover=$app />\n"
 	}
 	append out "</Environment>\n"
 	return $out
@@ -724,13 +724,13 @@ proc ::RosettaInputGenerator::make_environment {name autocut registerList applyL
 proc ::RosettaInputGenerator::make_rigid_chunk {name regselector template selector apply_to_template} \
 {
 	global tempPath
-	set out "<RigidChunkCM name=\"$name\" region_selector=\"$regselector\" template=\"$tempPath/$template\" selector=\"$selector\" apply_to_template=\"$apply_to_template\" />\n"
+	set out "<RigidChunkCM name=$name region_selector=$regselector template=\"$tempPath/$template\" selector=$selector apply_to_template=$apply_to_template />\n"
 	return $out
 }
 
 
-#<CartesianSampler name=cen5_50 automode_scorecut=-0.5 scorefxn=cen mcscorefxn=cen
-#fascorefxn=dens_soft strategy="auto" fragbias="density" rms=%%rms%% ncycles=200 fullatom=0
+#<CartesianSampler name=cen5_50 automode_scorecut=-0.5 scorefxn=cen mcscorefxn=cen 
+#fascorefxn=dens_soft strategy="auto" fragbias="density" rms=%%rms%% ncycles=200 fullatom=0 
 #bbmove=0 nminsteps=25 temp=4 fraglens=7 nfrags=25 residues_to_exclude="50-116"/>
 # usage
 
@@ -741,9 +741,9 @@ proc ::RosettaInputGenerator::make_cart_sample {arg} \
 		::RosettaInputGenerator::wrong_input
 	}
 	if {[llength $arg] == 16} {
-		append out "<CartesianSampler name=\"[lindex $arg 0]\" automode_scorecut=\"[lindex $arg 1]\" scorefxn=\"[lindex $arg 2]\" mcscorefxn=\"[lindex $arg 3]\" fascorefxn=\"[lindex $arg 4]\" strategy=\"[lindex $arg 5]\" fragbias=\"[lindex $arg 6]\" rms=\"[lindex $arg 7]\" ncycles=\"[lindex $arg 8]\" fullatom=\"[lindex $arg 9]\" bbmove=\"[lindex $arg 10]\" nminsteps=\"[lindex $arg 11]\" temp=\"[lindex $arg 12]\" fraglens=\"[lindex $arg 13]\" nfrags=\"[lindex $arg 14]\" residues_to_exclude=\"[lindex $arg 15]\" />"
+		append out "<CartesianSampler name=[lindex $arg 0] automode_scorecut=[lindex $arg 1] scorefxn=[lindex $arg 2] mcscorefxn=[lindex $arg 3] fascorefxn=[lindex $arg 4] strategy=[lindex $arg 5] fragbias=[lindex $arg 6] rms=[lindex $arg 7] ncycles=[lindex $arg 8] fullatom=[lindex $arg 9] bbmove=[lindex $arg 10] nminsteps=[lindex $arg 11] temp=[lindex $arg 12] fraglens=[lindex $arg 13] nfrags=[lindex $arg 14] residues_to_exclude=\"[lindex $arg 15]\" />"
 	} else {
-		append out "<CartesianSampler name=\"[lindex $arg 0]\" automode_scorecut=\"[lindex $arg 1]\" scorefxn=\"[lindex $arg 2]\" mcscorefxn=\"[lindex $arg 3]\" fascorefxn=\"[lindex $arg 4]\" strategy=\"[lindex $arg 5]\" fragbias=\"[lindex $arg 6]\" rms=\"[lindex $arg 7]\" ncycles=\"[lindex $arg 8]\" fullatom=\"[lindex $arg 9]\" bbmove=\"[lindex $arg 10]\" nminsteps=\"[lindex $arg 11]\" temp=\"[lindex $arg 12]\" fraglens=\"[lindex $arg 13]\" nfrags=\"[lindex $arg 14]\" />"
+		append out "<CartesianSampler name=[lindex $arg 0] automode_scorecut=[lindex $arg 1] scorefxn=[lindex $arg 2] mcscorefxn=[lindex $arg 3] fascorefxn=[lindex $arg 4] strategy=[lindex $arg 5] fragbias=[lindex $arg 6] rms=[lindex $arg 7] ncycles=[lindex $arg 8] fullatom=[lindex $arg 9] bbmove=[lindex $arg 10] nminsteps=[lindex $arg 11] temp=[lindex $arg 12] fraglens=[lindex $arg 13] nfrags=[lindex $arg 14] />"
 	}
 	append out "\n"
 	return $out
@@ -760,7 +760,7 @@ proc ::RosettaInputGenerator::make_cart_sample {arg} \
 proc ::RosettaInputGenerator::make_relaxcart {name repeats movemap_comps} \
 {
 	set out ""
-	append out "<FastRelax name=\"$name\" scorefxn=\"dens\" repeats=\"$repeats\" cartesian=\"1\"> \n"
+	append out "<FastRelax name=$name scorefxn=dens repeats=$repeats cartesian=1> \n"
 	append out [::RosettaInputGenerator::make_movemap $movemap_comps]
 	append out "</FastRelax> \n"
 	return $out
@@ -770,14 +770,14 @@ proc ::RosettaInputGenerator::make_relaxcart {name repeats movemap_comps} \
 #<MinMover name=cenmin scorefxn=cen type=lbfgs_armijo_nonmonotone max_iter=200 tolerance=0.00001 chi=0 bb=0>
 #			<MoveMap>
 #				<Chain number=1 chi=0 bb=0 />
-#				<Span begin=1 end=61 chi=1 bb=1 />
+#				<Span begin=1 end=61 chi=1 bb=1 /> 
 #			</MoveMap>
 #		</MinMover>
 
 proc ::RosettaInputGenerator::make_cenmin {name chi bb movemap_comps} \
 {
 	set out ""
-	append out "<MinMover name=\"$name\" scorefxn=\"cen\" type=\"lbfgs_armijo_nonmonotone\" max_iter=\"200\" tolerance=\"0.00001\" chi=\"$chi\" bb=\"$bb\"> \n"
+	append out "<MinMover name=$name scorefxn=cen type=lbfgs_armijo_nonmonotone max_iter=200 tolerance=0.00001 chi=$chi bb=$bb> \n"
 	append out [::RosettaInputGenerator::make_movemap $movemap_comps]
 	append out "</MinMover>\n"
 	return $out
@@ -794,10 +794,10 @@ proc ::RosettaInputGenerator::make_resid_selectors {components} \
 		set name [lindex $comp 0]
 		switch -exact -- $name {
 			"Index" {
-				append out "<Index name=\"[lindex $comp 1]\" resnums=\"[lindex $comp 2]\" />\n"
+				append out "<Index name=[lindex $comp 1] resnums=\"[lindex $comp 2]\" />\n"
 			}
 			"Chain" {
-				append out "<Chain name=\"[lindex $comp 1]\" chains=\"[lindex $comp 2]\" /> \n"
+				append out "<Chain name=[lindex $comp 1] chains=\"[lindex $comp 2]\" /> \n"
 			}
 			default {
 				::RosettaInputGenerator::wrong_input
@@ -813,7 +813,7 @@ proc ::RosettaInputGenerator::make_protocol {movernames} \
 	set out ""
 	append out "<PROTOCOLS> \n"
 	foreach mover $movernames {
-		append out "<Add mover=\"$mover\"/> \n"
+		append out "<Add mover=$mover/> \n"
 	}
 	append out "</PROTOCOLS> \n"
 	return $out
@@ -826,15 +826,15 @@ proc ::RosettaInputGenerator::make_default_scfxn {} \
 {
 	return "<SCOREFXNS>
 		<cen weights=\"score4_smooth_cart\">
-			<Reweight scoretype=\"elec_dens_fast weight=20\"/>
+			<Reweight scoretype=elec_dens_fast weight=20/>
 		</cen>
 		<dens_soft weights=\"soft_rep\">
-			<Reweight scoretype=\"cart_bonded\" weight=\"0.5\"/>
-			<Reweight scoretype=\"pro_close\" weight=\"0.0\"/>
-			<Reweight scoretype=\"elec_dens_fast\" weight=\"%%denswt%%\"/>
+			<Reweight scoretype=cart_bonded weight=0.5/>
+			<Reweight scoretype=pro_close weight=0.0/>
+			<Reweight scoretype=elec_dens_fast weight=\"%%denswt%%\"/>
 		</dens_soft>
 		<dens weights=\"talaris2013_cart\">
-			<Reweight scoretype=\"elec_dens_fast\" weight=\"%%denswt%%\"/>
+			<Reweight scoretype=elec_dens_fast weight=\"%%denswt%%\"/>
 			<Set scale_sc_dens_byres=\"R:0.76,K:0.76,E:0.76,D:0.76,M:0.76,C:0.81,Q:0.81,H:0.81,N:0.81,T:0.81,S:0.81,Y:0.88,W:0.88,A:0.88,F:0.88,P:0.88,I:0.88,L:0.88,V:0.88\"/>
 		</dens>
 	</SCOREFXNS> \n"
@@ -844,7 +844,7 @@ proc ::RosettaInputGenerator::make_default_scfxn {} \
 
 proc ::RosettaInputGenerator::make_density_setup {} \
 {
-	return "<SetupForDensityScoring name=\"setupdens\"/> \n <LoadDensityMap name=\"loaddens\" mapfile=\"%%map%%\"/>\n"
+	return "<SetupForDensityScoring name=setupdens/> \n <LoadDensityMap name=loaddens mapfile=\"%%map%%\"/>\n"
 }
 
 
@@ -891,7 +891,7 @@ if \[ -z \"\$1\" \]\; then
   echo Need job name!
   exit
 fi
-/home/sgeadmin/bin/linux-x64/qsub -q linux -N \$JOBNAME -j y -o \${PATH}/OUTPUT_FILES << EOF
+/home/sgeadmin/bin/linux-x64/qsub -q linux -N \$JOBNAME -j y -o \${PATH}/OUTPUT_FILES << EOF  
 #\$ -S /bin/bash
 #\$ -t 1-$tasks
 for i in {1..$nPerTask}
@@ -912,7 +912,7 @@ $rosettapath/rosetta_scripts.$platform \\
         -overwrite \\
         -ignore_zero_occupancy false \\
 	-seed_offset \\\$idx
-
+         
 mv \${JOBNAME}*.pdb ./pdb_out/
 mv *.sc ./sc_out/
 done
@@ -995,10 +995,10 @@ $rosettapath/minirosetta.$platform \\
 	-nstruct $nstruct \\
 	-overwrite
 
-#mkdir intermediates
-#mv loops_closed*.pdb ./intermediates/
-#mv *.sc ./sc_out/
-#mv $jobname*.pdb ./pdb_out/
+mkdir intermediates
+mv loops_closed*.pdb ./intermediates/
+mv *.sc ./sc_out/
+mv $jobname*.pdb ./pdb_out/
 
 "
 }
@@ -1014,7 +1014,7 @@ proc ::RosettaInputGenerator::make_insertion_cluster_script {jobname mol nstruct
 export PATH=\$(pwd)
 JOBNAME=$jobname
 
-/home/sgeadmin/bin/linux-x64/qsub -q linux -N \$JOBNAME -j y -o \${PATH}/OUTPUT_FILES << EOF
+/home/sgeadmin/bin/linux-x64/qsub -q linux -N \$JOBNAME -j y -o \${PATH}/OUTPUT_FILES << EOF  
 #\$ -S /bin/bash
 #\$ -t 1-$tasks
 for i in {1..$nPerTask}
@@ -1095,8 +1095,8 @@ $rosettapath/rosetta_scripts.$platform \\
     -ignore_zero_occupancy false\\
     -overwrite
 
-#mv \${JOBNAME}*.pdb ./pdb_out/
-#mv *.sc ./sc_out/
+mv \${JOBNAME}*.pdb ./pdb_out/
+mv *.sc ./sc_out/
 
 "
 }
@@ -1114,7 +1114,7 @@ if \[ -z \"\$1\" \]\; then
   echo Need job name!
   exit
 fi
-/home/sgeadmin/bin/linux-x64/qsub -q linux -N \$JOBNAME -j y -o \${PATH}/OUTPUT_FILES << EOF
+/home/sgeadmin/bin/linux-x64/qsub -q linux -N \$JOBNAME -j y -o \${PATH}/OUTPUT_FILES << EOF  
 #\$ -S /bin/bash
 #\$ -t 1-$tasks
 for i in {1..$nPerTask}
@@ -1133,7 +1133,7 @@ $rosettapath/rosetta_scripts.linuxgccrelease \\
         -overwrite \\
         -ignore_zero_occupancy false \\
 	-seed_offset \\\$idx
-
+         
 mv \${JOBNAME}*.pdb ./pdb_out/
 mv *.sc ./sc_out/
 done
@@ -1147,12 +1147,12 @@ EOF
 
 proc ::RosettaInputGenerator::make_centroid_mover {name} \
 {
-	return "<SwitchResidueTypeSetMover name=\"$name\" set=\"centroid\" /> \n"
+	return "<SwitchResidueTypeSetMover name=$name set=\"centroid\" /> \n"
 }
 
 proc ::RosettaInputGenerator::make_full_atom_mover {name} \
 {
-	return "<SwitchResidueTypeSetMover name=\"$name\" set=\"fa_standard\" />\n"
+	return "<SwitchResidueTypeSetMover name=$name set=\"fa_standard\" />\n"
 }
 
 # /Scr/scr-test-trudack/marc1/rosetta_bin_linux_2015.12.57698_bundle/main/source/bin/rosetta_scripts.linuxgccrelease

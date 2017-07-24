@@ -27,11 +27,11 @@ namespace eval ::MODELMAKER {
   #or gui, if not present, perhaps pop up a dialog with a Browse button to allow user to get the path and
   #proceed...
   if {[info exists env(ROSETTADB)]} {
-    variable rosettadbpath $env(ROSETTADB) 
+    variable rosettadbpath $env(ROSETTADB)
   } else {
-    variable rosettadbpath "" 
+    variable rosettadbpath ""
   }
- 
+
   #currently set in .vmdrc like ROSETTADB, !!HOWEVER!!
   #this should not be necessary to specify if we tell the user that
   #the rosetta bin directory is on their PATH. Just setting this variable
@@ -40,9 +40,9 @@ namespace eval ::MODELMAKER {
   #single "ROSETTAPATH" variable that just points to where the user installed rosetta's
   #top level directory. Then we can just use that and append the bin/ and database/ locations as needed.
   if {[info exists env(ROSETTAPATH)]} {
-    variable rosettaPath $env(ROSETTAPATH) 
+    variable rosettaPath $env(ROSETTAPATH)
   } else {
-    variable rosettaPath "" 
+    variable rosettaPath ""
   }
  # variable defaultGapfindMol "top"
   variable DefaultNStruct 5000
@@ -138,7 +138,7 @@ proc ::MODELMAKER::insertion { args } {
 #for testing.
   #set tempPath [pwd]/full_length_model
   #set tempdir [pwd]/full_length_model
- 
+
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
   set platform $rosettaEXE
@@ -164,27 +164,27 @@ proc ::MODELMAKER::insertion { args } {
   if { [info exists arg(model)] } {
     #set model $arg(model)
   #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
-  #extension. Need to change RosettaVMD to not require this. 
+  #extension. Need to change RosettaVMD to not require this.
     set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
   } else {
     error "A full model pdb file must be specified!"
   }
-  
+
   if { [info exists arg(sel)] } {
     set sel [list $arg(sel)]
   } else {
     error "An atomselection text must be specified!"
   }
-  
+
   if { [info exists arg(fragfiles)] } {
     set fragfiles $arg(fragfiles)
   } else {
     error "At least one fragment file must be specified!"
   }
-  
+
   if { [info exists arg(fasta)] } {
   #NOTE: Right now, because of RosettaVMD package, this needs to be the fasta name without the .fasta
-  #extension. Need to change RosettaVMD to not require this. 
+  #extension. Need to change RosettaVMD to not require this.
     set fasta [string range $arg(fasta) 0 [expr [string last ".fasta" $arg(fasta)] - 1 ]]
   #  set fasta $arg(fasta)
   } else {
@@ -209,7 +209,7 @@ proc ::MODELMAKER::insertion { args } {
   } else {
     set nstruct $DefaultNStruct
   }
-  
+
   if { [info exists arg(jobname)] } {
     set jobname $arg(jobname)
   } else {
@@ -218,7 +218,7 @@ proc ::MODELMAKER::insertion { args } {
 
   set modelPath [file dirname $arg(model)]
   if { $modelPath == "." } {
-    set tempPath [pwd]  
+    set tempPath [pwd]
   } else {
     set tempPath $modelPath
   }
@@ -227,7 +227,7 @@ proc ::MODELMAKER::insertion { args } {
   set temp_mol [mol new $arg(model)]
   set temp_sel [atomselect $temp_mol all]
   set resstart [lindex [lsort -integer [$temp_sel get resid]] 0]
-   
+
   foreach pdb [glob "rosetta_output_$jobname/pdb_out/*"] {
     set full_mol [mol new $pdb]
     set full_sel [atomselect $full_mol all]
@@ -257,7 +257,7 @@ proc ::MODELMAKER::abinitio_usage { } {
 }
 
 proc ::MODELMAKER::abinitio { args } {
-  
+
   variable rosettaEXE
   variable rosettadbpath
   variable DefaultNStruct
@@ -284,7 +284,7 @@ proc ::MODELMAKER::abinitio { args } {
 #for testing.
   #set tempPath [pwd]/full_length_model
   #set tempdir [pwd]/full_length_model
- 
+
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
   set platform $rosettaEXE
@@ -313,24 +313,24 @@ proc ::MODELMAKER::abinitio { args } {
   if { [info exists arg(model)] } {
     #set model $arg(model)
   #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
-  #extension. Need to change RosettaVMD to not require this. 
+  #extension. Need to change RosettaVMD to not require this.
     set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
   } else {
     error "A full model pdb file must be specified!"
   }
-  
+
   if { [info exists arg(sel)] } {
     set sel [list $arg(sel)]
   } else {
     error "An atomselection text must be specified!"
   }
-  
+
   if { [info exists arg(anchor)] } {
     set anchor $arg(anchor)
   } else {
     error "An anchor residue id must be specified!"
   }
-  
+
   if { [info exists arg(fragfiles)] } {
     set fragfiles $arg(fragfiles)
   } else {
@@ -355,25 +355,25 @@ proc ::MODELMAKER::abinitio { args } {
   } else {
     set nstruct $DefaultNStruct
   }
-  
+
   if { [info exists arg(cluster)] } {
     set cluster $arg(cluster)
   } else {
     set cluster $DefaultCluster
   }
-  
+
   if { [info exists arg(npertask)] } {
     set npertask $arg(npertask)
   } else {
     set npertask $DefaultNPerTask
   }
-  
+
   if { [info exists arg(testrun)] } {
     set testrun $arg(testrun)
   } else {
     set testrun $DefaultTestRun
   }
-  
+
   if { [info exists arg(jobname)] } {
     set jobname $arg(jobname)
   } else {
@@ -382,7 +382,7 @@ proc ::MODELMAKER::abinitio { args } {
 
   set modelPath [file dirname $arg(model)]
   if { $modelPath == "." } {
-    set tempPath [pwd]  
+    set tempPath [pwd]
   } else {
     set tempPath $modelPath
   }
@@ -438,10 +438,10 @@ proc ::MODELMAKER::analyze { args } {
     }
   }
 
-  puts $arg(model)  
+  puts $arg(model)
   if { [info exists arg(model)] } {
   #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
-  #extension. Need to change RosettaVMD to not require this. 
+  #extension. Need to change RosettaVMD to not require this.
     set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
   } else {
     error "A full model pdb file must be specified!"
@@ -452,7 +452,7 @@ proc ::MODELMAKER::analyze { args } {
   } else {
     error "Number of structures to analyze must be specified!"
   }
-  
+
 #This is pretty cumbersome for the user and fairly opaque. Will have to find a succinct way of listing the
 #possibilities and summarizing functionality in the usage command...
  #Also, like fragment files, is a list of lists so the user will have to do somehing like
@@ -462,25 +462,25 @@ proc ::MODELMAKER::analyze { args } {
   } else {
     error "Analysis tasks must be specified!"
   }
-  
+
   if { [info exists arg(align_template)] } {
     set align_template $arg(align_template)
   } else {
     set align_template "$DefaultAlignTemplate"
   }
-  
+
   if { [info exists arg(align_rosetta)] } {
     set align_rosetta $arg(align_rosetta)
   } else {
     set align_rosetta $align_template
   }
-  
+
   if { [info exists arg(bestN)] } {
     set bestN $arg(bestN)
   } else {
     set bestN $nstruct
   }
-  
+
   if { [info exists arg(jobname)] } {
     set jobname $arg(jobname)
   } else {
@@ -492,13 +492,13 @@ proc ::MODELMAKER::analyze { args } {
   } else {
     set insertion $DefaultInsertion
   }
-  
+
   if { [info exists arg(cluster)] } {
     set cluster $arg(cluster)
   } else {
     set cluster $DefaultCluster
   }
- 
+
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
@@ -509,7 +509,7 @@ proc ::MODELMAKER::analyze { args } {
  global platform
 
  global packagePath
- global vmdexe 
+ global vmdexe
 #can we avoid this or make it optional?
  global gnuplotexe
 
@@ -524,11 +524,11 @@ proc ::MODELMAKER::analyze { args } {
   #If you want to use a different template for alignment, why just a different dir? What does the filename have to be?
 #why must this be set regardless?
   set tempdir [pwd]/full_length_model
- 
+
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
   set platform $rosettaEXE
-  
+
   set packagePath $::env(RosettaVMDDIR)
 
 #assumes in PATH which should be reasonable
@@ -538,12 +538,12 @@ proc ::MODELMAKER::analyze { args } {
   switch $insertion {
     "yes" {
       set modelname "$model\_S"
-      set insert_model $model 
+      set insert_model $model
     }
-    "no"  { 
+    "no"  {
       set modelname $model
-      set insert_model "" 
-    }  
+      set insert_model ""
+    }
   }
   puts "MODEL: $model  INSERT_MODEL: $insert_model"
   #jobname mol bestN nstruct cluster align_template align_rosetta analysis_components
@@ -567,7 +567,7 @@ proc ::MODELMAKER::renumber { sel start } {
 
 proc ::MODELMAKER::full_length_model_usage { } {
   variable DefaultResStart
-  
+
   puts "Usage: modelmaker full_length_model -template <template pdb> -fragfiles <list of fragment files> \
     -fasta <fasta file> ?options?"
   puts "Options:"
@@ -596,19 +596,19 @@ proc ::MODELMAKER::full_length_model { args } {
       #-output { set arg(output) $val }
     }
   }
-  
+
   if { [info exists arg(template)] } {
     set template $arg(template)
   } else {
     error "A template pdb file must be specified!"
   }
-  
+
   if { [info exists arg(fragfiles)] } {
     set fragfiles $arg(fragfiles)
   } else {
     error "A list of two fragment files must be specified!"
   }
-  
+
   if { [info exists arg(fasta)] } {
     set fasta $arg(fasta)
   } else {
@@ -620,22 +620,22 @@ proc ::MODELMAKER::full_length_model { args } {
   #} else {
   #  error "A model name must be specified!"
   #}
-  
+
   if { [info exists arg(resstart)] } {
     set resstart $arg(resstart)
   } else {
     set resstart $DefaultResStart
   }
-  
+
 #  if { [info exists arg(output)] } {
 #    set output $arg(output)
 #  } else {
 #    #this mimics the default rosetta behaviour
 #    set output $template
 #  }
-  
-  
- 
+
+
+
   #this assume only 9 and 3 length fragment files and in a specific order. Can
   #we implement some logic to look at the provided files and determine what all we have?
   exec full_length_model.$rosettaEXE -in:file:fasta $fasta \
@@ -643,8 +643,8 @@ proc ::MODELMAKER::full_length_model { args } {
     -loops:frag_sizes 9 3 1 \
     -in:file::s $template \
     -overwrite
- 
-  
+
+
   set full_mol [mol new ${template}_full_length.pdb]
   set full_sel [atomselect $full_mol all]
   renumber $full_sel $resstart
@@ -658,7 +658,7 @@ proc ::MODELMAKER::full_length_model { args } {
 
 
 proc ::MODELMAKER::gapfind_usage { } {
-  
+
   variable defaultGapfindSel
  # variable defaultGapfindMol
 
@@ -668,7 +668,7 @@ proc ::MODELMAKER::gapfind_usage { } {
   puts "  -sel <atom selection> (default: $defaultGapfindSel)"
   #puts "  -mol <molid> (find gaps in already loaded molecule) (default: $defaultGapfindMol)"
   puts "  -mol <molid> (find gaps in already loaded molecule)"
-  
+
 }
 
 
@@ -677,7 +677,7 @@ proc ::MODELMAKER::gapfind { args } {
 
   variable defaultGapfindSel
  # variable defaultGapfindMol
-  
+
   set nargs [llength [lindex $args 0]]
   if {$nargs == 0} {
     gapfind_usage
@@ -688,7 +688,7 @@ proc ::MODELMAKER::gapfind { args } {
 
 #  mol delete all
 #  mol new $MOL.pdb
-  
+
   foreach {name val} $args {
     switch -- $name {
       -i { set arg(i) $val }
@@ -702,19 +702,19 @@ proc ::MODELMAKER::gapfind { args } {
   } elseif { ![info exists arg(i)] && ![info exists arg(mol)] } {
     error "either an input pdb OR a mol id must be specified"
   }
-  
+
   if { [info exists arg(i)] } {
     set inputpdb $arg(i)
   } else {
     set inputpdb ""
   }
-  
+
   if { [info exists arg(sel)] } {
     set inputsel $arg(sel)
   } else {
     set inputsel $defaultGapfindSel
   }
-  
+
   if { [info exists arg(mol)] } {
     set inputmol $arg(mol)
   } else {
@@ -727,7 +727,7 @@ proc ::MODELMAKER::gapfind { args } {
   } else {
     set MOLID [molinfo $inputmol get id]
   }
-  
+
   set molname [molinfo $MOLID get name]
 
   set chains [lsort -unique [[atomselect $MOLID all] get chain]]
@@ -777,6 +777,3 @@ proc ::MODELMAKER::gapfind { args } {
 #    }
 #    return [ uplevel set $int ]
 #}
-
-
-

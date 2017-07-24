@@ -34,6 +34,9 @@ proc ::CheckCluster::check_clusterjob {uname jobid ntasks} \
 				switch -exact -- $status {
 					"r" {
 						lappend running_jobs [lindex $line 2]
+					}	
+					"t" {
+						lappend running_jobs [lindex $line 2]
 					}
 					"qw" {
 						set inf [lindex $line 2]

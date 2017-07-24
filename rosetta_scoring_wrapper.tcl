@@ -58,11 +58,11 @@ proc ::RosettaScoring::score_refinement_cluster {run MOL max_structures} \
   }
 }
 
-proc ::RosettaScoring::score_abinitio {run MOL max_structures cluster} \
+proc ::RosettaScoring::score_abinitio {run MOL max_structures cluster {extra 0} args} \
 {
   puts $MOL
   if {$cluster} {
-    set pdb [::RosettaScoring::rosetta_scoring_cluster_consistent $max_structures $run]
+    set pdb [::RosettaScoring::rosetta_scoring_cluster_consistent $max_structures $run $extra]
     } else {
       set pdb [::RosettaScoring::rosetta_scoring $max_structures]
     }
@@ -209,12 +209,17 @@ proc ::RosettaScoring::rosetta_scoring_cluster {length_tot} {
 
 
 #package require Tcl 8.5
-proc ::RosettaScoring::rosetta_scoring_cluster_consistent {length_tot runname} {
+proc ::RosettaScoring::rosetta_scoring_cluster_consistent {length_tot runname {extra 0} args} {
   set file_list ""
   set val_list ""
   set id_list ""
   # set ic_val_list ""
-  set score_name "${runname}_score"
+  if {$extra == 0} {
+    set score_name "${runname}_score" 
+  } else {
+    set score_name "${runname}_${extra}_score"
+  }
+  puts $score_name
   set file_list [lsort -dictionary [glob ./sc_out/*.sc]]
   #set file_list [lsort -dictionary [glob ../rosetta_output_bbfix/sc_out/*.sc]]
   #set file_list [lsort -dictionary [glob ../rosetta_output_bbfree/sc_out/*.sc]]
