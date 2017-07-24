@@ -412,13 +412,13 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta ns
 	exec mkdir -p pdb_out
 	exec mkdir -p OUTPUT_FILES
 	set output [exec "[pwd]/$jobname.sh" >> rosetta_log_$jobname.log &]
-	set current [exec ls -1v pdb_out | wc -l]
+	set current [llength [glob -nocomplain $jobname*.pdb ] ]
 	while {$current < $nstruct} {
 		set n 20
 		puts "Files are not yet available."
-		puts "Current number: [exec ls -1v pdb_out | wc -l] - [expr double($current)/($nstruct) * 100.0] %"
+		puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
 		after [expr {int($n * 1000)}]
-		set current [exec ls -1v pdb_out | wc -l]
+		set current [llength [glob -nocomplain $jobname*.pdb ] ]
 		if {$cluster} {
 			set logfile [open "rosetta_log_$jobname.log" r]
 			set dt [read $logfile]
@@ -433,6 +433,11 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta ns
 			}
 		}	
 	}
+  file mkdir intermediates	
+	file rename {*}[glob loops_closed*.pdb] intermediates/
+  file rename {*}[glob *.sc] sc_out/
+	file rename {*}[glob *.pdb] pdb_out/
+
 	puts $output
 	puts "Rosetta insertion folding finished."
 	cd ..	
