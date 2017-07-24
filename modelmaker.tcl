@@ -13,10 +13,10 @@ namespace eval ::MODELMAKER {
   #best to be independent of any future naming conventions of rosetta. Use wildcard instead?
   switch $tcl_platform(os) {
     "Darwin" {
-      variable rosettaEXE "macos*release"
+      variable rosettaEXE "macosclangrelease"
     }
     "Linux" {
-      variable rosettaEXE "linux*release"
+      variable rosettaEXE "linuxgccrelease"
     }
     default {
       variable rosettaEXE "Unrecognized"
