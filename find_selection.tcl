@@ -185,6 +185,10 @@ proc ::FindSelection::find_selection {MOL selections config {offset 4} args} \
 	mol delete $searchmol
 	close $out_ros
 	puts "finished finding selections."
+	set lastchar [string range $exclude_string end end]
+	if {$lastchar == ","} {
+		return [list $out_spans [string range $exclude_string 0 [expr [string length $exclude_string]-2]] $chain_config $constraint]
+	}
 	return [list $out_spans $exclude_string $chain_config $constraint]
 	#return [list $out_spans [string range $exclude_string 0 [expr [string length $exclude_string]-2]] $chain_config $constraint]
 #  return [list $out_spans [string range $exclude_string 0 [expr $end-1]] $chain_config $constraint]
