@@ -342,7 +342,7 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 
 	set username $::MODELMAKER::settings(username)
 	puts "Rosetta abinitio started."
-# 	rosetta_abinitio {jobname MOL fragfiles fragpath nstruct cluster nPerTask test configuration}
+# 	rosetta_abinitio {jobname MOL fragfiles nstruct cluster nPerTask test configuration}
 	cd $::MODELMAKER::workdir/run-$jobname
 	rosetta_abinitio $jobname $mol.pdb $fragfiles $nstruct $cluster $nPerTask $testrun $ros_config $chain_idents
 	exec chmod +x $jobname.sh
@@ -384,9 +384,10 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 }
 
 
-proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta nstruct {cluster 0} {nPerTask 5} args} \
+proc start_rosetta_insertion {jobname mol selections fragfiles fasta nstruct {cluster 0} {nPerTask 5} args} \
 {
 	# prepare configuration
+	cd $::MODELMAKER::workdir
 	set selection_length [llength $selections]
 	set find_cfg []
 	for {set i 0} {$i < $selection_length} {incr i} {
@@ -395,29 +396,28 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta ns
 	}
 
 	# Cleanup input file
-	exec sed -i -e {s/HSD/HIS/g} full_length_model/$mol.pdb
-	exec sed -i -e {s/HSE/HIS/g} full_length_model/$mol.pdb
-	exec sed -i -e {s/HSP/HIS/g} full_length_model/$mol.pdb
+	exec sed -i -e {s/HSD/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	exec sed -i -e {s/HSE/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	exec sed -i -e {s/HSP/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
 
 
 	# MOL selections config {offset 4}
-	set find_sel [find_selection full_length_model/$mol $selections $find_cfg 0]
+	set find_sel [find_selection $::MODELMAKER::workdir/setup-$jobname/$mol $selections $find_cfg 0]
 	set spans [lindex $find_sel 0]
 	set exclude [lindex $find_sel 1]
 	set chains [lindex $find_sel 2]
 
 	set ros_config [list $chains $spans $exclude]
 
-	global username
+	cd $::MODELMAKER::workdir/run-$jobname
 	puts "Rosetta insertion folding started."
-	rosetta_insertion $jobname $mol $fragfiles $fasta $fragpath $nstruct $cluster $nPerTask $ros_config
-	cd rosetta_output_$jobname
+	rosetta_insertion $jobname $mol $fragfiles $fasta $nstruct $cluster $nPerTask $ros_config
 	exec chmod +x $jobname.sh
 
-	exec mkdir -p sc_out
-	exec mkdir -p pdb_out
-	exec mkdir -p OUTPUT_FILES
-	set output [exec "[pwd]/$jobname.sh" >> rosetta_log_$jobname.log &]
+	file mkdir sc_out
+	file mkdir pdb_out
+	file mkdir OUTPUT_FILES
+	set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" >> rosetta_log_$jobname.log &]
 	set current [llength [glob -nocomplain $jobname*.pdb ] ]
 	while {$current < $nstruct} {
 		set n 20
@@ -446,8 +446,7 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta ns
 
 	puts $output
 	puts "Rosetta insertion folding finished."
-	cd ..
-
+	cd $::MODELMAKER::workdir
 }
 
 proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template align_rosetta analysis_components {insertion 0} args} \

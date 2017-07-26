@@ -50,7 +50,6 @@ namespace eval ::MODELMAKER {
   variable DefaultNPerTask 1
   variable DefaultTestRun 0
   variable DefaultResStart 1
-  variable DefaultFragPath [pwd]
   variable DefaultAlignTemplate "all"
   variable DefaultInsertion "no"
 
@@ -106,14 +105,13 @@ proc ::MODELMAKER::modelmaker { args } {
 
 proc ::MODELMAKER::insertion_usage  { } {
   variable DefaultNStruct
-  variable DefaultFragPath
   puts "Usage: modelmaker insertion -model <full length template pdb> -fragfiles <list of fragment files> \
     -sel <list of atomselection texts with selections to fold> -fasta <fasta file> \
      ?options?"
   puts "Options:"
-  puts "  -fragpath   <path to fragment files> (default: $DefaultFragPath)> "
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
+  puts "  -workdir    <working/project directory for job> (default \[pwd\]/workdir)>"
 }
 
 
@@ -122,7 +120,6 @@ proc ::MODELMAKER::insertion { args } {
   variable rosettadbpath
   variable DefaultNStruct
   variable rosettaPath
-  variable DefaultFragPath
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
@@ -149,8 +146,8 @@ proc ::MODELMAKER::insertion { args } {
       -sel { set arg(sel) $val }
       -fasta { set arg(fasta) $val }
       -fragfiles { set arg(fragfiles) $val }
-      -fragpath { set arg(fragpath) $val }
       -nstruct { set arg(nstruct) $val }
+      -workdir { set arg(workdir) $val }
     }
   }
 
@@ -184,18 +181,6 @@ proc ::MODELMAKER::insertion { args } {
     error "A fasta file must be specified!"
   }
 
-  #I don't understand why we need to give the path. Like with other files I've mentioned,
-# the function should just take the file names/paths as the same argument. I sort of understand
-#if you have a LOT of fragfiles and you just want to name them in -fragfiles and then give one
-#directory to their location here, so maybe this is fine, but I put in a default directory because
- #it shouldn't be required, only optional.
-  if { [info exists arg(fragpath)] } {
-    set fragpath $arg(fragpath)
-  } else {
-    set fragpath $DefaultFragPath
-    #error "A path to the fragment files must be specified!"
-  }
-
 
   if { [info exists arg(nstruct)] } {
     set nstruct $arg(nstruct)
@@ -209,13 +194,43 @@ proc ::MODELMAKER::insertion { args } {
     set jobname $model
   }
 
-#start_rosetta_insertion rpn11_insertion rpn11_yeast_23-306_complete [list "resid 138 to 157"] [list "rpn11_yeast_23-306_frag9" "rpn11_yeast_23-306_frag3"] [pwd]/input rpn11_yeast_23-306 $nstruct
-  start_rosetta_insertion $jobname $model $sel $fragfiles $fragpath $fasta $nstruct
+  if { [info exists arg(workdir)] } {
+    set ::MODELMAKER::workdir $arg(workdir)
+  } else {
+    set ::MODELMAKER::workdir [pwd]/workdir
+  }
+
+  if { [file exists $::MODELMAKER::workdir] } {
+    puts "The working directory already exists!"
+    exit 1
+  }
+
+
+  file mkdir $::MODELMAKER::workdir
+
+  ## preparing files ##
+  # folder with all the files needed for setup/run
+  file mkdir $::MODELMAKER::workdir/setup-$jobname
+  file mkdir $::MODELMAKER::workdir/run-$jobname
+
+  file copy $model.pdb $::MODELMAKER::workdir/setup-$jobname
+  file copy $fasta.fasta $::MODELMAKER::workdir/setup-$jobname
+  foreach fragfile $fragfiles {
+    puts $fragfile
+    file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
+  }
+  #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $nstruct $cluster $npertask $testrun
+  set currentPWD [pwd]
+
+  #start_rosetta_insertion rpn11_insertion rpn11_yeast_23-306_complete [list "resid 138 to 157"] [list "rpn11_yeast_23-306_frag9" "rpn11_yeast_23-306_frag3"] [pwd]/input rpn11_yeast_23-306 $nstruct
+  cd $::MODELMAKER::workdir
+  start_rosetta_insertion $jobname $model $sel $fragfiles $fasta $nstruct
+  cd $currentPWD
   set temp_mol [mol new $arg(model)]
   set temp_sel [atomselect $temp_mol all]
   set resstart [lindex [lsort -integer [$temp_sel get resid]] 0]
 
-  foreach pdb [glob "rosetta_output_$jobname/pdb_out/*"] {
+  foreach pdb [glob "$::MODELMAKER::workdir/run-$jobname/pdb_out/*"] {
     set full_mol [mol new $pdb]
     set full_sel [atomselect $full_mol all]
     renumber $full_sel $resstart
@@ -229,12 +244,10 @@ proc ::MODELMAKER::abinitio_usage { } {
   variable DefaultCluster
   variable DefaultNPerTask
   variable DefaultTestRun
-  variable DefaultFragPath
   puts "Usage: modelmaker abinitio -model <full length template pdb> -fragfiles <list of fragment files> \
     -sel <list of atomselection texts with selections to fold> -anchor <anchor residue for coordinate restraints> \
      ?options?"
   puts "Options:"
-  puts "  -fragpath   <path to fragment files> (default: $DefaultFragPath)> "
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "
   puts "  -workdir    <working/project directory for job> (default \[pwd\]/workdir)>"
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
@@ -253,7 +266,6 @@ proc ::MODELMAKER::abinitio { args } {
   variable DefaultNPerTask
   variable DefaultTestRun
   variable rosettaPath
-  variable DefaultFragPath
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
@@ -280,7 +292,6 @@ proc ::MODELMAKER::abinitio { args } {
       -sel { set arg(sel) $val }
       -anchor { set arg(anchor) $val }
       -fragfiles { set arg(fragfiles) $val }
-      -fragpath { set arg(fragpath) $val }
       -nstruct { set arg(nstruct) $val }
       -cluster { set arg(cluster) $val }
       -npertask { set arg(npertask) $val }
@@ -369,7 +380,7 @@ proc ::MODELMAKER::abinitio { args } {
     file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
   }
   cd $::MODELMAKER::workdir
-  #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $fragpath $nstruct $cluster $npertask $testrun
+  #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $nstruct $cluster $npertask $testrun
   set currentPWD [pwd]
   start_rosetta_abinitio $jobname $model $sel $anchor $fragfiles $nstruct $cluster $npertask $testrun
   cd $currentPWD
