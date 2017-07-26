@@ -16,7 +16,7 @@ namespace eval ::MODELMAKER {
       variable rosettaEXE "macosclangrelease"
     }
     "Linux" {
-      variable rosettaEXE "linuxgccrelease"
+      variable rosettaEXE "linuxclangrelease"
     }
     default {
       variable rosettaEXE "Unrecognized"
@@ -53,6 +53,9 @@ namespace eval ::MODELMAKER {
   variable DefaultFragPath [pwd]
   variable DefaultAlignTemplate "all"
   variable DefaultInsertion "no"
+
+  variable settings
+  set ::MODELMAKER::settings(username) ""
 }
 
 proc modelmaker { args } { return [eval ::MODELMAKER::modelmaker $args] }
@@ -179,7 +182,7 @@ proc ::MODELMAKER::insertion { args } {
   if { [info exists arg(fragfiles)] } {
     set fragfiles $arg(fragfiles)
   } else {
-    error "At least one fragment file must be specified!"
+    error "At least two fragment files must be specified!"
   }
 
   if { [info exists arg(fasta)] } {
@@ -307,6 +310,7 @@ proc ::MODELMAKER::abinitio { args } {
       -cluster { set arg(cluster) $val }
       -npertask { set arg(npertask) $val }
       -testrun { set arg(testrun) $val }
+      -workdir { set arg(workdir) $val }
     }
   }
 
@@ -334,7 +338,7 @@ proc ::MODELMAKER::abinitio { args } {
   if { [info exists arg(fragfiles)] } {
     set fragfiles $arg(fragfiles)
   } else {
-    error "At least one fragment file must be specified!"
+    error "Two fragment files must be specified!"
   }
 
   #I don't understand why we need to give the path. Like with other files I've mentioned,
@@ -386,6 +390,31 @@ proc ::MODELMAKER::abinitio { args } {
   } else {
     set tempPath $modelPath
   }
+
+  if { [info exists arg(workdir)] } {
+    set ::MODELMAKER::workdir $arg(workdir)
+  } else {
+    set ::MODELMAKER::workdir [pwd]/workdir
+  }
+
+  if { [file exists $::MODELMAKER::workdir] } {
+    puts "The working directory already exists!"
+    exit
+  }
+
+
+  file mkdir $::MODELMAKER::workdir
+
+  ## preparing files ##
+  cd $::MODELMAKER::workdir
+  # folder with all the files needed for setup
+  file mkdir setup-$jobname
+  # folder with all the files produced in run
+  file mkdir run-$jobname
+
+  
+
+
 
   #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $fragpath $nstruct $cluster $npertask $testrun
   start_rosetta_abinitio $jobname $model $sel $anchor $fragfiles $fragpath $nstruct $cluster $npertask $testrun
