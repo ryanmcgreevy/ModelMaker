@@ -127,20 +127,10 @@ proc ::MODELMAKER::insertion { args } {
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
  global rosettapath
- global tempPath
- global tempdir
  global rosettaDBpath
  global platform
 
 #$::env(PATH)
-
-  #I don't understand why we need these in the underlying package or why
-#there are assumptions about things living in a "full_length_model" folder
-#elsewhere, even if we set if differently here. The method should just take a filename/path and not care.
-#Just go with this for now
-#for testing.
-  #set tempPath [pwd]/full_length_model
-  #set tempdir [pwd]/full_length_model
 
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
@@ -246,6 +236,7 @@ proc ::MODELMAKER::abinitio_usage { } {
   puts "Options:"
   puts "  -fragpath   <path to fragment files> (default: $DefaultFragPath)> "
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "
+  puts "  -workdir    <working/project directory for job> (default \[pwd\]/workdir)>"
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
   puts "  -testrun    <test run flag (0 or 1)> (default: $DefaultTestRun)> "
 #hide these until wider functionality
@@ -379,8 +370,9 @@ proc ::MODELMAKER::abinitio { args } {
   }
   cd $::MODELMAKER::workdir
   #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $fragpath $nstruct $cluster $npertask $testrun
+  set currentPWD [pwd]
   start_rosetta_abinitio $jobname $model $sel $anchor $fragfiles $nstruct $cluster $npertask $testrun
-
+  cd $currentPWD
 }
 
 proc ::MODELMAKER::analyze_usage { } {
@@ -419,6 +411,7 @@ proc ::MODELMAKER::analyze { args } {
     switch -- $name {
       -jobname          { set arg(jobname) $val }
       -model            { set arg(model) $val }
+      -template            { set arg(template) $val }
       -nstruct          { set arg(nstruct) $val }
       -cluster          { set arg(cluster) $val }
       -bestN            { set arg(bestN) $val }
@@ -437,6 +430,20 @@ proc ::MODELMAKER::analyze { args } {
   } else {
     error "A full model pdb file must be specified!"
   }
+
+  if { [info exists arg(template)] } {
+  #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
+  #extension. Need to change RosettaVMD to not require this.
+    # get the full path of the template file
+    set dir [file dirname $arg(template)]
+    if { $dir == "." } {
+      set dir [pwd]
+    }
+    set template "$dir/$arg(template)"
+  } else {
+    error "A template pdb file must be specified!"
+  }
+
   #can we determine this automatically?
   if { [info exists arg(nstruct)] } {
     set nstruct $arg(nstruct)
@@ -490,12 +497,21 @@ proc ::MODELMAKER::analyze { args } {
     set cluster $DefaultCluster
   }
 
+  if { [info exists arg(workdir)] } {
+    set ::MODELMAKER::workdir $arg(workdir)
+  } else {
+    set ::MODELMAKER::workdir [pwd]/workdir
+  }
+
+  if { ![file exists $::MODELMAKER::workdir] } {
+    puts "The working directory does not exist!"
+    exit 1
+  }
+
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
  global rosettapath
- global tempPath
- global tempdir
  global rosettaDBpath
  global platform
 
@@ -505,16 +521,6 @@ proc ::MODELMAKER::analyze { args } {
  global gnuplotexe
 
 #$::env(PATH)
-
-  #I don't understand why we need these in the underlying package or why
-#there are assumptions about things living in a "full_length_model" folder
-#elsewhere, even if we set if differently here. The method should just take a filename/path and not care.
-#Just go with this for now
-#for testing.
-  set tempPath [pwd]/full_length_model
-  #If you want to use a different template for alignment, why just a different dir? What does the filename have to be?
-#why must this be set regardless?
-  set tempdir [pwd]/full_length_model
 
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
@@ -538,7 +544,7 @@ proc ::MODELMAKER::analyze { args } {
   }
   puts "MODEL: $model  INSERT_MODEL: $insert_model"
   #jobname mol bestN nstruct cluster align_template align_rosetta analysis_components
-  analyze_abinitio $jobname $modelname $bestN $nstruct $cluster $align_template \
+  analyze_abinitio $jobname $modelname $template $bestN $nstruct $cluster $align_template \
     $align_rosetta $comps {*}$insert_model
 }
 

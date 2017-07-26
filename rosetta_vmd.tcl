@@ -374,6 +374,7 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 			}
 		}
 	}
+	puts [glob *.pdb]
 	file rename {*}[glob *.sc] sc_out/
 	file rename {*}[glob *.pdb] pdb_out/
 
@@ -449,30 +450,29 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta ns
 
 }
 
-proc analyze_abinitio {jobname mol bestN nstruct cluster align_template align_rosetta analysis_components {insertion 0} args} \
+proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template align_rosetta analysis_components {insertion 0} args} \
 {
-	global tempdir
 	global vmdexe
 	global packagePath
-	cd rosetta_output_$jobname
+	cd $::MODELMAKER::workdir/run-$jobname
 
 	puts "Ab-initio analysis started."
 
 	# ALIGNMENT
 	puts "current directory: [pwd]"
-	exec mkdir -p pdb_out_aligned
+	file mkdir pdb_out_aligned
 
 	if {!$cluster} {
 		if {$insertion != 0} {
-			align_rosetta_local 1 $nstruct ${jobname}_$mol $tempdir $insertion $align_template $align_rosetta
+			align_rosetta_local 1 $nstruct ${jobname}_$mol $template $insertion $align_template $align_rosetta
 		} else {
-			align_rosetta_local 1 $nstruct ${jobname}_$mol $tempdir $mol $align_template $align_rosetta
+			align_rosetta_local 1 $nstruct ${jobname}_$mol $template $mol $align_template $align_rosetta
 		}
 	} else {
 		if {$insertion != 0} {
-			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $tempdir $insertion $align_template $align_rosetta
+			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $template $insertion $align_template $align_rosetta
 		} else {
-			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $tempdir $mol $align_template $align_rosetta
+			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $template $mol $align_template $align_rosetta
 		}
 	}
 
@@ -486,9 +486,9 @@ proc analyze_abinitio {jobname mol bestN nstruct cluster align_template align_ro
 	score_abinitio $jobname ${jobname}_$mol $bestN $cluster $extra
 
 	# ANALYSIS
-	exec mkdir -p analysis
-	exec cp ${jobname}_${mol}_rosetta_scoring_min_$bestN.dcd analysis
-	exec cp ${jobname}_${mol}_rosetta_scoring_min_$bestN.pdb analysis
+	file mkdir analysis
+	file copy ${jobname}_${mol}_rosetta_scoring_min_$bestN.dcd analysis
+	file copy ${jobname}_${mol}_rosetta_scoring_min_$bestN.pdb analysis
 	cd analysis
 
 	set prefix ${jobname}_${mol}
@@ -514,7 +514,7 @@ proc analyze_abinitio {jobname mol bestN nstruct cluster align_template align_ro
 				}
 				# run_rosetta_clustering $mol $start $end $bestN -1 $cluster_number
 				# run_clustering $prefix $start $end $bestN
-				cd ..
+				cd $::MODELMAKER::workdir/run-$jobname/analysis
 			}
 			ss {
 				set start [lindex $ana 1]
@@ -539,19 +539,16 @@ proc analyze_abinitio {jobname mol bestN nstruct cluster align_template align_ro
 				puts "running SS analysis"
 				exec >&@stdout $vmdexe -dispdev text -e run_ss.tcl
 				evaluate_ss_analysis $bestN $start $end
-				cd ..
+				cd $::MODELMAKER::workdir/run-$jobname/analysis
 			}
 			default {
-				cd ..
-				cd ..
+				cd $::MODELMAKER::workdir
 				puts "Wrong input. Exiting."
 			}
 		}
 	}
 
-	cd .. ;# back to ouput folder
-
-	cd .. ;# back to initial folder
+	cd $::MODELMAKER::workdir
 }
 
 # MDFF only starts with pdb created by rosetta
