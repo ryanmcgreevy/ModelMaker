@@ -391,7 +391,7 @@ proc ::RosettaInputGenerator::rosetta_basic_refinement {jobname MOL nstruct clus
 # }
 
 
-proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath nstruct cluster nPerTask test configuration chain_idents} \
+proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles nstruct cluster nPerTask test configuration chain_idents} \
 {
 	###############################
 	#	CONFIGURATION
@@ -417,9 +417,7 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath n
 	puts $converted
 	##############################
 
-	exec mkdir -p "rosetta_input_$jobname"
-	exec mkdir -p "rosetta_output_$jobname"
-	###############################
+  ###############################
 	#	ROSETTA XML SCRIPT
 	###############################
 	set allMovers {}
@@ -450,14 +448,14 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath n
 
 	append tot [make_centroid_mover "centroid"]
 
-	append tot [make_rigid_chunk chunk fix $MOL fix centroid]
+	append tot [make_rigid_chunk chunk fix $MOL fix centroid $jobname]
 
 	# TODO: multiple chains!
 	# check if right fragfiles are assigned to the right chain!
 	set frag {}
 	set counter 0
 	foreach chain $chain_idents {
-		lappend frag [list "$fragpath/[lindex $fragfiles $counter 0]" "$fragpath/[lindex $fragfiles $counter 1]" "Chain$chain"]
+		lappend frag [list "$::MODELMAKER::workdir/setup-$jobname/[lindex $fragfiles $counter 0]" "$::MODELMAKER::workdir/setup-$jobname/[lindex $fragfiles $counter 1]" "Chain$chain"]
 		incr counter
 	}
 
@@ -503,7 +501,6 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath n
 	append tot "</ROSETTASCRIPTS>\n"
 
 	set f [open "$jobname.xml" w]
-	exec mv $jobname.xml rosetta_input_$jobname
 	puts $f $tot
 	close $f
 
@@ -721,10 +718,9 @@ proc ::RosettaInputGenerator::make_environment {name autocut registerList applyL
 
 
 #<RigidChunkCM name="chunk" region_selector="fix" template="../full_length_model/rpt4_5_human_complete.pdb" selector="fix" apply_to_template="centroid" />
-proc ::RosettaInputGenerator::make_rigid_chunk {name regselector template selector apply_to_template} \
+proc ::RosettaInputGenerator::make_rigid_chunk {name regselector template selector apply_to_template jobname} \
 {
-	global tempPath
-	set out "<RigidChunkCM name=\"$name\" region_selector=\"$regselector\" template=\"$tempPath/$template\" selector=\"$selector\" apply_to_template=\"$apply_to_template\" />\n"
+	set out "<RigidChunkCM name=\"$name\" region_selector=\"$regselector\" template=\"$::MODELMAKER::workdir/setup-$jobname/$template\" selector=\"$selector\" apply_to_template=\"$apply_to_template\" />\n"
 	return $out
 }
 
@@ -942,8 +938,8 @@ $rosettapath/rosetta_scripts.$platform \\
 	-nstruct $nstruct \\
 	-run:test_cycles \\
     -out::prefix \${JOBNAME}_ \\
-	-s ../full_length_model/\${MOL} \\
-    -parser::protocol ../rosetta_input_$jobname/$jobname.xml \\
+	-s $::MODELMAKER::workdir/setup-$jobname/\${MOL} \\
+    -parser::protocol $::MODELMAKER::workdir/run-$jobname/$jobname.xml \\
     -parser:view \\
     -ignore_zero_occupancy false\\
     -overwrite

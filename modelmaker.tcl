@@ -219,12 +219,6 @@ proc ::MODELMAKER::insertion { args } {
     set jobname $model
   }
 
-  set modelPath [file dirname $arg(model)]
-  if { $modelPath == "." } {
-    set tempPath [pwd]
-  } else {
-    set tempPath $modelPath
-  }
 #start_rosetta_insertion rpn11_insertion rpn11_yeast_23-306_complete [list "resid 138 to 157"] [list "rpn11_yeast_23-306_frag9" "rpn11_yeast_23-306_frag3"] [pwd]/input rpn11_yeast_23-306 $nstruct
   start_rosetta_insertion $jobname $model $sel $fragfiles $fragpath $fasta $nstruct
   set temp_mol [mol new $arg(model)]
@@ -273,20 +267,10 @@ proc ::MODELMAKER::abinitio { args } {
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
  global rosettapath
- global tempPath
- global tempdir
  global rosettaDBpath
  global platform
 
 #$::env(PATH)
-
-  #I don't understand why we need these in the underlying package or why
-#there are assumptions about things living in a "full_length_model" folder
-#elsewhere, even if we set if differently here. The method should just take a filename/path and not care.
-#Just go with this for now
-#for testing.
-  #set tempPath [pwd]/full_length_model
-  #set tempdir [pwd]/full_length_model
 
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
@@ -315,10 +299,8 @@ proc ::MODELMAKER::abinitio { args } {
   }
 
   if { [info exists arg(model)] } {
-    #set model $arg(model)
-  #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
-  #extension. Need to change RosettaVMD to not require this.
     set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
+    #set model $arg(model)
   } else {
     error "A full model pdb file must be specified!"
   }
@@ -340,19 +322,6 @@ proc ::MODELMAKER::abinitio { args } {
   } else {
     error "Two fragment files must be specified!"
   }
-
-  #I don't understand why we need to give the path. Like with other files I've mentioned,
-# the function should just take the file names/paths as the same argument. I sort of understand
-#if you have a LOT of fragfiles and you just want to name them in -fragfiles and then give one
-#directory to their location here, so maybe this is fine, but I put in a default directory because
- #it shouldn't be required, only optional.
-  if { [info exists arg(fragpath)] } {
-    set fragpath $arg(fragpath)
-  } else {
-    set fragpath $DefaultFragPath
-    #error "A path to the fragment files must be specified!"
-  }
-
 
   if { [info exists arg(nstruct)] } {
     set nstruct $arg(nstruct)
@@ -384,12 +353,6 @@ proc ::MODELMAKER::abinitio { args } {
     set jobname $model
   }
 
-  set modelPath [file dirname $arg(model)]
-  if { $modelPath == "." } {
-    set tempPath [pwd]
-  } else {
-    set tempPath $modelPath
-  }
 
   if { [info exists arg(workdir)] } {
     set ::MODELMAKER::workdir $arg(workdir)
@@ -399,25 +362,24 @@ proc ::MODELMAKER::abinitio { args } {
 
   if { [file exists $::MODELMAKER::workdir] } {
     puts "The working directory already exists!"
-    exit
+    exit 1
   }
 
 
   file mkdir $::MODELMAKER::workdir
 
   ## preparing files ##
+  # folder with all the files needed for setup/run
+  file mkdir $::MODELMAKER::workdir/setup-$jobname
+  file mkdir $::MODELMAKER::workdir/run-$jobname
+
+  file copy $model.pdb $::MODELMAKER::workdir/setup-$jobname
+  foreach fragfile [lindex $fragfiles 0] {
+    file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
+  }
   cd $::MODELMAKER::workdir
-  # folder with all the files needed for setup
-  file mkdir setup-$jobname
-  # folder with all the files produced in run
-  file mkdir run-$jobname
-
-  
-
-
-
   #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $fragpath $nstruct $cluster $npertask $testrun
-  start_rosetta_abinitio $jobname $model $sel $anchor $fragfiles $fragpath $nstruct $cluster $npertask $testrun
+  start_rosetta_abinitio $jobname $model $sel $anchor $fragfiles $nstruct $cluster $npertask $testrun
 
 }
 
