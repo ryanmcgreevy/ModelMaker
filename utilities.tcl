@@ -59,42 +59,42 @@ proc getSS {args} \
 
 proc assignSS {args} \
 {
-	return [eval ::RosettaUtilities::assignSS $args]	
+	return [eval ::RosettaUtilities::assignSS $args]
 }
 
-proc ::RosettaUtilities::align_rosetta_local {start end MOL tempdir tempMol sel_temp sel_rosetta} \
+proc ::RosettaUtilities::align_rosetta_local {start end MOL template tempMol sel_temp sel_rosetta} \
 {
-	set ml [mol new $tempdir/$tempMol.pdb]
+	set ml [mol new $template]
 
 	set temp [atomselect $ml "($sel_temp) and backbone and noh"]
 
 	for {set x $start} {$x<=$end} {incr x} {
-		set index [mol new ./pdb_out/${MOL}_[format %04i  $x].pdb] 
+		set index [mol new ./pdb_out/${MOL}_[format %04i  $x].pdb]
 
 		set sel [atomselect $index "($sel_rosetta) and backbone and noh"]
 		set transformation_matrix [measure fit $sel $temp]
 		set move_sel [atomselect $index "all"]
 		$move_sel move $transformation_matrix
-		$move_sel writepdb ./pdb_out_aligned/${MOL}_${x}_0001_aligned.pdb 
+		$move_sel writepdb ./pdb_out_aligned/${MOL}_${x}_0001_aligned.pdb
 		$sel delete
 		$move_sel delete
 		mol delete $index
 	}
 }
 
-proc ::RosettaUtilities::align_rosetta_cluster {start end MOL tempdir tempMol sel_temp sel_rosetta} \
+proc ::RosettaUtilities::align_rosetta_cluster {start end MOL template tempMol sel_temp sel_rosetta} \
 {
-	set tempmol [mol new $tempdir/$tempMol.pdb]
+	set tempmol [mol new $template]
 	set temp [atomselect $tempmol "($sel_temp) and backbone and noh"]
 
 	for {set x $start} {$x<=$end} {incr x} {
 		if { [file exists "./pdb_out/${MOL}${x}_0001.pdb"] == 1} {
-		set index [mol new ./pdb_out/${MOL}${x}_0001.pdb] 
+		set index [mol new ./pdb_out/${MOL}${x}_0001.pdb]
 		set sel [atomselect $index "($sel_rosetta) and backbone and noh"]
 		set transformation_matrix [measure fit $sel $temp]
 		set move_sel [atomselect $index "all"]
 		$move_sel move $transformation_matrix
-		$move_sel writepdb ./pdb_out_aligned/${MOL}_${x}_0001_aligned.pdb 
+		$move_sel writepdb ./pdb_out_aligned/${MOL}_${x}_0001_aligned.pdb
 		$sel delete
 		$move_sel delete
 		mol delete $index
@@ -105,8 +105,8 @@ proc ::RosettaUtilities::align_rosetta_cluster {start end MOL tempdir tempMol se
 proc ::RosettaUtilities::make_cluster_input {MOL start end max_structures} \
 {
 	#set start 267
-	#set end 286 
-	#set MOL ubp6_5a5b_8_g4S 
+	#set end 286
+	#set MOL ubp6_5a5b_8_g4S
 	#set max_structures 2500
 
 	mol new ${MOL}_rosetta_scoring_min_${max_structures}.pdb waitfor all
@@ -164,10 +164,10 @@ proc ::RosettaUtilities::run_vmd_clustering {mol start end bestN cutoff cluster_
 	package require math::statistics
 	set clust_num $cluster_number ;# number of clusters
 	# set cutoff 0.25 ;# RMSD within each cluster
-	
+
 	# open a file to write the output text to
 	set log [open cluster_out.txt w+]
-	
+
 	# loading the predicted structures sorted by the rosetta energy scoring script to VMD and creating the defined atom selections
 	# mol new ${MOL}_rosetta_scoring_min_${max_structures}.pdb waitfor all
 	set cl_mol [mol new cluster_input_${start}_${end}_${bestN}.pdb waitfor all]
@@ -205,13 +205,13 @@ proc ::RosettaUtilities::run_vmd_clustering {mol start end bestN cutoff cluster_
   			lappend rmsd [format %.2f [measure rmsd $sel $av_struct]]
   		}
 		$av_struct delete
-	
+
 		set min [math::statistics::min $rmsd]
 		set minframe [lsearch $rmsd $min]
 		mol delete all
 		mol new cluster_input_${start}_${end}_${bestN}.pdb waitfor all
 		animate write pdb cluster_rep_${j}.pdb beg [lindex $clustList_aux $minframe] end [lindex $clustList_aux $minframe]
-	
+
 		puts $log "Cluster $j {$clustList_aux}"
 		puts $log "Cluster $j representative [lindex $clustList_aux $minframe]"
 		puts $log "Cluster $j {$min}"
@@ -263,7 +263,7 @@ proc ::RosettaUtilities::read_cluster_file {MOL max_structures max_cluster} \
 		# for {set j 1} {$j < [llength [lindex $clusters $i] ]} {incr j} {
 		# 	mol addfile ${MOL}_rosetta_scoring_min_${max_structures}.pdb first [lindex [lindex $clusters $i] $j] last [lindex [lindex $clusters $i] $j] -waitfor all
 		# }
-		# animate write pdb cluster_[expr $i +1].pdb beg 0 end [expr [llength [lindex $clusters $i] ] -1] skip 1 top 
+		# animate write pdb cluster_[expr $i +1].pdb beg 0 end [expr [llength [lindex $clusters $i] ] -1] skip 1 top
 
 		puts $outfile "[expr $i +1]\t[llength [lindex $clusters $i] ]\t[lindex $clusters $i]"
 		mol delete top
@@ -285,7 +285,7 @@ proc ::RosettaUtilities::read_cluster_file {MOL max_structures max_cluster} \
 	for {set i 1} {$i <= $max_cluster} {incr i} {
 		puts $outfile "Representative struct from cluster $i [lindex $representative $i]"
 		mol new ${MOL}_rosetta_scoring_min_${max_structures}.pdb first [lindex $representative $i] last [lindex $representative $i] -waitfor all
-		animate write pdb cluster_rep_$i.pdb beg 0 end 0 skip 1 top 
+		animate write pdb cluster_rep_$i.pdb beg 0 end 0 skip 1 top
 		mol delete top
 
 	}
@@ -309,9 +309,9 @@ proc ::RosettaUtilities::make_histogram_gnuplot {max_structures resid_start resi
 	reset
 	set term postscript enhanced color
 	set output \"plot_${max_structures}_${resid_start}_${resid_stop}.ps\"
-	set xtics font \",9\" 
-	set xtics rotate out 
-	set xrange \[ -1 \: $diff \] 
+	set xtics font \",9\"
+	set xtics rotate out
+	set xrange \[ -1 \: $diff \]
 	set yrange \[ 0 : 100 \]
 
 	set xlabel \"Residue ID\"
@@ -348,7 +348,7 @@ proc ::RosettaUtilities::get_unass_dens {MOL selection mapname cutoff outname} \
 	set sel [atomselect $comp "$selection"]
 
 	volmap mask $sel -o mask.dx -cutoff $cutoff
-	mdff griddx -i mask.dx -o mask_invert.dx 
+	mdff griddx -i mask.dx -o mask_invert.dx
 	volutil -mult ${mapname}.dx mask_invert.dx -o ${outname}_${cutoff}_${mapname}_unassigned_density.dx
 	exec rm -f mask.dx
 	exec rm -f mask_invert.dx
@@ -416,4 +416,3 @@ proc ::RosettaUtilities::assignSS {filein molid breakby} {
 	$sel delete
     }
 }
-

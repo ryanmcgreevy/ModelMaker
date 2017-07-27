@@ -16,7 +16,7 @@ namespace eval ::MODELMAKER {
       variable rosettaEXE "macosclangrelease"
     }
     "Linux" {
-      variable rosettaEXE "linuxgccrelease"
+      variable rosettaEXE "linuxclangrelease"
     }
     default {
       variable rosettaEXE "Unrecognized"
@@ -50,9 +50,13 @@ namespace eval ::MODELMAKER {
   variable DefaultNPerTask 1
   variable DefaultTestRun 0
   variable DefaultResStart 1
-  variable DefaultFragPath [pwd]
   variable DefaultAlignTemplate "all"
   variable DefaultInsertion "no"
+  variable DefaultWorkDir "[pwd]/workdir"
+  variable workdir $DefaultWorkDir
+
+  variable settings
+  set ::MODELMAKER::settings(username) ""
 }
 
 proc modelmaker { args } { return [eval ::MODELMAKER::modelmaker $args] }
@@ -103,14 +107,14 @@ proc ::MODELMAKER::modelmaker { args } {
 
 proc ::MODELMAKER::insertion_usage  { } {
   variable DefaultNStruct
-  variable DefaultFragPath
+  variable DefaultWorkDir
   puts "Usage: modelmaker insertion -model <full length template pdb> -fragfiles <list of fragment files> \
     -sel <list of atomselection texts with selections to fold> -fasta <fasta file> \
      ?options?"
   puts "Options:"
-  puts "  -fragpath   <path to fragment files> (default: $DefaultFragPath)> "
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
+  puts "  -workdir    <working/project directory for job> (default: $DefaultWorkDir)>"
 }
 
 
@@ -119,25 +123,15 @@ proc ::MODELMAKER::insertion { args } {
   variable rosettadbpath
   variable DefaultNStruct
   variable rosettaPath
-  variable DefaultFragPath
+  variable DefaultWorkDir
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
  global rosettapath
- global tempPath
- global tempdir
  global rosettaDBpath
  global platform
 
 #$::env(PATH)
-
-  #I don't understand why we need these in the underlying package or why
-#there are assumptions about things living in a "full_length_model" folder
-#elsewhere, even if we set if differently here. The method should just take a filename/path and not care.
-#Just go with this for now
-#for testing.
-  #set tempPath [pwd]/full_length_model
-  #set tempdir [pwd]/full_length_model
 
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
@@ -156,8 +150,8 @@ proc ::MODELMAKER::insertion { args } {
       -sel { set arg(sel) $val }
       -fasta { set arg(fasta) $val }
       -fragfiles { set arg(fragfiles) $val }
-      -fragpath { set arg(fragpath) $val }
       -nstruct { set arg(nstruct) $val }
+      -workdir { set arg(workdir) $val }
     }
   }
 
@@ -179,7 +173,7 @@ proc ::MODELMAKER::insertion { args } {
   if { [info exists arg(fragfiles)] } {
     set fragfiles $arg(fragfiles)
   } else {
-    error "At least one fragment file must be specified!"
+    error "At least two fragment files must be specified!"
   }
 
   if { [info exists arg(fasta)] } {
@@ -189,18 +183,6 @@ proc ::MODELMAKER::insertion { args } {
   #  set fasta $arg(fasta)
   } else {
     error "A fasta file must be specified!"
-  }
-
-  #I don't understand why we need to give the path. Like with other files I've mentioned,
-# the function should just take the file names/paths as the same argument. I sort of understand
-#if you have a LOT of fragfiles and you just want to name them in -fragfiles and then give one
-#directory to their location here, so maybe this is fine, but I put in a default directory because
- #it shouldn't be required, only optional.
-  if { [info exists arg(fragpath)] } {
-    set fragpath $arg(fragpath)
-  } else {
-    set fragpath $DefaultFragPath
-    #error "A path to the fragment files must be specified!"
   }
 
 
@@ -216,19 +198,43 @@ proc ::MODELMAKER::insertion { args } {
     set jobname $model
   }
 
-  set modelPath [file dirname $arg(model)]
-  if { $modelPath == "." } {
-    set tempPath [pwd]
+  if { [info exists arg(workdir)] } {
+    set ::MODELMAKER::workdir $arg(workdir)
   } else {
-    set tempPath $modelPath
+    set ::MODELMAKER::workdir $DefaultWorkDir
   }
-#start_rosetta_insertion rpn11_insertion rpn11_yeast_23-306_complete [list "resid 138 to 157"] [list "rpn11_yeast_23-306_frag9" "rpn11_yeast_23-306_frag3"] [pwd]/input rpn11_yeast_23-306 $nstruct
-  start_rosetta_insertion $jobname $model $sel $fragfiles $fragpath $fasta $nstruct
+
+  if { [file exists $::MODELMAKER::workdir] } {
+    puts "The working directory already exists!"
+    exit 1
+  }
+
+
+  file mkdir $::MODELMAKER::workdir
+
+  ## preparing files ##
+  # folder with all the files needed for setup/run
+  file mkdir $::MODELMAKER::workdir/setup-$jobname
+  file mkdir $::MODELMAKER::workdir/run-$jobname
+
+  file copy $model.pdb $::MODELMAKER::workdir/setup-$jobname
+  file copy $fasta.fasta $::MODELMAKER::workdir/setup-$jobname
+  foreach fragfile $fragfiles {
+    puts $fragfile
+    file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
+  }
+  #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $nstruct $cluster $npertask $testrun
+  set currentPWD [pwd]
+
+  #start_rosetta_insertion rpn11_insertion rpn11_yeast_23-306_complete [list "resid 138 to 157"] [list "rpn11_yeast_23-306_frag9" "rpn11_yeast_23-306_frag3"] [pwd]/input rpn11_yeast_23-306 $nstruct
+  #cd $::MODELMAKER::workdir
+  start_rosetta_insertion $jobname $model $sel $fragfiles $fasta $nstruct
+  #cd $currentPWD
   set temp_mol [mol new $arg(model)]
   set temp_sel [atomselect $temp_mol all]
   set resstart [lindex [lsort -integer [$temp_sel get resid]] 0]
 
-  foreach pdb [glob "rosetta_output_$jobname/pdb_out/*"] {
+  foreach pdb [glob "$::MODELMAKER::workdir/run-$jobname/pdb_out/*"] {
     set full_mol [mol new $pdb]
     set full_sel [atomselect $full_mol all]
     renumber $full_sel $resstart
@@ -242,13 +248,13 @@ proc ::MODELMAKER::abinitio_usage { } {
   variable DefaultCluster
   variable DefaultNPerTask
   variable DefaultTestRun
-  variable DefaultFragPath
+  variable DefaultWorkDir
   puts "Usage: modelmaker abinitio -model <full length template pdb> -fragfiles <list of fragment files> \
     -sel <list of atomselection texts with selections to fold> -anchor <anchor residue for coordinate restraints> \
      ?options?"
   puts "Options:"
-  puts "  -fragpath   <path to fragment files> (default: $DefaultFragPath)> "
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "
+  puts "  -workdir    <working/project directory for job> (default: $DefaultWorkDir)>"
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
   puts "  -testrun    <test run flag (0 or 1)> (default: $DefaultTestRun)> "
 #hide these until wider functionality
@@ -265,25 +271,15 @@ proc ::MODELMAKER::abinitio { args } {
   variable DefaultNPerTask
   variable DefaultTestRun
   variable rosettaPath
-  variable DefaultFragPath
+  variable DefaultWorkDir
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
  global rosettapath
- global tempPath
- global tempdir
  global rosettaDBpath
  global platform
 
 #$::env(PATH)
-
-  #I don't understand why we need these in the underlying package or why
-#there are assumptions about things living in a "full_length_model" folder
-#elsewhere, even if we set if differently here. The method should just take a filename/path and not care.
-#Just go with this for now
-#for testing.
-  #set tempPath [pwd]/full_length_model
-  #set tempdir [pwd]/full_length_model
 
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
@@ -302,19 +298,17 @@ proc ::MODELMAKER::abinitio { args } {
       -sel { set arg(sel) $val }
       -anchor { set arg(anchor) $val }
       -fragfiles { set arg(fragfiles) $val }
-      -fragpath { set arg(fragpath) $val }
       -nstruct { set arg(nstruct) $val }
       -cluster { set arg(cluster) $val }
       -npertask { set arg(npertask) $val }
       -testrun { set arg(testrun) $val }
+      -workdir { set arg(workdir) $val }
     }
   }
 
   if { [info exists arg(model)] } {
-    #set model $arg(model)
-  #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
-  #extension. Need to change RosettaVMD to not require this.
     set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
+    #set model $arg(model)
   } else {
     error "A full model pdb file must be specified!"
   }
@@ -334,21 +328,8 @@ proc ::MODELMAKER::abinitio { args } {
   if { [info exists arg(fragfiles)] } {
     set fragfiles $arg(fragfiles)
   } else {
-    error "At least one fragment file must be specified!"
+    error "Two fragment files must be specified!"
   }
-
-  #I don't understand why we need to give the path. Like with other files I've mentioned,
-# the function should just take the file names/paths as the same argument. I sort of understand
-#if you have a LOT of fragfiles and you just want to name them in -fragfiles and then give one
-#directory to their location here, so maybe this is fine, but I put in a default directory because
- #it shouldn't be required, only optional.
-  if { [info exists arg(fragpath)] } {
-    set fragpath $arg(fragpath)
-  } else {
-    set fragpath $DefaultFragPath
-    #error "A path to the fragment files must be specified!"
-  }
-
 
   if { [info exists arg(nstruct)] } {
     set nstruct $arg(nstruct)
@@ -380,16 +361,33 @@ proc ::MODELMAKER::abinitio { args } {
     set jobname $model
   }
 
-  set modelPath [file dirname $arg(model)]
-  if { $modelPath == "." } {
-    set tempPath [pwd]
+
+  if { [info exists arg(workdir)] } {
+    set ::MODELMAKER::workdir $arg(workdir)
   } else {
-    set tempPath $modelPath
+    set ::MODELMAKER::workdir $DefaultWorkDir 
+
   }
 
-  #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $fragpath $nstruct $cluster $npertask $testrun
-  start_rosetta_abinitio $jobname $model $sel $anchor $fragfiles $fragpath $nstruct $cluster $npertask $testrun
+  if { [file exists $::MODELMAKER::workdir] } {
+    puts "The working directory already exists!"
+    exit 1
+  }
 
+
+  file mkdir $::MODELMAKER::workdir
+
+  ## preparing files ##
+  # folder with all the files needed for setup/run
+  file mkdir $::MODELMAKER::workdir/setup-$jobname
+  file mkdir $::MODELMAKER::workdir/run-$jobname
+
+  file copy $model.pdb $::MODELMAKER::workdir/setup-$jobname
+  foreach fragfile [lindex $fragfiles 0] {
+    file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
+  }
+  #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $nstruct $cluster $npertask $testrun
+  start_rosetta_abinitio $jobname $model $sel $anchor $fragfiles $nstruct $cluster $npertask $testrun
 }
 
 proc ::MODELMAKER::analyze_usage { } {
@@ -428,6 +426,7 @@ proc ::MODELMAKER::analyze { args } {
     switch -- $name {
       -jobname          { set arg(jobname) $val }
       -model            { set arg(model) $val }
+      -template            { set arg(template) $val }
       -nstruct          { set arg(nstruct) $val }
       -cluster          { set arg(cluster) $val }
       -bestN            { set arg(bestN) $val }
@@ -446,6 +445,20 @@ proc ::MODELMAKER::analyze { args } {
   } else {
     error "A full model pdb file must be specified!"
   }
+
+  if { [info exists arg(template)] } {
+  #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
+  #extension. Need to change RosettaVMD to not require this.
+    # get the full path of the template file
+    set dir [file dirname $arg(template)]
+    if { $dir == "." } {
+      set dir [pwd]
+    }
+    set template "$dir/$arg(template)"
+  } else {
+    error "A template pdb file must be specified!"
+  }
+
   #can we determine this automatically?
   if { [info exists arg(nstruct)] } {
     set nstruct $arg(nstruct)
@@ -499,12 +512,21 @@ proc ::MODELMAKER::analyze { args } {
     set cluster $DefaultCluster
   }
 
+  if { [info exists arg(workdir)] } {
+    set ::MODELMAKER::workdir $arg(workdir)
+  } else {
+    set ::MODELMAKER::workdir [pwd]/workdir
+  }
+
+  if { ![file exists $::MODELMAKER::workdir] } {
+    puts "The working directory does not exist!"
+    exit 1
+  }
+
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
  global rosettapath
- global tempPath
- global tempdir
  global rosettaDBpath
  global platform
 
@@ -514,16 +536,6 @@ proc ::MODELMAKER::analyze { args } {
  global gnuplotexe
 
 #$::env(PATH)
-
-  #I don't understand why we need these in the underlying package or why
-#there are assumptions about things living in a "full_length_model" folder
-#elsewhere, even if we set if differently here. The method should just take a filename/path and not care.
-#Just go with this for now
-#for testing.
-  set tempPath [pwd]/full_length_model
-  #If you want to use a different template for alignment, why just a different dir? What does the filename have to be?
-#why must this be set regardless?
-  set tempdir [pwd]/full_length_model
 
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
@@ -545,9 +557,8 @@ proc ::MODELMAKER::analyze { args } {
       set insert_model ""
     }
   }
-  puts "MODEL: $model  INSERT_MODEL: $insert_model"
   #jobname mol bestN nstruct cluster align_template align_rosetta analysis_components
-  analyze_abinitio $jobname $modelname $bestN $nstruct $cluster $align_template \
+  analyze_abinitio $jobname $modelname $template $bestN $nstruct $cluster $align_template \
     $align_rosetta $comps {*}$insert_model
 }
 

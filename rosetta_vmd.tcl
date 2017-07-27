@@ -4,7 +4,7 @@
 ####################################################
 
 
-# JOB CONTROLLER 
+# JOB CONTROLLER
 #### DO NOT CHANGE ANYTTHING HERE
 package require mdff
 
@@ -17,13 +17,13 @@ package require CheckCluster
 package require RosettaUtilities
 package require SSAnalysis
 
-## RosettaVMD namespace 
+## RosettaVMD namespace
 # main namespace for RosettaVMD package
 namespace eval ::RosettaVMD {
     namespace export start_rosetta_refine ;#< refinement protocol
     namespace export start_rosetta_refine_sidechains_density ;#< sidechain refinement protocol
     namespace export start_rosetta_abinitio ;# ab-initio procotol
-    namespace export analyze_abinitio 
+    namespace export analyze_abinitio
     namespace export start_mdff_run
     namespace export helix_reg
     namespace export readscorefile
@@ -31,11 +31,11 @@ namespace eval ::RosettaVMD {
 	namespace export make_mrc_file
 	namespace export smooth_density
 	namespace export write_phenixpdb
- 
+
 	# Set up Variable
 	set version 0.1
 	set packageDescription "RosettaVMD Plugin"
- 
+
     # Variable for the path of the script
     variable home [file join [pwd] [file dirname [info script]]]
 }
@@ -43,7 +43,7 @@ package provide RosettaVMD $RosettaVMD::version
 
 proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapresolution score_dens bestN nstruct {cluster 0} {nPerTask 5} {scoreOnly 0} args} \
 {
-	global username
+  set username $::MODELMAKER::settings(username)
 	# prepare configuration
 	set selection_length [llength $selections]
 	set find_cfg []
@@ -54,7 +54,7 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 	# MOL selections config {offset 4}
 	# offset set to 5 for cartesianSampler
 	if {$cartesian} {
-		set find_sel [find_selection full_length_model/$mol $selections $find_cfg 5]	
+		set find_sel [find_selection full_length_model/$mol $selections $find_cfg 5]
 	} else {
 		set find_sel [find_selection full_length_model/$mol $selections $find_cfg 0]
 	}
@@ -72,7 +72,7 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 	exec sed -i -e {s/HSP/HIS/g} full_length_model/$mol.pdb
 	######################
 	puts "Rosetta started"
-	# refine_with_rosetta {jobname MOL mapname res score_dens nstruct cluster nPerTask configuration {cartesianSampler 0}} 
+	# refine_with_rosetta {jobname MOL mapname res score_dens nstruct cluster nPerTask configuration {cartesianSampler 0}}
 	refine_with_rosetta $jobname $mol.pdb $mapname $mapresolution $score_dens $nstruct $cluster $nPerTask $ros_config $cartesian
 	exec chmod +x $jobname.sh
 	exec mv $jobname.sh rosetta_output_$jobname/
@@ -90,7 +90,7 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 			puts "Files are not yet available."
 			puts "Current number: [exec ls -1v pdb_out | wc -l] - [expr double($current)/($nstruct) * 100.0] %"
 			after [expr {int($n * 1000)}]
-			set current [exec ls -1v pdb_out | wc -l]	
+			set current [exec ls -1v pdb_out | wc -l]
 			if {$cluster} {
 				set logfile [open "rosetta_log_$jobname.log" r]
 				set dt [read $logfile]
@@ -103,10 +103,10 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 				if {$status == 0} {
 					break
 				}
-			}	
+			}
 		}
 		puts $output
-		puts "Rosetta finished"	
+		puts "Rosetta finished"
 	}
 
 	# Scoring
@@ -121,15 +121,15 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 		puts "Scoring cluster run."
 		score_refinement_cluster $jobname ${jobname}_$mol $bestN
 	}
-	
 
-	cd ..	
+
+	cd ..
 }
 
 proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapname mapresolution score_dens bestN nstruct {cluster 0} {nPerTask 5} {scoreOnly 0} args} \
 {
 	# prepare configuration
-	global username
+	set username $::MODELMAKER::settings(username)
 	set selection_length [llength $selections]
 	set find_cfg []
 	for {set i 0} {$i < $selection_length} {incr i} {
@@ -152,7 +152,7 @@ proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapn
 	######################
 	puts "Rosetta sidechain started"
 	refine_with_rosetta $jobname $mol.pdb $mapname $mapresolution $score_dens $nstruct $cluster $nPerTask $ros_config
-	# refine_sidechains_rosetta 
+	# refine_sidechains_rosetta
 	exec chmod +x $jobname.sh
 	exec mv $jobname.sh rosetta_output_$jobname/
 	exec cp $mapname.mrc rosetta_input_$jobname/
@@ -169,7 +169,7 @@ proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapn
 			puts "Files are not yet available."
 			puts "Current number: [exec ls -1v pdb_out | wc -l] - [expr double($current)/($nstruct) * 100.0] %"
 			after [expr {int($n * 1000)}]
-			set current [exec ls -1v pdb_out | wc -l]		
+			set current [exec ls -1v pdb_out | wc -l]
 			if {$cluster} {
 				set logfile [open "rosetta_log_$jobname.log" r]
 				set dt [read $logfile]
@@ -182,10 +182,10 @@ proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapn
 				if {$status == 0} {
 					break
 				}
-			}	
+			}
 		}
 		puts $output
-		puts "Rosetta finished"	
+		puts "Rosetta finished"
 	}
 
 	# MOL max_structures
@@ -197,9 +197,9 @@ proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapn
 		puts "Scoring cluster run."
 		score_refinement_cluster $jobname ${jobname}_$mol $bestN
 	}
-	
 
-	cd ..	
+
+	cd ..
 }
 
 
@@ -208,7 +208,7 @@ proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapn
 #sidechains_only: puts backbone constraints
 proc start_rosetta_basic_refine {jobname mol selections anchor sidechains_only bestN nstruct {cluster 0} {nPerTask 5} {scoreOnly 0} args} \
 {
-	global username
+	set username $::MODELMAKER::settings(username)
 	# prepare configuration
 	set selection_length [llength $selections]
 	set find_cfg []
@@ -255,7 +255,7 @@ proc start_rosetta_basic_refine {jobname mol selections anchor sidechains_only b
 			puts "Files are not yet available."
 			puts "Current number: [exec ls -1v pdb_out | wc -l] - [expr double($current)/($nstruct) * 100.0] %"
 			after [expr {int($n * 1000)}]
-			set current [exec ls -1v pdb_out | wc -l]	
+			set current [exec ls -1v pdb_out | wc -l]
 			if {$cluster} {
 				set logfile [open "rosetta_log_$jobname.log" r]
 				set dt [read $logfile]
@@ -268,10 +268,10 @@ proc start_rosetta_basic_refine {jobname mol selections anchor sidechains_only b
 				if {$status == 0} {
 					break
 				}
-			}	
+			}
 		}
 		puts $output
-		puts "Rosetta finished"	
+		puts "Rosetta finished"
 	}
 
 	# Scoring
@@ -286,15 +286,17 @@ proc start_rosetta_basic_refine {jobname mol selections anchor sidechains_only b
 		puts "Scoring cluster run."
 		score_refinement_cluster $jobname ${jobname}_$mol $bestN
 	}
-	
 
-	cd ..	
+
+	cd ..
 }
 
 
 
-proc start_rosetta_abinitio {jobname mol selections anchor fragfiles fragpath nstruct {cluster 0} {nPerTask 5} {testrun 0} args} \
+proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cluster 0} {nPerTask 5} {testrun 0} args} \
 {
+	# make sure we are in the correct directory
+#	cd $::MODELMAKER::workdir
 	# prepare configuration
 	set selection_length [llength $selections]
 	set find_cfg []
@@ -304,13 +306,13 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles fragpath ns
 	}
 
 	# Cleanup input file
-	exec sed -i -e {s/HSD/HIS/g} full_length_model/$mol.pdb
-	exec sed -i -e {s/HSE/HIS/g} full_length_model/$mol.pdb
-	exec sed -i -e {s/HSP/HIS/g} full_length_model/$mol.pdb
+	exec sed -i -e {s/HSD/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	exec sed -i -e {s/HSE/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	exec sed -i -e {s/HSP/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
 
-	
+
 	# MOL selections config {offset 4}
-	set find_sel [find_selection full_length_model/$mol $selections $find_cfg 0]
+	set find_sel [find_selection $::MODELMAKER::workdir/setup-$jobname/$mol $selections $find_cfg 0]
 	set spans [lindex $find_sel 0]
 	set exclude [lindex $find_sel 1]
 	set chains [lindex $find_sel 2]
@@ -323,9 +325,9 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles fragpath ns
 	set seltexts []
 	mol delete all
 	foreach seltext $selections {
-		lappend seltexts $seltext	
-	}	
-	set searchmol [mol new full_length_model/$mol.pdb]
+		lappend seltexts $seltext
+	}
+	set searchmol [mol new $::MODELMAKER::workdir/setup-$jobname/$mol.pdb]
 
 	set chain_idents {}
 	foreach findseltext $seltexts {
@@ -338,26 +340,26 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles fragpath ns
 	mol delete all
 	######################
 
-	global username
+	set username $::MODELMAKER::settings(username)
 	puts "Rosetta abinitio started."
-# 	rosetta_abinitio {jobname MOL fragfiles fragpath nstruct cluster nPerTask test configuration}
-	rosetta_abinitio $jobname $mol.pdb $fragfiles $fragpath $nstruct $cluster $nPerTask $testrun $ros_config $chain_idents
-	exec chmod +x $jobname.sh
-	exec mv $jobname.sh rosetta_output_$jobname/
-	#exec cp $mapname.mrc rosetta_input_$jobname/
-	cd rosetta_output_$jobname
+# 	rosetta_abinitio {jobname MOL fragfiles nstruct cluster nPerTask test configuration}
+	#cd $::MODELMAKER::workdir/run-$jobname
+	rosetta_abinitio $jobname $mol.pdb $fragfiles $nstruct $cluster $nPerTask $testrun $ros_config $chain_idents
+	exec chmod +x $::MODELMAKER::workdir/run-$jobname/$jobname.sh
 
-	exec mkdir -p sc_out
-	exec mkdir -p pdb_out
-	exec mkdir -p OUTPUT_FILES
-	set output [exec "[pwd]/$jobname.sh" "$jobname" "$mol.pdb" >> rosetta_log_$jobname.log &]
-  set current [llength [glob -nocomplain *.pdb ] ]
+	#exec cp $mapname.mrc rosetta_input_$jobname/
+
+	file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
+	file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
+	file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
+	set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" "$jobname" "$mol.pdb" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
+  set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
 	while {$current < $nstruct} {
 		set n 5
 		puts "Files are not yet available."
 		puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
 		after [expr {int($n * 1000)}]
-		set current [llength [glob -nocomplain *.pdb ] ]
+		set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
 		if {$cluster} {
 			set logfile [open "rosetta_log_$jobname.log" r]
 			set dt [read $logfile]
@@ -370,20 +372,24 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles fragpath ns
 			if {$status == 0} {
 				break
 			}
-		}	
+		}
 	}
-	file rename {*}[glob *.sc] sc_out/
-	file rename {*}[glob *.pdb] pdb_out/
-	
+#	puts "pdbs: [glob *.pdb]"
+#  puts "score: [glob -nocomplain *.sc] pwd: [pwd]"
+ # if { [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.sc] != ""} {
+#	  file rename {*}[glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.sc] $::MODELMAKER::workdir/run-$jobname/sc_out/
+#  }
+#	file rename {*}[glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.pdb] $::MODELMAKER::workdir/run-$jobname/pdb_out/
+
   puts $output
 	puts "Rosetta abinitio finished."
-	cd ..	
 }
 
 
-proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta nstruct {cluster 0} {nPerTask 5} args} \
+proc start_rosetta_insertion {jobname mol selections fragfiles fasta nstruct {cluster 0} {nPerTask 5} args} \
 {
 	# prepare configuration
+#	cd $::MODELMAKER::workdir
 	set selection_length [llength $selections]
 	set find_cfg []
 	for {set i 0} {$i < $selection_length} {incr i} {
@@ -392,36 +398,35 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta ns
 	}
 
 	# Cleanup input file
-	exec sed -i -e {s/HSD/HIS/g} full_length_model/$mol.pdb
-	exec sed -i -e {s/HSE/HIS/g} full_length_model/$mol.pdb
-	exec sed -i -e {s/HSP/HIS/g} full_length_model/$mol.pdb
+	exec sed -i -e {s/HSD/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	exec sed -i -e {s/HSE/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	exec sed -i -e {s/HSP/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
 
-	
+
 	# MOL selections config {offset 4}
-	set find_sel [find_selection full_length_model/$mol $selections $find_cfg 0]
+	set find_sel [find_selection $::MODELMAKER::workdir/setup-$jobname/$mol $selections $find_cfg 0]
 	set spans [lindex $find_sel 0]
 	set exclude [lindex $find_sel 1]
 	set chains [lindex $find_sel 2]
 
 	set ros_config [list $chains $spans $exclude]
 
-	global username
+	#cd $::MODELMAKER::workdir/run-$jobname
 	puts "Rosetta insertion folding started."
-	rosetta_insertion $jobname $mol $fragfiles $fasta $fragpath $nstruct $cluster $nPerTask $ros_config
-	cd rosetta_output_$jobname
-	exec chmod +x $jobname.sh
+	rosetta_insertion $jobname $mol $fragfiles $fasta $nstruct $cluster $nPerTask $ros_config
+	exec chmod +x $::MODELMAKER::workdir/run-$jobname/$jobname.sh
 
-	exec mkdir -p sc_out
-	exec mkdir -p pdb_out
-	exec mkdir -p OUTPUT_FILES
-	set output [exec "[pwd]/$jobname.sh" >> rosetta_log_$jobname.log &]
-	set current [llength [glob -nocomplain $jobname*.pdb ] ]
+	file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
+	file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
+	file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
+	set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
+	set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/$jobname*.pdb ] ]
 	while {$current < $nstruct} {
 		set n 20
 		puts "Files are not yet available."
 		puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
 		after [expr {int($n * 1000)}]
-		set current [llength [glob -nocomplain $jobname*.pdb ] ]
+		set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/$jobname*.pdb ] ]
 		if {$cluster} {
 			set logfile [open "rosetta_log_$jobname.log" r]
 			set dt [read $logfile]
@@ -434,43 +439,41 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fragpath fasta ns
 			if {$status == 0} {
 				break
 			}
-		}	
+		}
 	}
-  file mkdir intermediates	
-	file rename {*}[glob loops_closed*.pdb] intermediates/
-  file rename {*}[glob *.sc] sc_out/
-	file rename {*}[glob *.pdb] pdb_out/
+  file mkdir $::MODELMAKER::workdir/run-$jobname/intermediates
+	file rename {*}[glob $::MODELMAKER::workdir/run-$jobname/pdb_out/loops_closed*.pdb] $::MODELMAKER::workdir/run-$jobname/intermediates/
+#  file rename {*}[glob $::MODELMAKER::workdir/run-$jobname/*.sc] $::MODELMAKER::workdir/run-$jobname/sc_out/
+#	file rename {*}[glob $::MODELMAKER::workdir/run-$jobname/*.pdb] $::MODELMAKER::workdir/run-$jobname/pdb_out/
 
 	puts $output
 	puts "Rosetta insertion folding finished."
-	cd ..	
-
+	#cd $::MODELMAKER::workdir
 }
 
-proc analyze_abinitio {jobname mol bestN nstruct cluster align_template align_rosetta analysis_components {insertion 0} args} \
+proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template align_rosetta analysis_components {insertion 0} args} \
 {
-	global tempdir
 	global vmdexe
 	global packagePath
-	cd rosetta_output_$jobname
+	cd $::MODELMAKER::workdir/run-$jobname
 
 	puts "Ab-initio analysis started."
-	
+
 	# ALIGNMENT
 	puts "current directory: [pwd]"
-	exec mkdir -p pdb_out_aligned
+	file mkdir pdb_out_aligned
 
 	if {!$cluster} {
 		if {$insertion != 0} {
-			align_rosetta_local 1 $nstruct ${jobname}_$mol $tempdir $insertion $align_template $align_rosetta	
+			align_rosetta_local 1 $nstruct ${jobname}_$mol $template $insertion $align_template $align_rosetta
 		} else {
-			align_rosetta_local 1 $nstruct ${jobname}_$mol $tempdir $mol $align_template $align_rosetta
+			align_rosetta_local 1 $nstruct ${jobname}_$mol $template $mol $align_template $align_rosetta
 		}
 	} else {
 		if {$insertion != 0} {
-			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $tempdir $insertion $align_template $align_rosetta	
+			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $template $insertion $align_template $align_rosetta
 		} else {
-			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $tempdir $mol $align_template $align_rosetta
+			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $template $mol $align_template $align_rosetta
 		}
 	}
 
@@ -480,13 +483,13 @@ proc analyze_abinitio {jobname mol bestN nstruct cluster align_template align_ro
 	if {$insertion != 0} {
 		set extra $mol
 	}
-	
+
 	score_abinitio $jobname ${jobname}_$mol $bestN $cluster $extra
 
 	# ANALYSIS
-	exec mkdir -p analysis
-	exec cp ${jobname}_${mol}_rosetta_scoring_min_$bestN.dcd analysis
-	exec cp ${jobname}_${mol}_rosetta_scoring_min_$bestN.pdb analysis
+	file mkdir analysis
+	file copy ${jobname}_${mol}_rosetta_scoring_min_$bestN.dcd analysis
+	file copy ${jobname}_${mol}_rosetta_scoring_min_$bestN.pdb analysis
 	cd analysis
 
 	set prefix ${jobname}_${mol}
@@ -512,7 +515,7 @@ proc analyze_abinitio {jobname mol bestN nstruct cluster align_template align_ro
 				}
 				# run_rosetta_clustering $mol $start $end $bestN -1 $cluster_number
 				# run_clustering $prefix $start $end $bestN
-				cd ..
+				cd $::MODELMAKER::workdir/run-$jobname/analysis
 			}
 			ss {
 				set start [lindex $ana 1]
@@ -537,19 +540,16 @@ proc analyze_abinitio {jobname mol bestN nstruct cluster align_template align_ro
 				puts "running SS analysis"
 				exec >&@stdout $vmdexe -dispdev text -e run_ss.tcl
 				evaluate_ss_analysis $bestN $start $end
-				cd ..
+				cd $::MODELMAKER::workdir/run-$jobname/analysis
 			}
 			default {
-				cd ..
-				cd ..
+				cd $::MODELMAKER::workdir
 				puts "Wrong input. Exiting."
 			}
 		}
 	}
 
-	cd .. ;# back to ouput folder
-
-	cd .. ;# back to initial folder
+	cd $::MODELMAKER::workdir
 }
 
 # MDFF only starts with pdb created by rosetta
@@ -616,7 +616,7 @@ proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res 
 		global inputfolder
 		if {$pdbfolder == 0} {
 			set pdbfolder $inputfolder
-		}	
+		}
 		# for normal MDFF run or cascade mdff run, input files should be in inputfolder
 		puts [pwd]
 		set folder mdff_${jobname}
@@ -639,7 +639,7 @@ proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res 
 						mdff griddx -i $inputfolder/${mapname}_smooth_$smoothr.dx -o $inputfolder/density_grids/griddx$i.dx
 					}
 			}
-			auto_mdff_casc_init $jobname $prefix $mapname $fixedselection $config $minSteps $dcdfreq $ch_seg $mutations $topdir $topfiles $parfiles $inputfolder $gridconfig	
+			auto_mdff_casc_init $jobname $prefix $mapname $fixedselection $config $minSteps $dcdfreq $ch_seg $mutations $topdir $topfiles $parfiles $inputfolder $gridconfig
 
 			for {set i 1} {$i <= [llength $config]} {incr i} {
 				puts "Running NAMD step $i"

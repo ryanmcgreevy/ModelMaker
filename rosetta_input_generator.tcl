@@ -391,7 +391,7 @@ proc ::RosettaInputGenerator::rosetta_basic_refinement {jobname MOL nstruct clus
 # }
 
 
-proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath nstruct cluster nPerTask test configuration chain_idents} \
+proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles nstruct cluster nPerTask test configuration chain_idents} \
 {
 	###############################
 	#	CONFIGURATION
@@ -417,9 +417,7 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath n
 	puts $converted
 	##############################
 
-	exec mkdir -p "rosetta_input_$jobname"
-	exec mkdir -p "rosetta_output_$jobname"
-	###############################
+  ###############################
 	#	ROSETTA XML SCRIPT
 	###############################
 	set allMovers {}
@@ -450,14 +448,14 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath n
 
 	append tot [make_centroid_mover "centroid"]
 
-	append tot [make_rigid_chunk chunk fix $MOL fix centroid]
+	append tot [make_rigid_chunk chunk fix $MOL fix centroid $jobname]
 
 	# TODO: multiple chains!
 	# check if right fragfiles are assigned to the right chain!
 	set frag {}
 	set counter 0
 	foreach chain $chain_idents {
-		lappend frag [list "$fragpath/[lindex $fragfiles $counter 0]" "$fragpath/[lindex $fragfiles $counter 1]" "Chain$chain"]
+		lappend frag [list "$::MODELMAKER::workdir/setup-$jobname/[lindex $fragfiles $counter 0]" "$::MODELMAKER::workdir/setup-$jobname/[lindex $fragfiles $counter 1]" "Chain$chain"]
 		incr counter
 	}
 
@@ -502,8 +500,7 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath n
 	#append tot "<OUTPUT scorefxn=dens/> \n"
 	append tot "</ROSETTASCRIPTS>\n"
 
-	set f [open "$jobname.xml" w]
-	exec mv $jobname.xml rosetta_input_$jobname
+	set f [open "$::MODELMAKER::workdir/run-$jobname/$jobname.xml" w]
 	puts $f $tot
 	close $f
 
@@ -526,13 +523,13 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles fragpath n
 	}
 
 
-	set script [open "$jobname.sh" w]
+	set script [open "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" w]
 	puts $script $bashscript
 	close $script
 }
 
 
-proc ::RosettaInputGenerator::rosetta_insertion {jobname MOL fragfiles fasta fragpath nstruct cluster nPerTask configuration} \
+proc ::RosettaInputGenerator::rosetta_insertion {jobname MOL fragfiles fasta nstruct cluster nPerTask configuration} \
 {
 	###############################
 	#	CONFIGURATION
@@ -556,29 +553,26 @@ proc ::RosettaInputGenerator::rosetta_insertion {jobname MOL fragfiles fasta fra
 	# puts $converted
 	##############################
 
-	exec mkdir -p "rosetta_input_$jobname"
-	exec mkdir -p "rosetta_output_$jobname"
-
 	puts $exclude
 	set exclusions [split $exclude ","]
-	set f [open "rosetta_input_$jobname/protein.rigid" "w"]
+	set f [open "$::MODELMAKER::workdir/setup-$jobname/protein.rigid" "w"]
 	foreach ex $exclusions {
 		set xsplit [split $ex "-"]
 		puts $f "RIGID [lindex $xsplit 0] [lindex $xsplit 1] 0 0 0"
 	}
 	close $f
 
-	set f [open "rosetta_input_$jobname/input.tpb" "w"]
+	set f [open "$::MODELMAKER::workdir/setup-$jobname/input.tpb" "w"]
 	puts $f "CLAIMER RigidChunkClaimer"
-	puts $f "REGION_FILE ../rosetta_input_$jobname/protein.rigid"
-	puts $f "PDB_FILE ../full_length_model/$MOL.pdb"
+	puts $f "REGION_FILE $::MODELMAKER::workdir/setup-$jobname/protein.rigid"
+	puts $f "PDB_FILE $::MODELMAKER::workdir/setup-$jobname/$MOL.pdb"
 	puts $f "END_CLAIMER"
 	close $f
 
 	set frag3 [lindex $fragfiles 1]
 	set frag9 [lindex $fragfiles 0]
 	if {!$cluster} {
-		set bashscript [::RosettaInputGenerator::make_insertion_local_script $jobname $MOL $nstruct $fragpath $frag3 $frag9 $fasta]
+		set bashscript [::RosettaInputGenerator::make_insertion_local_script $jobname $MOL $nstruct $frag3 $frag9 $fasta]
 	} else {
 		set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
 		puts "Tasks: $tasks"
@@ -587,9 +581,9 @@ proc ::RosettaInputGenerator::rosetta_insertion {jobname MOL fragfiles fasta fra
 			wrong_input
 		}
 		puts "Preparing $nstruct structures on cluster. $tasks tasks with $nPerTask structures each."
-		set bashscript [::RosettaInputGenerator::make_insertion_cluster_script $jobname $MOL $nstruct $fragpath $frag3 $frag9 $fasta $tasks $nPerTask]
+		set bashscript [::RosettaInputGenerator::make_insertion_cluster_script $jobname $MOL $nstruct $frag3 $frag9 $fasta $tasks $nPerTask]
 	}
-	set script [open "rosetta_output_$jobname/$jobname.sh" w]
+	set script [open "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" w]
 	puts $script $bashscript
 	close $script
 
@@ -721,10 +715,9 @@ proc ::RosettaInputGenerator::make_environment {name autocut registerList applyL
 
 
 #<RigidChunkCM name="chunk" region_selector="fix" template="../full_length_model/rpt4_5_human_complete.pdb" selector="fix" apply_to_template="centroid" />
-proc ::RosettaInputGenerator::make_rigid_chunk {name regselector template selector apply_to_template} \
+proc ::RosettaInputGenerator::make_rigid_chunk {name regselector template selector apply_to_template jobname} \
 {
-	global tempPath
-	set out "<RigidChunkCM name=\"$name\" region_selector=\"$regselector\" template=\"$tempPath/$template\" selector=\"$selector\" apply_to_template=\"$apply_to_template\" />\n"
+	set out "<RigidChunkCM name=\"$name\" region_selector=\"$regselector\" template=\"$::MODELMAKER::workdir/setup-$jobname/$template\" selector=\"$selector\" apply_to_template=\"$apply_to_template\" />\n"
 	return $out
 }
 
@@ -942,8 +935,10 @@ $rosettapath/rosetta_scripts.$platform \\
 	-nstruct $nstruct \\
 	-run:test_cycles \\
     -out::prefix \${JOBNAME}_ \\
-	-s ../full_length_model/\${MOL} \\
-    -parser::protocol ../rosetta_input_$jobname/$jobname.xml \\
+	-out:path:pdb $::MODELMAKER::workdir/run-$jobname/pdb_out/ \\
+  -out:path:score $::MODELMAKER::workdir/run-$jobname/sc_out/ \\
+	-s $::MODELMAKER::workdir/setup-$jobname/\${MOL} \\
+    -parser::protocol $::MODELMAKER::workdir/run-$jobname/$jobname.xml \\
     -parser:view \\
     -ignore_zero_occupancy false\\
     -overwrite
@@ -955,7 +950,7 @@ $rosettapath/rosetta_scripts.$platform \\
 }
 
 
-proc ::RosettaInputGenerator::make_insertion_local_script {jobname mol nstruct fragpath frag3 frag9 fasta} \
+proc ::RosettaInputGenerator::make_insertion_local_script {jobname mol nstruct frag3 frag9 fasta} \
 {
 	global rosettapath
 	global rosettaDBpath
@@ -987,18 +982,20 @@ $rosettapath/minirosetta.$platform \\
 	-relax::default_repeats 1 \\
 	-out::shuffle_nstruct $nstruct \\
 	-out::prefix ${jobname}_${mol}_ \\
-	-run::protocol broker \\
-	-in:file:fasta $fragpath/$fasta.fasta \\
-	-broker:setup ../rosetta_input_$jobname/input.tpb \\
-	-frag3 $fragpath/$frag3 \\
-	-frag9 $fragpath/$frag9 \\
+	-out:path:pdb $::MODELMAKER::workdir/run-$jobname/pdb_out/ \\
+  -out:path:score $::MODELMAKER::workdir/run-$jobname/sc_out/ \\
+  -run::protocol broker \\
+	-in:file:fasta $::MODELMAKER::workdir/setup-$jobname/$fasta.fasta \\
+	-broker:setup $::MODELMAKER::workdir/setup-$jobname/input.tpb \\
+	-frag3 $::MODELMAKER::workdir/setup-$jobname/$frag3 \\
+	-frag9 $::MODELMAKER::workdir/setup-$jobname/$frag9 \\
 	-nstruct $nstruct \\
 	-overwrite
 
 "
 }
 
-proc ::RosettaInputGenerator::make_insertion_cluster_script {jobname mol nstruct fragpath frag3 frag9 fasta tasks nPerTask} \
+proc ::RosettaInputGenerator::make_insertion_cluster_script {jobname mol nstruct frag3 frag9 fasta tasks nPerTask} \
 {
 		global rosettapath
 	global rosettaDBpath
@@ -1043,10 +1040,10 @@ $rosettapath/minirosetta.$platform \\
 	-out::prefix ${jobname}_${mol}_ \\
 	-out::suffix \\\$idx \\
 	-run::protocol broker \\
-	-in:file:fasta $fragpath/$fasta.fasta \\
-	-broker:setup ../rosetta_input_$jobname/input.tpb \\
-	-frag3 $fragpath/$frag3 \\
-	-frag9 $fragpath/$frag9 \\
+	-in:file:fasta $::MODELMAKER::workdir/setup-$jobname/$fasta.fasta \\
+	-broker:setup $::MODELMAKER::workdir/setup-$jobname/input.tpb \\
+	-frag3 $::MODELMAKER::workdir/setup-$jobname/$frag3 \\
+	-frag9 $::MODELMAKER::workdir/setup-$jobname/$frag9 \\
 	-nstruct 1 \\
 	-overwrite
 
@@ -1082,10 +1079,12 @@ fi
 
 $rosettapath/rosetta_scripts.$platform \\
     -database $rosettaDBpath \\
-	-nstruct $nstruct \\
+	  -nstruct $nstruct \\
     -out::prefix \${JOBNAME}_ \\
-	-s ../full_length_model/\${MOL} \\
-    -parser::protocol ../rosetta_input_$jobname/$jobname.xml \\
+	  -out:path:pdb $::MODELMAKER::workdir/run-$jobname/pdb_out/ \\
+    -out:path:score $::MODELMAKER::workdir/run-$jobname/sc_out/ \\
+    -s $::MODELMAKER::workdir/setup-$jobname/\${MOL} \\
+    -parser::protocol $::MODELMAKER::workdir/run-$jobname/$jobname.xml \\
     -parser:view \\
     -ignore_zero_occupancy false\\
     -overwrite
