@@ -980,8 +980,8 @@ $rosettapath/minirosetta.$platform \\
 	-relax::default_repeats 1 \\
 	-out::shuffle_nstruct $nstruct \\
 	-out::prefix ${jobname}_${mol}_ \\
-	-out:path:pdb $::MODELMAKER::workdir/run-$jobname/ \\
-  -out:path:score $::MODELMAKER::workdir/run-$jobname/ \\
+	-out:path:pdb $::MODELMAKER::workdir/run-$jobname/pdb_out/ \\
+  -out:path:score $::MODELMAKER::workdir/run-$jobname/sc_out/ \\
   -run::protocol broker \\
 	-in:file:fasta $::MODELMAKER::workdir/setup-$jobname/$fasta.fasta \\
 	-broker:setup $::MODELMAKER::workdir/setup-$jobname/input.tpb \\
