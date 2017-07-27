@@ -52,6 +52,8 @@ namespace eval ::MODELMAKER {
   variable DefaultResStart 1
   variable DefaultAlignTemplate "all"
   variable DefaultInsertion "no"
+  variable DefaultWorkDir "[pwd]/workdir"
+  variable workdir $DefaultWorkDir
 
   variable settings
   set ::MODELMAKER::settings(username) ""
@@ -105,13 +107,14 @@ proc ::MODELMAKER::modelmaker { args } {
 
 proc ::MODELMAKER::insertion_usage  { } {
   variable DefaultNStruct
+  variable DefaultWorkDir
   puts "Usage: modelmaker insertion -model <full length template pdb> -fragfiles <list of fragment files> \
     -sel <list of atomselection texts with selections to fold> -fasta <fasta file> \
      ?options?"
   puts "Options:"
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
-  puts "  -workdir    <working/project directory for job> (default \[pwd\]/workdir)>"
+  puts "  -workdir    <working/project directory for job> (default: $DefaultWorkDir)>"
 }
 
 
@@ -120,6 +123,7 @@ proc ::MODELMAKER::insertion { args } {
   variable rosettadbpath
   variable DefaultNStruct
   variable rosettaPath
+  variable DefaultWorkDir
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
@@ -197,7 +201,7 @@ proc ::MODELMAKER::insertion { args } {
   if { [info exists arg(workdir)] } {
     set ::MODELMAKER::workdir $arg(workdir)
   } else {
-    set ::MODELMAKER::workdir [pwd]/workdir
+    set ::MODELMAKER::workdir $DefaultWorkDir
   }
 
   if { [file exists $::MODELMAKER::workdir] } {
@@ -244,12 +248,13 @@ proc ::MODELMAKER::abinitio_usage { } {
   variable DefaultCluster
   variable DefaultNPerTask
   variable DefaultTestRun
+  variable DefaultWorkDir
   puts "Usage: modelmaker abinitio -model <full length template pdb> -fragfiles <list of fragment files> \
     -sel <list of atomselection texts with selections to fold> -anchor <anchor residue for coordinate restraints> \
      ?options?"
   puts "Options:"
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "
-  puts "  -workdir    <working/project directory for job> (default \[pwd\]/workdir)>"
+  puts "  -workdir    <working/project directory for job> (default: $DefaultWorkDir)>"
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
   puts "  -testrun    <test run flag (0 or 1)> (default: $DefaultTestRun)> "
 #hide these until wider functionality
@@ -266,6 +271,7 @@ proc ::MODELMAKER::abinitio { args } {
   variable DefaultNPerTask
   variable DefaultTestRun
   variable rosettaPath
+  variable DefaultWorkDir
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
@@ -359,7 +365,8 @@ proc ::MODELMAKER::abinitio { args } {
   if { [info exists arg(workdir)] } {
     set ::MODELMAKER::workdir $arg(workdir)
   } else {
-    set ::MODELMAKER::workdir [pwd]/workdir
+    set ::MODELMAKER::workdir $DefaultWorkDir 
+
   }
 
   if { [file exists $::MODELMAKER::workdir] } {

@@ -935,6 +935,8 @@ $rosettapath/rosetta_scripts.$platform \\
 	-nstruct $nstruct \\
 	-run:test_cycles \\
     -out::prefix \${JOBNAME}_ \\
+	-out:path:pdb $::MODELMAKER::workdir/run-$jobname/pdb_out/ \\
+  -out:path:score $::MODELMAKER::workdir/run-$jobname/sc_out/ \\
 	-s $::MODELMAKER::workdir/setup-$jobname/\${MOL} \\
     -parser::protocol $::MODELMAKER::workdir/run-$jobname/$jobname.xml \\
     -parser:view \\
