@@ -389,7 +389,7 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 proc start_rosetta_insertion {jobname mol selections fragfiles fasta nstruct {cluster 0} {nPerTask 5} args} \
 {
 	# prepare configuration
-	cd $::MODELMAKER::workdir
+#	cd $::MODELMAKER::workdir
 	set selection_length [llength $selections]
 	set find_cfg []
 	for {set i 0} {$i < $selection_length} {incr i} {
@@ -411,22 +411,22 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fasta nstruct {cl
 
 	set ros_config [list $chains $spans $exclude]
 
-	cd $::MODELMAKER::workdir/run-$jobname
+	#cd $::MODELMAKER::workdir/run-$jobname
 	puts "Rosetta insertion folding started."
 	rosetta_insertion $jobname $mol $fragfiles $fasta $nstruct $cluster $nPerTask $ros_config
-	exec chmod +x $jobname.sh
+	exec chmod +x $::MODELMAKER::workdir/run-$jobname/$jobname.sh
 
-	file mkdir sc_out
-	file mkdir pdb_out
-	file mkdir OUTPUT_FILES
-	set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" >> rosetta_log_$jobname.log &]
-	set current [llength [glob -nocomplain $jobname*.pdb ] ]
+	file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
+	file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
+	file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
+	set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
+	set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/$jobname*.pdb ] ]
 	while {$current < $nstruct} {
 		set n 20
 		puts "Files are not yet available."
 		puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
 		after [expr {int($n * 1000)}]
-		set current [llength [glob -nocomplain $jobname*.pdb ] ]
+		set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/$jobname*.pdb ] ]
 		if {$cluster} {
 			set logfile [open "rosetta_log_$jobname.log" r]
 			set dt [read $logfile]
@@ -441,14 +441,14 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fasta nstruct {cl
 			}
 		}
 	}
-  file mkdir intermediates
-	file rename {*}[glob loops_closed*.pdb] intermediates/
-  file rename {*}[glob *.sc] sc_out/
-	file rename {*}[glob *.pdb] pdb_out/
+  file mkdir $::MODELMAKER::workdir/run-$jobname/intermediates
+	file rename {*}[glob $::MODELMAKER::workdir/run-$jobname/loops_closed*.pdb] $::MODELMAKER::workdir/run-$jobname/intermediates/
+  file rename {*}[glob $::MODELMAKER::workdir/run-$jobname/*.sc] $::MODELMAKER::workdir/run-$jobname/sc_out/
+	file rename {*}[glob $::MODELMAKER::workdir/run-$jobname/*.pdb] $::MODELMAKER::workdir/run-$jobname/pdb_out/
 
 	puts $output
 	puts "Rosetta insertion folding finished."
-	cd $::MODELMAKER::workdir
+	#cd $::MODELMAKER::workdir
 }
 
 proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template align_rosetta analysis_components {insertion 0} args} \
