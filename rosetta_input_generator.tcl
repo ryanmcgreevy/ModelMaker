@@ -500,7 +500,7 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles nstruct cl
 	#append tot "<OUTPUT scorefxn=dens/> \n"
 	append tot "</ROSETTASCRIPTS>\n"
 
-	set f [open "$jobname.xml" w]
+	set f [open "$::MODELMAKER::workdir/run-$jobname/$jobname.xml" w]
 	puts $f $tot
 	close $f
 
@@ -523,7 +523,7 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles nstruct cl
 	}
 
 
-	set script [open "$jobname.sh" w]
+	set script [open "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" w]
 	puts $script $bashscript
 	close $script
 }
@@ -1076,9 +1076,9 @@ fi
 $rosettapath/rosetta_scripts.$platform \\
     -database $rosettaDBpath \\
 	-nstruct $nstruct \\
-    -out::prefix \${JOBNAME}_ \\
+    -out::prefix $::MODELMAKER::workdir/run-$jobname/\${JOBNAME}_ \\
 	-s $::MODELMAKER::workdir/setup-$jobname/\${MOL} \\
-    -parser::protocol $jobname.xml \\
+    -parser::protocol $::MODELMAKER::workdir/run-$jobname/$jobname.xml \\
     -parser:view \\
     -ignore_zero_occupancy false\\
     -overwrite

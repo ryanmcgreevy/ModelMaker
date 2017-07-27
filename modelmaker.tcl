@@ -223,9 +223,9 @@ proc ::MODELMAKER::insertion { args } {
   set currentPWD [pwd]
 
   #start_rosetta_insertion rpn11_insertion rpn11_yeast_23-306_complete [list "resid 138 to 157"] [list "rpn11_yeast_23-306_frag9" "rpn11_yeast_23-306_frag3"] [pwd]/input rpn11_yeast_23-306 $nstruct
-  cd $::MODELMAKER::workdir
+  #cd $::MODELMAKER::workdir
   start_rosetta_insertion $jobname $model $sel $fragfiles $fasta $nstruct
-  cd $currentPWD
+  #cd $currentPWD
   set temp_mol [mol new $arg(model)]
   set temp_sel [atomselect $temp_mol all]
   set resstart [lindex [lsort -integer [$temp_sel get resid]] 0]
@@ -379,11 +379,8 @@ proc ::MODELMAKER::abinitio { args } {
   foreach fragfile [lindex $fragfiles 0] {
     file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
   }
-  cd $::MODELMAKER::workdir
   #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $nstruct $cluster $npertask $testrun
-  set currentPWD [pwd]
   start_rosetta_abinitio $jobname $model $sel $anchor $fragfiles $nstruct $cluster $npertask $testrun
-  cd $currentPWD
 }
 
 proc ::MODELMAKER::analyze_usage { } {

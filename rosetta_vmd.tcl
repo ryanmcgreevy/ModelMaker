@@ -296,7 +296,7 @@ proc start_rosetta_basic_refine {jobname mol selections anchor sidechains_only b
 proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cluster 0} {nPerTask 5} {testrun 0} args} \
 {
 	# make sure we are in the correct directory
-	cd $::MODELMAKER::workdir
+#	cd $::MODELMAKER::workdir
 	# prepare configuration
 	set selection_length [llength $selections]
 	set find_cfg []
@@ -306,13 +306,13 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 	}
 
 	# Cleanup input file
-	exec sed -i -e {s/HSD/HIS/g} setup-$jobname/$mol.pdb
-	exec sed -i -e {s/HSE/HIS/g} setup-$jobname/$mol.pdb
-	exec sed -i -e {s/HSP/HIS/g} setup-$jobname/$mol.pdb
+	exec sed -i -e {s/HSD/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	exec sed -i -e {s/HSE/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	exec sed -i -e {s/HSP/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
 
 
 	# MOL selections config {offset 4}
-	set find_sel [find_selection setup-$jobname/$mol $selections $find_cfg 0]
+	set find_sel [find_selection $::MODELMAKER::workdir/setup-$jobname/$mol $selections $find_cfg 0]
 	set spans [lindex $find_sel 0]
 	set exclude [lindex $find_sel 1]
 	set chains [lindex $find_sel 2]
@@ -327,7 +327,7 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 	foreach seltext $selections {
 		lappend seltexts $seltext
 	}
-	set searchmol [mol new setup-$jobname/$mol.pdb]
+	set searchmol [mol new $::MODELMAKER::workdir/setup-$jobname/$mol.pdb]
 
 	set chain_idents {}
 	foreach findseltext $seltexts {
@@ -343,23 +343,23 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 	set username $::MODELMAKER::settings(username)
 	puts "Rosetta abinitio started."
 # 	rosetta_abinitio {jobname MOL fragfiles nstruct cluster nPerTask test configuration}
-	cd $::MODELMAKER::workdir/run-$jobname
+	#cd $::MODELMAKER::workdir/run-$jobname
 	rosetta_abinitio $jobname $mol.pdb $fragfiles $nstruct $cluster $nPerTask $testrun $ros_config $chain_idents
-	exec chmod +x $jobname.sh
+	exec chmod +x $::MODELMAKER::workdir/run-$jobname/$jobname.sh
 
 	#exec cp $mapname.mrc rosetta_input_$jobname/
 
-	file mkdir sc_out
-	file mkdir pdb_out
-	file mkdir OUTPUT_FILES
-	set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" "$jobname" "$mol.pdb" >> rosetta_log_$jobname.log &]
-  set current [llength [glob -nocomplain *.pdb ] ]
+	file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
+	file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
+	file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
+	set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" "$jobname" "$mol.pdb" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
+  set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.pdb ] ]
 	while {$current < $nstruct} {
 		set n 5
 		puts "Files are not yet available."
 		puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
 		after [expr {int($n * 1000)}]
-		set current [llength [glob -nocomplain *.pdb ] ]
+		set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.pdb ] ]
 		if {$cluster} {
 			set logfile [open "rosetta_log_$jobname.log" r]
 			set dt [read $logfile]
@@ -376,12 +376,13 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 	}
 #	puts "pdbs: [glob *.pdb]"
 #  puts "score: [glob -nocomplain *.sc] pwd: [pwd]"
-	file rename {*}[glob *.sc] sc_out/
-	file rename {*}[glob *.pdb] pdb_out/
+  if { [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.sc] != ""} {
+	  file rename {*}[glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.sc] $::MODELMAKER::workdir/run-$jobname/sc_out/
+  }
+	file rename {*}[glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.pdb] $::MODELMAKER::workdir/run-$jobname/pdb_out/
 
   puts $output
 	puts "Rosetta abinitio finished."
-	cd $::MODELMAKER::workdir
 }
 
 
