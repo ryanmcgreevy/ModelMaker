@@ -1077,8 +1077,8 @@ $rosettapath/rosetta_scripts.$platform \\
     -database $rosettaDBpath \\
 	-nstruct $nstruct \\
     -out::prefix \${JOBNAME}_ \\
-	-s ../full_length_model/\${MOL} \\
-    -parser::protocol ../rosetta_input_$jobname/$jobname.xml \\
+	-s $::MODELMAKER::workdir/setup-$jobname/\${MOL} \\
+    -parser::protocol $jobname.xml \\
     -parser:view \\
     -ignore_zero_occupancy false\\
     -overwrite

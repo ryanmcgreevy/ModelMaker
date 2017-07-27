@@ -374,7 +374,8 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 			}
 		}
 	}
-	puts [glob *.pdb]
+#	puts "pdbs: [glob *.pdb]"
+#  puts "score: [glob -nocomplain *.sc] pwd: [pwd]"
 	file rename {*}[glob *.sc] sc_out/
 	file rename {*}[glob *.pdb] pdb_out/
 
