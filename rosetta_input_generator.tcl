@@ -1077,9 +1077,11 @@ fi
 
 $rosettapath/rosetta_scripts.$platform \\
     -database $rosettaDBpath \\
-	-nstruct $nstruct \\
-    -out::prefix $::MODELMAKER::workdir/run-$jobname/\${JOBNAME}_ \\
-	-s $::MODELMAKER::workdir/setup-$jobname/\${MOL} \\
+	  -nstruct $nstruct \\
+    -out::prefix \${JOBNAME}_ \\
+	  -out:path:pdb $::MODELMAKER::workdir/run-$jobname/pdb_out/ \\
+    -out:path:score $::MODELMAKER::workdir/run-$jobname/sc_out/ \\
+    -s $::MODELMAKER::workdir/setup-$jobname/\${MOL} \\
     -parser::protocol $::MODELMAKER::workdir/run-$jobname/$jobname.xml \\
     -parser:view \\
     -ignore_zero_occupancy false\\

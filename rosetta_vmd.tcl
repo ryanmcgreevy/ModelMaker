@@ -353,13 +353,13 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 	file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
 	file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
 	set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" "$jobname" "$mol.pdb" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
-  set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.pdb ] ]
+  set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
 	while {$current < $nstruct} {
 		set n 5
 		puts "Files are not yet available."
 		puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
 		after [expr {int($n * 1000)}]
-		set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.pdb ] ]
+		set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
 		if {$cluster} {
 			set logfile [open "rosetta_log_$jobname.log" r]
 			set dt [read $logfile]
@@ -376,10 +376,10 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 	}
 #	puts "pdbs: [glob *.pdb]"
 #  puts "score: [glob -nocomplain *.sc] pwd: [pwd]"
-  if { [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.sc] != ""} {
-	  file rename {*}[glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.sc] $::MODELMAKER::workdir/run-$jobname/sc_out/
-  }
-	file rename {*}[glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.pdb] $::MODELMAKER::workdir/run-$jobname/pdb_out/
+ # if { [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.sc] != ""} {
+#	  file rename {*}[glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.sc] $::MODELMAKER::workdir/run-$jobname/sc_out/
+#  }
+#	file rename {*}[glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.pdb] $::MODELMAKER::workdir/run-$jobname/pdb_out/
 
   puts $output
 	puts "Rosetta abinitio finished."

@@ -550,7 +550,6 @@ proc ::MODELMAKER::analyze { args } {
       set insert_model ""
     }
   }
-  puts "MODEL: $model  INSERT_MODEL: $insert_model"
   #jobname mol bestN nstruct cluster align_template align_rosetta analysis_components
   analyze_abinitio $jobname $modelname $template $bestN $nstruct $cluster $align_template \
     $align_rosetta $comps {*}$insert_model
