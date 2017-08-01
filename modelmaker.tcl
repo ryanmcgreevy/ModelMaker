@@ -54,6 +54,8 @@ namespace eval ::MODELMAKER {
   variable DefaultInsertion "no"
   variable DefaultWorkDir "[pwd]/workdir"
   variable workdir $DefaultWorkDir
+  variable DefaultScore -0.3
+  variable DefaultCSFlag 1
 
   variable settings
   set ::MODELMAKER::settings(username) ""
@@ -69,6 +71,7 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  abinitio              -- run Rosetta abinitio structure prediction"
   puts "  insertion             -- run Rosetta structure prediction for insertion folding"
   puts "  analyze               -- analyze results of Rosetta abinitio structure prediction"
+  puts "  refine                -- refine a structure with Rosetta using a density" 
   return
 
 }
@@ -95,6 +98,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::analyze $args]
   } elseif { $command == "insertion" } {
     return [eval ::MODELMAKER::insertion $args]
+  } elseif { $command == "refine" } {
+    return [eval ::MODELMAKER::refine $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -241,6 +246,160 @@ proc ::MODELMAKER::insertion { args } {
     $full_sel writepdb $pdb
     mol delete $full_mol
   }
+}
+
+proc ::MODELMAKER::refine_usage { } {
+  variable DefaultNStruct
+  variable DefaultCluster
+  variable DefaultNPerTask
+  variable DefaultTestRun
+  variable DefaultWorkDir
+  variable DefaultScore
+  variable DefaultCSFlag
+  puts "Usage: modelmaker refine -model <full length template pdb> \
+    -sel <list of atomselection texts with selections to fold> -anchor <anchor residue for coordinate restraints> \
+    -density <density file to refine against in .mrc format> -res <resolution of the density in Angstroms> \
+     ?options?"
+  puts "Options:"
+  puts "  -jobname    <name prefix for job> (default: taken from -model)> "
+  puts "  -workdir    <working/project directory for job> (default: $DefaultWorkDir)>"
+  puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
+  puts "  -bestN      <number of structures with best scores to save> (default: same as -nstruct)> "
+  puts "  -score      <Rosetta density score; lower values indicate lower weight> (default: $DefaultScore)> "
+  puts "  -csflag     <CartesianSample flag (0 or 1)> (default: $DefaultCSFlag)> "
+}
+
+proc ::MODELMAKER::refine { args } {
+
+  variable rosettaEXE
+  variable rosettadbpath
+  variable DefaultNStruct
+  variable rosettaPath
+  variable DefaultWorkDir
+  variable DefaultScore
+  variable DefaultCSFlag
+ #These need to be changed in the underlying package to refer to the variable instead.
+#e.g., $::MODELMAKER::rosettaDBpath
+#instead of using these 'global' variables which gets confusing and dangerous.
+ global rosettapath
+ global rosettaDBpath
+ global platform
+ global packagePath
+
+#$::env(PATH)
+  set packagePath $::env(RosettaVMDDIR)
+  set rosettapath $rosettaPath
+  set rosettaDBpath $rosettadbpath
+  set platform $rosettaEXE
+
+  set nargs [llength [lindex $args 0]]
+  if {$nargs == 0} {
+    refine_usage
+    error ""
+  }
+
+  foreach {name val} $args {
+    switch -- $name {
+      -jobname { set arg(jobname) $val }
+      -model { set arg(model) $val }
+      -sel { set arg(sel) $val }
+      -anchor { set arg(anchor) $val }
+      -nstruct { set arg(nstruct) $val }
+      -csflag { set arg(csflag) $val }
+      -density { set arg(density) $val }
+      -res { set arg(res) $val }
+      -score { set arg(score) $val }
+      -bestN { set arg(bestN) $val }
+      -workdir { set arg(workdir) $val }
+    }
+  }
+
+  if { [info exists arg(model)] } {
+    set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
+    #set model $arg(model)
+  } else {
+    error "A full model pdb file must be specified!"
+  }
+
+  if { [info exists arg(sel)] } {
+    set sel $arg(sel)
+  } else {
+    error "An atomselection text must be specified!"
+  }
+
+  if { [info exists arg(anchor)] } {
+    set anchor $arg(anchor)
+  } else {
+    error "An anchor residue id must be specified!"
+  }
+  
+  if { [info exists arg(density)] } {
+    #set density $arg(density)
+    set density [string range $arg(density) 0 [expr [string last ".dx" $arg(density)] - 1 ]]
+  } else {
+    error "A density file must be specified!"
+  }
+  
+  if { [info exists arg(res)] } {
+    set res $arg(res)
+  } else {
+    error "The resolution of the density must be specified!"
+  }
+  
+  if { [info exists arg(csflag)] } {
+    set csflag $arg(csflag)
+  } else {
+    set csflag $DefaultCSFlag
+  }
+  
+  if { [info exists arg(score)] } {
+    set score $arg(score)
+  } else {
+    set score $DefaultScore
+  }
+  
+  if { [info exists arg(nstruct)] } {
+    set nstruct $arg(nstruct)
+  } else {
+    set nstruct $DefaultNStruct
+  }
+  
+  if { [info exists arg(bestN)] } {
+    set bestN $arg(bestN)
+  } else {
+    set bestN $nstruct
+  }
+
+  if { [info exists arg(jobname)] } {
+    set jobname $arg(jobname)
+  } else {
+    set jobname $model
+  }
+
+
+  if { [info exists arg(workdir)] } {
+    set ::MODELMAKER::workdir $arg(workdir)
+  } else {
+    set ::MODELMAKER::workdir $DefaultWorkDir 
+
+  }
+
+  if { [file exists $::MODELMAKER::workdir] } {
+    puts "The working directory already exists!"
+    exit 1
+  }
+
+
+  file mkdir $::MODELMAKER::workdir
+
+  ## preparing files ##
+  # folder with all the files needed for setup/run
+  file mkdir $::MODELMAKER::workdir/setup-$jobname
+  file mkdir $::MODELMAKER::workdir/run-$jobname
+
+  file copy $model.pdb $::MODELMAKER::workdir/setup-$jobname
+  
+  start_rosetta_refine $jobname $model $sel $anchor $csflag $density $res $score $bestN $nstruct
 }
 
 proc ::MODELMAKER::abinitio_usage { } {
