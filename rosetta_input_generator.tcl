@@ -654,7 +654,7 @@ proc ::RosettaInputGenerator::make_coord_cst {config spans} \
 		if {[llength $span] != 2} {
 			::RosettaInputGenerator::wrong_input
 		}
-		append out "<Span begin=\"[lindex $span 0]\" end=\"[lindex $span 1]\" /> \n"
+		append out "<span begin=\"[lindex $span 0]\" end=\"[lindex $span 1]\" /> \n"
 	}
 	append out "</CoordinateCst> \n"
 	return $out
@@ -818,18 +818,18 @@ proc ::RosettaInputGenerator::make_protocol {movernames} \
 proc ::RosettaInputGenerator::make_default_scfxn {} \
 {
 	return "<SCOREFXNS>
-		<cen weights=\"score4_smooth_cart\">
-			<Reweight scoretype=\"elec_dens_fast weight=20\"/>
-		</cen>
-		<dens_soft weights=\"soft_rep\">
+		<ScoreFunction name=\"cen\" weights=\"score4_smooth_cart\">
+			<Reweight scoretype=\"elec_dens_fast\" weight=\"20\"/>
+		</ScoreFunction>
+		<ScoreFunction name=\"dens_soft\" weights=\"soft_rep\">
 			<Reweight scoretype=\"cart_bonded\" weight=\"0.5\"/>
 			<Reweight scoretype=\"pro_close\" weight=\"0.0\"/>
 			<Reweight scoretype=\"elec_dens_fast\" weight=\"%%denswt%%\"/>
-		</dens_soft>
-		<dens weights=\"talaris2013_cart\">
+		</ScoreFunction>
+		<ScoreFunction name=\"dens\" weights=\"talaris2013_cart\">
 			<Reweight scoretype=\"elec_dens_fast\" weight=\"%%denswt%%\"/>
 			<Set scale_sc_dens_byres=\"R:0.76,K:0.76,E:0.76,D:0.76,M:0.76,C:0.81,Q:0.81,H:0.81,N:0.81,T:0.81,S:0.81,Y:0.88,W:0.88,A:0.88,F:0.88,P:0.88,I:0.88,L:0.88,V:0.88\"/>
-		</dens>
+		</ScoreFunction>
 	</SCOREFXNS> \n"
 }
 
