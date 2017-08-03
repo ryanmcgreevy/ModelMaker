@@ -54,9 +54,9 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 	# MOL selections config {offset 4}
 	# offset set to 5 for cartesianSampler
 	if {$cartesian} {
-		set find_sel [find_selection full_length_model/$mol $selections $find_cfg 5]
+		set find_sel [find_selection $::MODELMAKER::workdir/setup-$jobname/$mol $selections $find_cfg 5]
 	} else {
-		set find_sel [find_selection full_length_model/$mol $selections $find_cfg 0]
+		set find_sel [find_selection $::MODELMAKER::workdir/setup-$jobname/$mol $selections $find_cfg 0]
 	}
 	set spans [lindex $find_sel 0]
 	set exclude [lindex $find_sel 1]
@@ -67,30 +67,30 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 
 	######################
 	# Cleanup input file
-	exec sed -i -e {s/HSD/HIS/g} full_length_model/$mol.pdb
-	exec sed -i -e {s/HSE/HIS/g} full_length_model/$mol.pdb
-	exec sed -i -e {s/HSP/HIS/g} full_length_model/$mol.pdb
+	exec sed -i -e {s/HSD/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	exec sed -i -e {s/HSE/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	exec sed -i -e {s/HSP/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
 	######################
 	puts "Rosetta started"
 	# refine_with_rosetta {jobname MOL mapname res score_dens nstruct cluster nPerTask configuration {cartesianSampler 0}}
 	refine_with_rosetta $jobname $mol.pdb $mapname $mapresolution $score_dens $nstruct $cluster $nPerTask $ros_config $cartesian
 	exec chmod +x $jobname.sh
-	exec mv $jobname.sh rosetta_output_$jobname/
-	exec cp $mapname.mrc rosetta_input_$jobname/
-	cd rosetta_output_$jobname
+	file rename $jobname.sh $::MODELMAKER::workdir/run-$jobname/
+	file copy $mapname.mrc $::MODELMAKER::workdir/setup-$jobname/
+	#cd rosetta_output_$jobname
 
 	if {!$scoreOnly} {
-		exec mkdir -p sc_out
-		exec mkdir -p pdb_out
-		exec mkdir -p OUTPUT_FILES
-		set output [exec "[pwd]/$jobname.sh" "$jobname" "$mol.pdb" >> rosetta_log_$jobname.log &]
-		set current [exec ls -1v pdb_out | wc -l]
+		file mkdir -p $::MODELMAKER::workdir/run-$jobname/sc_out
+		file mkdir -p $::MODELMAKER::workdir/run-$jobname/pdb_out
+		file mkdir -p $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
+		set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" "$jobname" "$mol.pdb" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
+    set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
 		while {$current < $nstruct} {
 			set n 5
 			puts "Files are not yet available."
-			puts "Current number: [exec ls -1v pdb_out | wc -l] - [expr double($current)/($nstruct) * 100.0] %"
+			puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
 			after [expr {int($n * 1000)}]
-			set current [exec ls -1v pdb_out | wc -l]
+		  set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
 			if {$cluster} {
 				set logfile [open "rosetta_log_$jobname.log" r]
 				set dt [read $logfile]
@@ -116,14 +116,14 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 	# MOL max_structures
 	if {!$cluster} {
 		puts "Scoring normal run."
-		score_refinement ${jobname}_$mol $bestN
+		score_refinement ${jobname}_$mol $bestN $jobname
 	} else {
 		puts "Scoring cluster run."
 		score_refinement_cluster $jobname ${jobname}_$mol $bestN
 	}
 
 
-	cd ..
+	#cd ..
 }
 
 proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapname mapresolution score_dens bestN nstruct {cluster 0} {nPerTask 5} {scoreOnly 0} args} \

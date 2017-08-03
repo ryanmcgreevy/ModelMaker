@@ -76,8 +76,8 @@ proc ::RosettaInputGenerator::refine_with_rosetta {jobname MOL mapname res score
 	}
 	puts $converted
 
-	exec mkdir -p "rosetta_input_$jobname"
-	exec mkdir -p "rosetta_output_$jobname"
+#	exec mkdir -p "rosetta_input_$jobname"
+#	exec mkdir -p "rosetta_output_$jobname"
 	###############################
 	#	ROSETTA XML SCRIPT
 	###############################
@@ -139,7 +139,7 @@ proc ::RosettaInputGenerator::refine_with_rosetta {jobname MOL mapname res score
 	append tot "</ROSETTASCRIPTS>\n"
 
 	set f [open "$jobname.xml" w]
-	exec mv $jobname.xml rosetta_input_$jobname
+	file rename $jobname.xml $::MODELMAKER::workdir/setup-$jobname/
 	puts $f $tot
 	close $f
 
@@ -856,17 +856,17 @@ proc ::RosettaInputGenerator::make_bash_script {denswt rms res map jobname nstru
 	$rosettapath/rosetta_scripts.$platform \\
 			-database $rosettaDBpath \\
 			-nstruct $nstruct \\
-		-parser::script_vars denswt=$denswt rms=$rms reso=$res map=../rosetta_input_$jobname/$map testmap=../rosetta_input_$jobname/$map \\
+		-parser::script_vars denswt=$denswt rms=$rms reso=$res map=$::MODELMAKER::workdir/setup-$jobname/$map testmap=$::MODELMAKER::workdir/setup-$jobname/$map \\
 		-edensity::mapreso $res \\
 	        -out::prefix \${JOBNAME}_ \\
-		-s ../full_length_model/\${MOL} \\
-	        -parser::protocol ../rosetta_input_$jobname/$jobname.xml \\
+          -out:path:pdb $::MODELMAKER::workdir/run-$jobname/pdb_out/ \\
+          -out:path:score $::MODELMAKER::workdir/run-$jobname/sc_out/ \\
+		-s $::MODELMAKER::workdir/setup-$jobname/\${MOL} \\
+	        -parser::protocol $::MODELMAKER::workdir/setup-$jobname/$jobname.xml \\
 	        -parser:view \\
 	        -overwrite \\
 	        -ignore_zero_occupancy false
 
-	mv \${JOBNAME}*.pdb ./pdb_out/
-	mv *.sc ./sc_out/
 	"
 }
 

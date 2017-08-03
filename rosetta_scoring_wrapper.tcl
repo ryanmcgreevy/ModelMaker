@@ -27,19 +27,19 @@ proc score_abinitio {args} \
   return [eval ::RosettaScoring::score_abinitio $args]
 }
 
-proc ::RosettaScoring::score_refinement {MOL max_structures} \
+proc ::RosettaScoring::score_refinement {MOL max_structures jobname} \
 {
   #set MOL loopmodel_73-78_4OCM_B.pdb_full_length
   #set max_structures 25
   puts "scoring started"
-  set pdb [::RosettaScoring::rosetta_scoring $max_structures]
+  set pdb [::RosettaScoring::rosetta_scoring $max_structures $jobname]
   puts $pdb
   puts "scoring finished"
   mol delete all
   #mol new ./pdb_out/${MOL}_[format %04i [lindex $pdb 0]].pdb waitfor all
   for {set i 0} {$i < [llength $pdb]} {incr i} {
-   mol new ./pdb_out/${MOL}_[format %04i [lindex $pdb $i]].pdb
-   [atomselect top all] writepdb ${MOL}_best[expr $i + 1].pdb
+   mol new $::MODELMAKER::workdir/run-$jobname/pdb_out/${MOL}_[format %04i [lindex $pdb $i]].pdb
+   [atomselect top all] writepdb $::MODELMAKER::workdir/run-$jobname/${MOL}_best[expr $i + 1].pdb
  }
 
  #animate write pdb ${MOL}_rosetta_scoring_min_$max_structures.pdb beg 0 end [expr $max_structures-1] skip 1 0
@@ -107,16 +107,16 @@ proc ::RosettaScoring::score_abinitio {run MOL max_structures cluster {extra 0} 
 
 
 
-proc ::RosettaScoring::rosetta_scoring {length_tot} {
+proc ::RosettaScoring::rosetta_scoring {length_tot jobname} {
   set file_list ""
   set val_list ""
 
-  set file_list [lsort -dictionary [glob ./sc_out/*.sc]]
+  set file_list [lsort -dictionary [glob $::MODELMAKER::workdir/run-$jobname/sc_out/*.sc]]
   set length 0
   for {set i 0} {$i < [llength $file_list]} {incr i} {
     set file [open [lindex $file_list $i] r]
     
-    set log [open "rosetta_scoring.log" w+]
+    set log [open "$::MODELMAKER::workdir/run-$jobname/rosetta_scoring.log" w+]
     while {[eof $file] != 1} {
        set line [gets $file]
        if {[lindex $line 0] == "SCORE:" && [regsub -all {[^0-9]} [lindex $line 1] ""] != ""} {
