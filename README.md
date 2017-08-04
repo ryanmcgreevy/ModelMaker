@@ -38,3 +38,9 @@ modelmaker insertion -model rpn11_yeast_23-306_complete.pdb -fragfiles {rpn11_ye
 
 modelmaker analyze -model rpn11_yeast_23-306_complete.pdb -template rpn11_yeast_23-306_complete.pdb -nstruct 1 -align_template "resid 1 to 137 or resid 158 to 284" -comps  {{ss 138 157 "A"} {cluster 138 157 "A" 2}} -jobname rpn11_insertion -insertion yes
 ```
+
+An example of how to use ModelMaker to refine a model against a mid-resolution density from the [tutorial](http://www.ks.uiuc.edu/Training/Tutorials/science/rosetta-mdff/rosetta-mdff-tutorial-html/node6.html) is below:
+
+```
+modelmaker refine -model rpn11_yeast.pdb -anchor 1  -sel {"resid 212 to 228" "resid 296 to 306"} -density rpn11_model_5_2594_density.dx -res 7.7 -nstruct 1 -jobname rpn11_refine -score -0.3
+```
