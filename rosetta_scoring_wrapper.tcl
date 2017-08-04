@@ -72,7 +72,7 @@ proc ::RosettaScoring::score_abinitio {run MOL max_structures cluster {extra 0} 
     #set file "../rosetta_output/pdb_out/${MOL}[lindex $pdb 0]_0001.pdb"
     puts $pdb
     #set file "../rosetta_output_bbfix/pdb_out/${MOL}[lindex $pdb 0]_0001.pdb"
-    set file "./pdb_out_aligned/${MOL}_[lindex $pdb 0]_0001_aligned.pdb"
+    set file "$::MODELMAKER::workdir/run-$run/pdb_out_aligned/${MOL}_[lindex $pdb 0]_0001_aligned.pdb"
     #set file "../rosetta_output_bbfree/pdb_out_aligned/${MOL}[lindex $pdb 0]_0001_aligned.pdb"
     mol new $file waitfor all
     set sel [atomselect top "all and noh"]
@@ -85,7 +85,7 @@ proc ::RosettaScoring::score_abinitio {run MOL max_structures cluster {extra 0} 
     for {set i 1} {$i < [llength $pdb]} {incr i} {
       #set file "../rosetta_output/pdb_out/${MOL}[lindex $pdb $i]_0001.pdb"
       #set file "../rosetta_output_bbfix/pdb_out/${MOL}[lindex $pdb $i]_0001.pdb"
-      set file "./pdb_out_aligned/${MOL}_[lindex $pdb $i]_0001_aligned.pdb"
+      set file "$::MODELMAKER::workdir/run-$run/pdb_out_aligned/${MOL}_[lindex $pdb $i]_0001_aligned.pdb"
       #set file "../rosetta_output_bbfree/pdb_out_aligned/${MOL}[lindex $pdb $i]_0001_aligned.pdb"
       mol new $file waitfor all
       set sel [atomselect top "all and noh"]
@@ -103,7 +103,7 @@ proc ::RosettaScoring::score_abinitio {run MOL max_structures cluster {extra 0} 
     animate write dcd ${MOL}_rosetta_scoring_min_$max_structures.dcd beg 0 end [expr $max_structures-1] skip 1 $top
     update idletasks
     update
-  }
+}
 
 
 
