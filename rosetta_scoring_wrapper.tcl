@@ -64,7 +64,7 @@ proc ::RosettaScoring::score_abinitio {run MOL max_structures cluster {extra 0} 
   if {$cluster} {
     set pdb [::RosettaScoring::rosetta_scoring_cluster_consistent $max_structures $run $extra]
     } else {
-      set pdb [::RosettaScoring::rosetta_scoring $max_structures]
+      set pdb [::RosettaScoring::rosetta_scoring $max_structures $run]
     }
     
 

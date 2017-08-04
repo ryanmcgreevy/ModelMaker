@@ -56,6 +56,7 @@ namespace eval ::MODELMAKER {
   variable workdir $DefaultWorkDir
   variable DefaultScore -0.3
   variable DefaultCSFlag 1
+  variable DefaultSidechain "no"
 
   variable settings
   set ::MODELMAKER::settings(username) ""
@@ -256,6 +257,7 @@ proc ::MODELMAKER::refine_usage { } {
   variable DefaultWorkDir
   variable DefaultScore
   variable DefaultCSFlag
+  variable DefaultSidechain
   puts "Usage: modelmaker refine -model <full length template pdb> \
     -sel <list of atomselection texts with selections to fold> -anchor <anchor residue for coordinate restraints> \
     -density <density file to refine against in .mrc format> -res <resolution of the density in Angstroms> \
@@ -266,7 +268,8 @@ proc ::MODELMAKER::refine_usage { } {
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
   puts "  -bestN      <number of structures with best scores to save> (default: same as -nstruct)> "
   puts "  -score      <Rosetta density score; lower values indicate lower weight> (default: $DefaultScore)> "
-  puts "  -csflag     <CartesianSample flag (0 or 1)> (default: $DefaultCSFlag)> "
+  puts "  -csflag     <CartesianSample flag (0 or 1) Only used for non-sidechain refinement> (default: $DefaultCSFlag)> "
+  puts "  -sidechain  <refine side chains? (yes or no) (default: $DefaultSidechain)> "
 }
 
 proc ::MODELMAKER::refine { args } {
@@ -278,6 +281,7 @@ proc ::MODELMAKER::refine { args } {
   variable DefaultWorkDir
   variable DefaultScore
   variable DefaultCSFlag
+  variable DefaultSidechain
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
@@ -311,6 +315,7 @@ proc ::MODELMAKER::refine { args } {
       -score { set arg(score) $val }
       -bestN { set arg(bestN) $val }
       -workdir { set arg(workdir) $val }
+      -sidechain { set arg(sidechain) $val }
     }
   }
 
@@ -350,6 +355,12 @@ proc ::MODELMAKER::refine { args } {
     set csflag $arg(csflag)
   } else {
     set csflag $DefaultCSFlag
+  }
+  
+  if { [info exists arg(sidechain)] } {
+    set sidechain $arg(sidechain)
+  } else {
+    set sidechain $DefaultSidechain
   }
   
   if { [info exists arg(score)] } {
@@ -399,7 +410,11 @@ proc ::MODELMAKER::refine { args } {
 
   file copy $model.pdb $::MODELMAKER::workdir/setup-$jobname
   
-  start_rosetta_refine $jobname $model $sel $anchor $csflag $density $res $score $bestN $nstruct
+  if { $sidechain == "yes" } {
+    start_rosetta_refine_sidechains_density $jobname $model $sel $anchor $density $res $score $bestN $nstruct
+  } else {
+    start_rosetta_refine $jobname $model $sel $anchor $csflag $density $res $score $bestN $nstruct
+  }
 }
 
 proc ::MODELMAKER::abinitio_usage { } {
