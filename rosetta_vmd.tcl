@@ -76,7 +76,6 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 	refine_with_rosetta $jobname $mol.pdb $mapname $mapresolution $score_dens $nstruct $cluster $nPerTask $ros_config $cartesian
 	file attributes $jobname.sh -permissions +x
 	file rename $jobname.sh $::MODELMAKER::workdir/run-$jobname/
-	file copy $mapname.mrc $::MODELMAKER::workdir/setup-$jobname/
 	#cd rosetta_output_$jobname
 
 	if {!$scoreOnly} {
