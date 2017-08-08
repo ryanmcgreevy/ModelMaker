@@ -72,7 +72,7 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  abinitio              -- run Rosetta abinitio structure prediction"
   puts "  insertion             -- run Rosetta structure prediction for insertion folding"
   puts "  analyze               -- analyze results of Rosetta abinitio structure prediction"
-  puts "  refine                -- refine a structure with Rosetta using a density"
+  puts "  refine                -- refine a structure with Rosetta using a density" 
   return
 
 }
@@ -260,7 +260,7 @@ proc ::MODELMAKER::refine_usage { } {
   variable DefaultSidechain
   puts "Usage: modelmaker refine -model <full length template pdb> \
     -sel <list of atomselection texts with selections to fold> -anchor <anchor residue for coordinate restraints> \
-    -density <density file to refine against in .dx format> -res <resolution of the density in Angstroms> \
+    -density <density file to refine against in .mrc format> -res <resolution of the density in Angstroms> \
      ?options?"
   puts "Options:"
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "
@@ -337,44 +337,44 @@ proc ::MODELMAKER::refine { args } {
   } else {
     error "An anchor residue id must be specified!"
   }
-
+  
   if { [info exists arg(density)] } {
     #set density $arg(density)
     set density [string range $arg(density) 0 [expr [string last ".dx" $arg(density)] - 1 ]]
   } else {
     error "A density file must be specified!"
   }
-
+  
   if { [info exists arg(res)] } {
     set res $arg(res)
   } else {
     error "The resolution of the density must be specified!"
   }
-
+  
   if { [info exists arg(csflag)] } {
     set csflag $arg(csflag)
   } else {
     set csflag $DefaultCSFlag
   }
-
+  
   if { [info exists arg(sidechain)] } {
     set sidechain $arg(sidechain)
   } else {
     set sidechain $DefaultSidechain
   }
-
+  
   if { [info exists arg(score)] } {
     set score $arg(score)
   } else {
     set score $DefaultScore
   }
-
+  
   if { [info exists arg(nstruct)] } {
     set nstruct $arg(nstruct)
   } else {
     set nstruct $DefaultNStruct
   }
-
+  
   if { [info exists arg(bestN)] } {
     set bestN $arg(bestN)
   } else {
@@ -391,7 +391,7 @@ proc ::MODELMAKER::refine { args } {
   if { [info exists arg(workdir)] } {
     set ::MODELMAKER::workdir $arg(workdir)
   } else {
-    set ::MODELMAKER::workdir $DefaultWorkDir
+    set ::MODELMAKER::workdir $DefaultWorkDir 
 
   }
 
@@ -409,11 +409,7 @@ proc ::MODELMAKER::refine { args } {
   file mkdir $::MODELMAKER::workdir/run-$jobname
 
   file copy $model.pdb $::MODELMAKER::workdir/setup-$jobname
-
-  # density must be converted to mrc format
-	file copy $density.dx $::MODELMAKER::workdir/setup-$jobname/
-  make_mrc_file $::MODELMAKER::workdir/setup-$jobname/$density
-
+  
   if { $sidechain == "yes" } {
     start_rosetta_refine_sidechains_density $jobname $model $sel $anchor $density $res $score $bestN $nstruct
   } else {
@@ -543,7 +539,7 @@ proc ::MODELMAKER::abinitio { args } {
   if { [info exists arg(workdir)] } {
     set ::MODELMAKER::workdir $arg(workdir)
   } else {
-    set ::MODELMAKER::workdir $DefaultWorkDir
+    set ::MODELMAKER::workdir $DefaultWorkDir 
 
   }
 
