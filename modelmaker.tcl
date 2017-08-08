@@ -16,7 +16,7 @@ namespace eval ::MODELMAKER {
       variable rosettaEXE "macosclangrelease"
     }
     "Linux" {
-      variable rosettaEXE "linuxclangrelease"
+      variable rosettaEXE "linux*release"
     }
     default {
       variable rosettaEXE "Unrecognized"
