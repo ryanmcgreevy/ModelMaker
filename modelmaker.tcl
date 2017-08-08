@@ -16,7 +16,7 @@ namespace eval ::MODELMAKER {
       variable rosettaEXE "macosclangrelease"
     }
     "Linux" {
-      variable rosettaEXE "linux*release"
+      variable rosettaEXE "linuxclangrelease"
     }
     default {
       variable rosettaEXE "Unrecognized"
@@ -764,6 +764,7 @@ proc ::MODELMAKER::full_length_model_usage { } {
 proc ::MODELMAKER::full_length_model { args } {
   variable rosettaEXE
   variable DefaultResStart
+  variable rosettaPath
 
   set nargs [llength [lindex $args 0]]
   if {$nargs == 0} {
@@ -823,11 +824,11 @@ proc ::MODELMAKER::full_length_model { args } {
 
   #this assume only 9 and 3 length fragment files and in a specific order. Can
   #we implement some logic to look at the provided files and determine what all we have?
-  exec full_length_model.$rosettaEXE -in:file:fasta $fasta \
+  exec $rosettaPath/full_length_model.$rosettaEXE -in:file:fasta $fasta \
     -loops:frag_files [lindex $fragfiles 0] [lindex $fragfiles 1] none \
     -loops:frag_sizes 9 3 1 \
     -in:file::s $template \
-    -overwrite
+    -overwrite >> $template-full_length_model.log
 
 
   set full_mol [mol new ${template}_full_length.pdb]
