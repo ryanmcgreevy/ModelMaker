@@ -237,7 +237,7 @@ proc run_rosetta_clustering {mol start end bestN radius cluster_max} \
 		lappend blacklist "cluster_single_${start}_${end}_${bestN}_${i}.pdb"
 	}
 	close $pdblist
-	exec $rosettapath/cluster.$platform -database $rosettaDBpath -in:file:l pdblist -in:file:fullatom -cluster:radius $radius -cluster:limit_clusters $cluster_max > cluster.log
+	exec [glob $rosettapath/cluster.$platform] -database $rosettaDBpath -in:file:l pdblist -in:file:fullatom -cluster:radius $radius -cluster:limit_clusters $cluster_max > cluster.log
 	foreach item $blacklist {
 		exec rm $item
 	}

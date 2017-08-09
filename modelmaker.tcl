@@ -13,10 +13,10 @@ namespace eval ::MODELMAKER {
   #best to be independent of any future naming conventions of rosetta. Use wildcard instead?
   switch $tcl_platform(os) {
     "Darwin" {
-      variable rosettaEXE "macosclangrelease"
+      variable rosettaEXE "default.macos*release"
     }
     "Linux" {
-      variable rosettaEXE "linuxclangrelease"
+      variable rosettaEXE "default.linux*release"
     }
     default {
       variable rosettaEXE "Unrecognized"
@@ -158,6 +158,7 @@ proc ::MODELMAKER::insertion { args } {
       -fragfiles { set arg(fragfiles) $val }
       -nstruct { set arg(nstruct) $val }
       -workdir { set arg(workdir) $val }
+      default { puts "Unknown argument $name"; return }
     }
   }
 
@@ -316,6 +317,7 @@ proc ::MODELMAKER::refine { args } {
       -bestN { set arg(bestN) $val }
       -workdir { set arg(workdir) $val }
       -sidechain { set arg(sidechain) $val }
+      default { puts "Unknown argument $name"; return  }
     }
   }
 
@@ -477,6 +479,7 @@ proc ::MODELMAKER::abinitio { args } {
       -npertask { set arg(npertask) $val }
       -testrun { set arg(testrun) $val }
       -workdir { set arg(workdir) $val }
+      default { puts "Unknown argument $name"; return  }
     }
   }
 
@@ -608,6 +611,7 @@ proc ::MODELMAKER::analyze { args } {
       -align_rosetta    { set arg(align_rosetta) $val }
       -comps            { set arg(comps) $val }
       -insertion        { set arg(insertion) $val }
+      default { puts "Unknown argument $name"; return  }
     }
   }
 
@@ -780,6 +784,7 @@ proc ::MODELMAKER::full_length_model { args } {
       -fasta { set arg(fasta) $val }
       -resstart { set arg(resstart) $val }
       #-output { set arg(output) $val }
+      default { puts "Unknown argument $name"; return  }
     }
   }
 
@@ -880,6 +885,7 @@ proc ::MODELMAKER::gapfind { args } {
       -i { set arg(i) $val }
       -sel { set arg(sel) $val }
       -mol { set arg(mol) $val }
+      default { puts "Unknown argument $name"; return  }
     }
   }
 
