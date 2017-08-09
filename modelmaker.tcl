@@ -922,7 +922,7 @@ proc ::MODELMAKER::gapfind { args } {
 
   set molname [molinfo $MOLID get name]
 
-  set chains [lsort -unique [[atomselect $MOLID all] get chain]]
+  set chains [lsort -unique [[atomselect $MOLID protein] get chain]]
 #set generalOut [open "$MOL-missing.html" w]
   foreach chain $chains {
     puts $chain
@@ -931,8 +931,7 @@ proc ::MODELMAKER::gapfind { args } {
     set residues [lsort -integer -unique [$sel get resid]]
     set missing []
     #puts $residues
-    #set first [lindex $residues 0]
-    set first 1
+    set first [lindex $residues 0]
     set last [lindex $residues end]
     set delta [expr $last - $first]
     #puts "$first $last $delta"
