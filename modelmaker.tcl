@@ -11,15 +11,19 @@ namespace eval ::MODELMAKER {
   #this should get auto-set depending on OS, but
   #should maybe be changed to not rely on this because it would be
   #best to be independent of any future naming conventions of rosetta. Use wildcard instead?
-  switch $tcl_platform(os) {
-    "Darwin" {
-      variable rosettaEXE "default.macos*release"
-    }
-    "Linux" {
-      variable rosettaEXE "default.linux*release"
-    }
-    default {
-      variable rosettaEXE "Unrecognized"
+  if {[info exists env(ROSETTAEXE)]} {
+    variable rosettaEXE $env(ROSETTAEXE)
+  } else {
+    switch $tcl_platform(os) {
+      "Darwin" {
+        variable rosettaEXE "static.macos*release"
+      }
+      "Linux" {
+        variable rosettaEXE "static.linux*release"
+      }
+      default {
+        variable rosettaEXE "Unrecognized"
+      }
     }
   }
   #this environment variable needs to be set by user somehow once, probably
