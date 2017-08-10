@@ -935,7 +935,8 @@ proc ::MODELMAKER::gapfind { args } {
     set residues [lsort -integer -unique [$sel get resid]]
     set missing []
     #puts $residues
-    set first [lindex $residues 0]
+    #set first [lindex $residues 0]
+    set first 1
     set last [lindex $residues end]
     set delta [expr $last - $first]
     #puts "$first $last $delta"
