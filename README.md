@@ -25,7 +25,7 @@ type `modelmaker command` where 'command' is one of the available ModelMaker com
 to see more information about it. 
 
 
-An example of how to obatin full length models with ModelMaker from the [tutorial](http://www.ks.uiuc.edu/Training/Tutorials/science/rosetta-mdff/rosetta-mdff-tutorial-html/node4.html) is below:
+An example of how to obtain full length models with ModelMaker from the [tutorial](http://www.ks.uiuc.edu/Training/Tutorials/science/rosetta-mdff/rosetta-mdff-tutorial-html/node4.html) is below:
 
 ```
 modelmaker full_length_model -template rpn11_yeast_4ocm.pdb -fragfiles {rpn11_yeast_23-306_frag9 rpn11_yeast_23-306_frag3} -fasta rpn11_yeast_23-306.fasta -resstart 23
