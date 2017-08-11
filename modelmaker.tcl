@@ -833,7 +833,7 @@ proc ::MODELMAKER::full_length_model { args } {
 
   #this assume only 9 and 3 length fragment files and in a specific order. Can
   #we implement some logic to look at the provided files and determine what all we have?
-  exec $rosettaPath/full_length_model.$rosettaEXE -in:file:fasta $fasta \
+  exec [glob $rosettaPath/full_length_model.$rosettaEXE] -in:file:fasta $fasta \
     -loops:frag_files [lindex $fragfiles 0] [lindex $fragfiles 1] none \
     -loops:frag_sizes 9 3 1 \
     -in:file::s $template \
