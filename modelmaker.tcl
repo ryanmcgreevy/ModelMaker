@@ -346,7 +346,7 @@ proc ::MODELMAKER::refine { args } {
   
   if { [info exists arg(density)] } {
     #set density $arg(density)
-    set density [string range $arg(density) 0 [expr [string last ".dx" $arg(density)] - 1 ]]
+    set density [string range $arg(density) 0 [expr [string last ".mrc" $arg(density)] - 1 ]]
   } else {
     error "A density file must be specified!"
   }
@@ -829,22 +829,24 @@ proc ::MODELMAKER::full_length_model { args } {
 #    set output $template
 #  }
 
-
-
+  set mol [mol new $template]
+  set sel [atomselect $mol "protein and noh"] 
+  format_pdb $sel "$template.formatted.pdb" 
   #this assume only 9 and 3 length fragment files and in a specific order. Can
   #we implement some logic to look at the provided files and determine what all we have?
   exec [glob $rosettaPath/full_length_model.$rosettaEXE] -in:file:fasta $fasta \
     -loops:frag_files [lindex $fragfiles 0] [lindex $fragfiles 1] none \
     -loops:frag_sizes 9 3 1 \
-    -in:file::s $template \
+    -in:file::s "$template.formatted.pdb" \
     -overwrite >> $template-full_length_model.log
-
-
-  set full_mol [mol new ${template}_full_length.pdb]
+  
+  file delete "$template.formatted.pdb"
+  set full_mol [mol new ${template}.formatted.pdb_full_length.pdb]
   set full_sel [atomselect $full_mol all]
   renumber $full_sel $resstart
   $full_sel writepdb ${template}_full_length.pdb
   mol delete $full_mol
+  file delete ${template}.formatted.pdb_full_length.pdb
 
 }
 
@@ -965,6 +967,27 @@ proc ::MODELMAKER::gapfind { args } {
 
 }
 
+proc ::MODELMAKER::format_pdb {sel filename} {
+  $sel set occupancy 1
+  $sel set beta 1
+  $sel writepdb $filename
+
+  set frpdb [open $filename "r"]
+  set spdb [read $frpdb]
+  close $frpdb
+  set fwpdb [open $filename "w"]
+  regsub -all "HSD" $spdb "HIS" spdb
+  regsub -all "HSE" $spdb "HIS" spdb
+  regsub -all "URA" $spdb "  U" spdb
+  regsub -all "ADE" $spdb "  A" spdb
+  regsub -all "CYT" $spdb "  C" spdb
+  regsub -all "GUA" $spdb "  G" spdb
+  regsub -all "THY" $spdb "  T" spdb
+  regsub -all "CYN" $spdb "CYS" spdb
+  regsub -all -line {^.*CRYST.*$} $spdb " " spdb
+  puts $fwpdb $spdb
+  close $fwpdb
+}
 #proc ::MODELMAKER::decr { int { n 1 } } {
 #    if { [ catch {
 #        uplevel incr $int -$n
