@@ -80,9 +80,9 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 	#cd rosetta_output_$jobname
 
 	if {!$scoreOnly} {
-		file mkdir -p $::MODELMAKER::workdir/run-$jobname/sc_out
-		file mkdir -p $::MODELMAKER::workdir/run-$jobname/pdb_out
-		file mkdir -p $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
+		file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
+		file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
+		file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
 		set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" "$jobname" "$mol.pdb" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
     set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
 		while {$current < $nstruct} {
