@@ -80,6 +80,7 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  analyze               -- analyze results of Rosetta abinitio structure prediction"
   puts "  refine                -- refine a structure with Rosetta using a density" 
   puts "  pdb2seq               -- get the single-letter amino acid sequence" 
+  puts "  seqsub                -- extract subrange of fasta sequence" 
   return
 
 }
@@ -110,6 +111,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::refine $args]
   } elseif { $command == "pdb2seq" } {
     return [eval ::MODELMAKER::pdb2seq $args]
+  } elseif { $command == "seqsub" } {
+    return [eval ::MODELMAKER::seqsub $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -1125,3 +1128,67 @@ proc ::MODELMAKER::pdb2seq {args} {
     return $sequence
   }
 }
+
+proc ::MODELMAKER::seqsub_usage { } {
+  puts "Usage: mdodelmaker seqsub ?options?"
+  puts "Options:"
+  puts "  -i <input fasta> "
+  puts "  -o <filename> (output file name) "
+  puts "  -start <residue number> (starting residue number) "
+  puts "  -end <residue number> (ending residue number) "
+
+}
+
+proc ::MODELMAKER::seqsub { args } {
+  set nargs [llength [lindex $args 0]]
+  if {$nargs == 0} {
+    seqsub_usage
+    error ""
+  }
+  
+  foreach {name val} $args {
+    switch -- $name {
+      -i { set arg(i) $val }
+      -o { set arg(o) $val }
+      -start { set arg(start) $val }
+      -end { set arg(end) $val }
+      default { puts "Unknown argument $name"; return  }
+    }
+  }
+
+  if { [info exists arg(i)] } {
+    set inputfasta $arg(i)
+  } else {
+    error "input fasta file required"
+  }
+  
+  if { [info exists arg(o)] } {
+    set output $arg(o)
+  } else {
+    error "output file name required"
+  }
+  
+  if { [info exists arg(start)] } {
+    set start $arg(start)
+  } else {
+    error "starting residue number required"
+  }
+  
+  if { [info exists arg(end)] } {
+    set end $arg(end)
+  } else {
+    error "ending residue number required"
+  }
+
+  set infile [open $inputfasta r]
+  while { [gets $infile line] >=0 } {
+    if { [string range $line 0 0] != ">"} {
+     append sequence $line 
+    }
+  }
+  close $infile
+  set outfile [open $output w]
+  puts $outfile [string range $sequence [expr $start - 1] $end]
+  close $outfile
+}
+
