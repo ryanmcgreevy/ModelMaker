@@ -65,14 +65,16 @@ proc ::RosettaInputGenerator::refine_with_rosetta {jobname MOL mapname res score
 
 	set converted []
 	set conv_anchor_spans []
-	foreach ch $chains {
-		lappend converted $ch
-	}
+	#foreach ch $chains {
+	#	lappend converted $ch
+	#}
+  puts $anchor_spans
 	foreach sp $spans {
 		lappend converted $sp
 	}
 	foreach anch $anchor_spans {
 		lappend conv_anchor_spans $anch
+    lappend converted [list "Span" [lindex $anch 0] [lindex $anch 1] 0 0]
 	}
 	puts $converted
 
