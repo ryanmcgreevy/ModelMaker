@@ -944,7 +944,7 @@ proc ::MODELMAKER::gapfind { args } {
   if { $inputpdb != ""} {
     set MOLID [mol new $inputpdb]
   } else {
-    set MOLID [molinfo $inputmol get id]
+    set MOLID $inputmol ;#[molinfo $inputmol get id]
   }
 
   set molname [molinfo $MOLID get name]
@@ -1018,6 +1018,7 @@ proc ::MODELMAKER::pdb2seq_usage { } {
   puts "  -sel <atom selection text> (default: $DefaultPDB2SeqSel)"
   #puts "  -mol <molid> (find gaps in already loaded molecule) (default: $defaultGapfindMol)"
   puts "  -mol <molid> (find gaps in already loaded molecule)"
+  puts "  -o   <filename> (output sequence to a file instead)"
 
 }
 
@@ -1067,20 +1068,20 @@ proc ::MODELMAKER::pdb2seq {args} {
   if { [info exists arg(o)] } {
     set output $arg(o)
   } else {
-    set output "stdout"
+    set output ""
   }
 
   if { $inputpdb != ""} {
     set MOLID [mol new $inputpdb]
   } else {
-    set MOLID [molinfo $inputmol get id]
+    set MOLID $inputmol;#[molinfo $inputmol get id]
   }
   
 
   set seqsel [atomselect $MOLID $sel]
  
   set sequence ""
-  foreach resid { [$seqsel get resid] } {
+  foreach resid [lsort -integer -unique [$seqsel get resid]] {
     set ressel [atomselect $MOLID "resid $resid"]
     set resname [lindex [$ressel get resname] 0]  
     switch $resname {
@@ -1099,7 +1100,7 @@ proc ::MODELMAKER::pdb2seq {args} {
       ILE { set res "I" }
       CYS { set res "C" }
       CYN { set res "C" }
-      TYR { set res "y" }
+      TYR { set res "Y" }
       HIS { set res "H" }
       HSE { set res "H" }
       HSD { set res "H" }
@@ -1114,11 +1115,13 @@ proc ::MODELMAKER::pdb2seq {args} {
     $ressel delete
   }
   
-  if {$output != "stdout"} {
+  if {$output != ""} {
    set f [open $output w] 
-   puts $f $sequence
+   foreach seq $sequence {
+    puts $f $seq
+   }
    close $f
   } else {
-    puts "$sequence"
+    return $sequence
   }
 }
