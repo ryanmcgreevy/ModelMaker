@@ -1120,9 +1120,9 @@ proc ::MODELMAKER::pdb2seq {args} {
   
   if {$output != ""} {
    set f [open $output w] 
-   foreach seq $sequence {
-    puts $f $seq
-   }
+  # foreach seq $sequence {
+    puts $f $sequence
+   #}
    close $f
   } else {
     return $sequence
