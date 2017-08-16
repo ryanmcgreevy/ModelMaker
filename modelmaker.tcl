@@ -59,8 +59,9 @@ namespace eval ::MODELMAKER {
   variable DefaultWorkDir "[pwd]/workdir"
   variable workdir $DefaultWorkDir
   variable DefaultScore -0.3
-  variable DefaultCSFlag 1
-  variable DefaultSidechain "no"
+  #variable DefaultCSFlag 1
+  #variable DefaultSidechain "no"
+  variable DefaultRefineMode "backbone"
 
   variable settings
   set ::MODELMAKER::settings(username) ""
@@ -261,20 +262,22 @@ proc ::MODELMAKER::refine_usage { } {
   variable DefaultTestRun
   variable DefaultWorkDir
   variable DefaultScore
-  variable DefaultCSFlag
-  variable DefaultSidechain
+  #variable DefaultCSFlag
+  #variable DefaultSidechain
+  variable DefaultRefineMode
   puts "Usage: modelmaker refine -model <full length template pdb> \
     -sel <list of atomselection texts with selections to fold> -anchor <anchor residue for coordinate restraints> \
     -density <density file to refine against in .mrc format> -res <resolution of the density in Angstroms> \
      ?options?"
   puts "Options:"
+  puts "  -mode       <refinement mode (backbone, sidechain, or cartesian> (default: $DefaultRefineMode)>"
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "
   puts "  -workdir    <working/project directory for job> (default: $DefaultWorkDir)>"
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
   puts "  -bestN      <number of structures with best scores to save> (default: same as -nstruct)> "
   puts "  -score      <Rosetta density score; lower values indicate lower weight> (default: $DefaultScore)> "
-  puts "  -csflag     <CartesianSample flag (0 or 1) Only used for non-sidechain refinement> (default: $DefaultCSFlag)> "
-  puts "  -sidechain  <refine side chains? (yes or no) (default: $DefaultSidechain)> "
+  #puts "  -csflag     <CartesianSample flag (0 or 1) Only used for non-sidechain refinement> (default: $DefaultCSFlag)> "
+  #puts "  -sidechain  <refine side chains? (yes or no) (default: $DefaultSidechain)> "
 }
 
 proc ::MODELMAKER::refine { args } {
@@ -285,8 +288,9 @@ proc ::MODELMAKER::refine { args } {
   variable rosettaPath
   variable DefaultWorkDir
   variable DefaultScore
-  variable DefaultCSFlag
-  variable DefaultSidechain
+  #variable DefaultCSFlag
+ # variable DefaultSidechain
+  variable DefaultRefineMode
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
@@ -321,6 +325,7 @@ proc ::MODELMAKER::refine { args } {
       -bestN { set arg(bestN) $val }
       -workdir { set arg(workdir) $val }
       -sidechain { set arg(sidechain) $val }
+      -mode { set arg(mode) $val }
       default { puts "Unknown argument $name"; return  }
     }
   }
@@ -357,17 +362,23 @@ proc ::MODELMAKER::refine { args } {
     error "The resolution of the density must be specified!"
   }
   
-  if { [info exists arg(csflag)] } {
-    set csflag $arg(csflag)
+  if { [info exists arg(mode)] } {
+    set mode $arg(mode)
   } else {
-    set csflag $DefaultCSFlag
+    set mode $DefaultRefineMode
   }
   
-  if { [info exists arg(sidechain)] } {
-    set sidechain $arg(sidechain)
-  } else {
-    set sidechain $DefaultSidechain
-  }
+ # if { [info exists arg(csflag)] } {
+ #   set csflag $arg(csflag)
+ # } else {
+ #   set csflag $DefaultCSFlag
+ # }
+  
+ # if { [info exists arg(sidechain)] } {
+ #   set sidechain $arg(sidechain)
+ # } else {
+ #   set sidechain $DefaultSidechain
+ # }
   
   if { [info exists arg(score)] } {
     set score $arg(score)
@@ -416,7 +427,13 @@ proc ::MODELMAKER::refine { args } {
 
   file copy $model.pdb $::MODELMAKER::workdir/setup-$jobname
   
-  if { $sidechain == "yes" } {
+  if { $mode == "cartesian" } {
+    set csflag 1
+  } else {
+    set csflag 0
+  }
+
+  if { $mode == "sidechain" } {
     start_rosetta_refine_sidechains_density $jobname $model $sel $anchor $density $res $score $bestN $nstruct
   } else {
     start_rosetta_refine $jobname $model $sel $anchor $csflag $density $res $score $bestN $nstruct
