@@ -79,6 +79,7 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  insertion             -- run Rosetta structure prediction for insertion folding"
   puts "  analyze               -- analyze results of Rosetta abinitio structure prediction"
   puts "  refine                -- refine a structure with Rosetta using a density" 
+  puts "  pdb2seq               -- get the single-letter amino acid sequence" 
   return
 
 }
@@ -107,6 +108,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::insertion $args]
   } elseif { $command == "refine" } {
     return [eval ::MODELMAKER::refine $args]
+  } elseif { $command == "pdb2seq" } {
+    return [eval ::MODELMAKER::pdb2seq $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -1080,7 +1083,34 @@ proc ::MODELMAKER::pdb2seq {args} {
   foreach resid { [$seqsel get resid] } {
     set ressel [atomselect $MOLID "resid $resid"]
     set resname [lindex [$ressel get resname] 0]  
-    lappend sequence $resname
+    switch $resname {
+      GLY { set res "G" }
+      ALA { set res "A" }
+      LEU { set res "L" }
+      MET { set res "M" }
+      PHE { set res "F" }
+      TRP { set res "W" }
+      LYS { set res "K" }
+      GLN { set res "Q" }
+      GLU { set res "E" }
+      SER { set res "S" }
+      PRO { set res "P" }
+      VAL { set res "V" }
+      ILE { set res "I" }
+      CYS { set res "C" }
+      CYN { set res "C" }
+      TYR { set res "y" }
+      HIS { set res "H" }
+      HSE { set res "H" }
+      HSD { set res "H" }
+      ARG { set res "R" }
+      ASN { set res "N" }
+      ASP { set res "D" }
+      THR { set res "T" }
+
+    }
+    
+    lappend sequence $res
     $ressel delete
   }
   
