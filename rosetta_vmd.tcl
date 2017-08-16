@@ -155,9 +155,9 @@ proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapn
 	file copy $mapname.mrc $::MODELMAKER::workdir/setup-$jobname/
 
 	if {!$scoreOnly} {
-		file mkdir -p $::MODELMAKER::workdir/run-$jobname/sc_out
-		file mkdir -p $::MODELMAKER::workdir/run-$jobname/pdb_out
-		file mkdir -p $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
+		file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
+		file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
+		file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
 		set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" "$jobname" "$mol.pdb" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
     set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
 		while {$current < $nstruct} {
