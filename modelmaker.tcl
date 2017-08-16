@@ -7,7 +7,7 @@ package require RosettaVMD
 package provide modelmaker 0.1
 
 namespace eval ::MODELMAKER {
-  variable defaultGapfindSel "all"
+  variable defaultGapfindSel "protein"
   #this should get auto-set depending on OS, but
   #should maybe be changed to not rely on this because it would be
   #best to be independent of any future naming conventions of rosetta. Use wildcard instead?
@@ -62,6 +62,7 @@ namespace eval ::MODELMAKER {
   #variable DefaultCSFlag 1
   #variable DefaultSidechain "no"
   variable DefaultRefineMode "backbone"
+  variable DefaultPDB2SeqSel "protein" 
 
   variable settings
   set ::MODELMAKER::settings(username) ""
@@ -78,6 +79,7 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  insertion             -- run Rosetta structure prediction for insertion folding"
   puts "  analyze               -- analyze results of Rosetta abinitio structure prediction"
   puts "  refine                -- refine a structure with Rosetta using a density" 
+  puts "  pdb2seq               -- get the single-letter amino acid sequence" 
   return
 
 }
@@ -106,6 +108,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::insertion $args]
   } elseif { $command == "refine" } {
     return [eval ::MODELMAKER::refine $args]
+  } elseif { $command == "pdb2seq" } {
+    return [eval ::MODELMAKER::pdb2seq $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -879,7 +883,7 @@ proc ::MODELMAKER::gapfind_usage { } {
   puts "Usage: mdodelmaker gapfind ?options?"
   puts "Options:"
   puts "  -i <input pdb> "
-  puts "  -sel <atom selection> (default: $defaultGapfindSel)"
+  puts "  -sel <atom selection text> (default: $defaultGapfindSel)"
   #puts "  -mol <molid> (find gaps in already loaded molecule) (default: $defaultGapfindMol)"
   puts "  -mol <molid> (find gaps in already loaded molecule)"
 
@@ -940,12 +944,12 @@ proc ::MODELMAKER::gapfind { args } {
   if { $inputpdb != ""} {
     set MOLID [mol new $inputpdb]
   } else {
-    set MOLID [molinfo $inputmol get id]
+    set MOLID $inputmol ;#[molinfo $inputmol get id]
   }
 
   set molname [molinfo $MOLID get name]
 
-  set chains [lsort -unique [[atomselect $MOLID protein] get chain]]
+  set chains [lsort -unique [[atomselect $MOLID $inputsel] get chain]]
 #set generalOut [open "$MOL-missing.html" w]
   foreach chain $chains {
     puts $chain
@@ -1005,11 +1009,119 @@ proc ::MODELMAKER::format_pdb {sel filename} {
   puts $fwpdb $spdb
   close $fwpdb
 }
-#proc ::MODELMAKER::decr { int { n 1 } } {
-#    if { [ catch {
-#        uplevel incr $int -$n
-#    } err ] } {
-#        return -code error "decr: $err"
-#    }
-#    return [ uplevel set $int ]
-#}
+
+proc ::MODELMAKER::pdb2seq_usage { } {
+  variable DefaultPDB2SeqSel 
+  puts "Usage: mdodelmaker pdb2seq ?options?"
+  puts "Options:"
+  puts "  -i <input pdb> "
+  puts "  -sel <atom selection text> (default: $DefaultPDB2SeqSel)"
+  #puts "  -mol <molid> (find gaps in already loaded molecule) (default: $defaultGapfindMol)"
+  puts "  -mol <molid> (find gaps in already loaded molecule)"
+  puts "  -o   <filename> (output sequence to a file instead)"
+
+}
+
+proc ::MODELMAKER::pdb2seq {args} {
+  variable DefaultPDB2SeqSel 
+  
+  set nargs [llength [lindex $args 0]]
+  if {$nargs == 0} {
+    pdb2seq_usage
+    error ""
+  }
+  
+  foreach {name val} $args {
+    switch -- $name {
+      -i { set arg(i) $val }
+      -o { set arg(o) $val }
+      -mol { set arg(mol) $val }
+      -sel { set arg(sel) $val }
+      default { puts "Unknown argument $name"; return  }
+    }
+  }
+
+  if { [info exists arg(i)] && [info exists arg(mol)] } {
+    error "only an input pdb OR a mol id can be specified at one time"
+  } elseif { ![info exists arg(i)] && ![info exists arg(mol)] } {
+    error "either an input pdb OR a mol id must be specified"
+  }
+
+  if { [info exists arg(i)] } {
+    set inputpdb $arg(i)
+  } else {
+    set inputpdb ""
+  }
+  
+  if { [info exists arg(sel)] } {
+    set sel $arg(sel)
+  } else {
+    set sel $DefaultPDB2SeqSel
+  }
+
+  if { [info exists arg(mol)] } {
+    set inputmol $arg(mol)
+  } else {
+    set inputmol ""
+  }
+  
+  if { [info exists arg(o)] } {
+    set output $arg(o)
+  } else {
+    set output ""
+  }
+
+  if { $inputpdb != ""} {
+    set MOLID [mol new $inputpdb]
+  } else {
+    set MOLID $inputmol;#[molinfo $inputmol get id]
+  }
+  
+
+  set seqsel [atomselect $MOLID $sel]
+ 
+  set sequence ""
+  foreach resid [lsort -integer -unique [$seqsel get resid]] {
+    set ressel [atomselect $MOLID "resid $resid"]
+    set resname [lindex [$ressel get resname] 0]  
+    switch $resname {
+      GLY { set res "G" }
+      ALA { set res "A" }
+      LEU { set res "L" }
+      MET { set res "M" }
+      PHE { set res "F" }
+      TRP { set res "W" }
+      LYS { set res "K" }
+      GLN { set res "Q" }
+      GLU { set res "E" }
+      SER { set res "S" }
+      PRO { set res "P" }
+      VAL { set res "V" }
+      ILE { set res "I" }
+      CYS { set res "C" }
+      CYN { set res "C" }
+      TYR { set res "Y" }
+      HIS { set res "H" }
+      HSE { set res "H" }
+      HSD { set res "H" }
+      ARG { set res "R" }
+      ASN { set res "N" }
+      ASP { set res "D" }
+      THR { set res "T" }
+
+    }
+    
+    lappend sequence $res
+    $ressel delete
+  }
+  
+  if {$output != ""} {
+   set f [open $output w] 
+   foreach seq $sequence {
+    puts $f $seq
+   }
+   close $f
+  } else {
+    return $sequence
+  }
+}
