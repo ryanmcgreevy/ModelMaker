@@ -63,7 +63,7 @@ namespace eval ::MODELMAKER {
   #variable DefaultSidechain "no"
   variable DefaultRefineMode "backbone"
   variable DefaultPDB2SeqSel "protein" 
-
+  variable MPINP
   variable settings
   set ::MODELMAKER::settings(username) ""
 }
@@ -133,6 +133,7 @@ proc ::MODELMAKER::insertion_usage  { } {
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
   puts "  -workdir    <working/project directory for job> (default: $DefaultWorkDir)>"
+  puts "  -np         <Number of processors to use. MPI version only> "
 }
 
 
@@ -142,6 +143,7 @@ proc ::MODELMAKER::insertion { args } {
   variable DefaultNStruct
   variable rosettaPath
   variable DefaultWorkDir
+  variable MPINP
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
@@ -170,6 +172,7 @@ proc ::MODELMAKER::insertion { args } {
       -fragfiles { set arg(fragfiles) $val }
       -nstruct { set arg(nstruct) $val }
       -workdir { set arg(workdir) $val }
+      -np { set arg(np) $val }
       default { puts "Unknown argument $name"; return }
     }
   }
@@ -215,6 +218,12 @@ proc ::MODELMAKER::insertion { args } {
     set jobname $arg(jobname)
   } else {
     set jobname $model
+  }
+  
+  if { [info exists arg(np)] } {
+    set MPINP $arg(np)
+  } elseif { [string match "*mpi.*" $rosettaEXE] }  {
+    error "number of processors (-np) must be specified when using MPI version of Rosetta!"
   }
 
   if { [info exists arg(workdir)] } {
@@ -277,12 +286,13 @@ proc ::MODELMAKER::refine_usage { } {
     -density <density file to refine against in .mrc format> -res <resolution of the density in Angstroms> \
      ?options?"
   puts "Options:"
-  puts "  -mode       <refinement mode (backbone, sidechain, or cartesian> (default: $DefaultRefineMode)>"
-  puts "  -jobname    <name prefix for job> (default: taken from -model)> "
-  puts "  -workdir    <working/project directory for job> (default: $DefaultWorkDir)>"
-  puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
-  puts "  -bestN      <number of structures with best scores to save> (default: same as -nstruct)> "
-  puts "  -score      <Rosetta density score; lower values indicate lower weight> (default: $DefaultScore)> "
+  puts "  -mode       <refinement mode (backbone, sidechain, or cartesian> (default: $DefaultRefineMode)"
+  puts "  -jobname    <name prefix for job> (default: taken from -model) "
+  puts "  -workdir    <working/project directory for job> (default: $DefaultWorkDir)"
+  puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct) "
+  puts "  -bestN      <number of structures with best scores to save> (default: same as -nstruct) "
+  puts "  -score      <Rosetta density score; lower values indicate lower weight> (default: $DefaultScore) "
+  puts "  -np         <Number of processors to use. MPI version only> "
   #puts "  -csflag     <CartesianSample flag (0 or 1) Only used for non-sidechain refinement> (default: $DefaultCSFlag)> "
   #puts "  -sidechain  <refine side chains? (yes or no) (default: $DefaultSidechain)> "
 }
@@ -295,6 +305,7 @@ proc ::MODELMAKER::refine { args } {
   variable rosettaPath
   variable DefaultWorkDir
   variable DefaultScore
+  variable MPINP
   #variable DefaultCSFlag
  # variable DefaultSidechain
   variable DefaultRefineMode
@@ -325,14 +336,15 @@ proc ::MODELMAKER::refine { args } {
       -sel { set arg(sel) $val }
       -anchor { set arg(anchor) $val }
       -nstruct { set arg(nstruct) $val }
-      -csflag { set arg(csflag) $val }
+      #-csflag { set arg(csflag) $val }
       -density { set arg(density) $val }
       -res { set arg(res) $val }
       -score { set arg(score) $val }
       -bestN { set arg(bestN) $val }
       -workdir { set arg(workdir) $val }
-      -sidechain { set arg(sidechain) $val }
+      #-sidechain { set arg(sidechain) $val }
       -mode { set arg(mode) $val }
+      -np { set arg(np) $val }
       default { puts "Unknown argument $name"; return  }
     }
   }
@@ -410,6 +422,12 @@ proc ::MODELMAKER::refine { args } {
   } else {
     set jobname $model
   }
+  
+  if { [info exists arg(np)] } {
+    set MPINP $arg(np)
+  } elseif { [string match "*mpi.*" $rosettaEXE] }  {
+    error "number of processors (-np) must be specified when using MPI version of Rosetta!"
+  }
 
 
   if { [info exists arg(workdir)] } {
@@ -461,6 +479,7 @@ proc ::MODELMAKER::abinitio_usage { } {
   puts "  -workdir    <working/project directory for job> (default: $DefaultWorkDir)>"
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
   puts "  -testrun    <test run flag (0 or 1)> (default: $DefaultTestRun)> "
+  puts "  -np         <Number of processors to use. MPI version only> "
 #hide these until wider functionality
 #  puts "  -cluster    <run on cluster flag (0 or 1)> (default: $DefaultCluster)> "
 #  puts "  -npertask   <tasks per job on cluster> (default: $DefaultNPerTask)> "
@@ -476,6 +495,7 @@ proc ::MODELMAKER::abinitio { args } {
   variable DefaultTestRun
   variable rosettaPath
   variable DefaultWorkDir
+  variable MPINP
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
@@ -507,6 +527,7 @@ proc ::MODELMAKER::abinitio { args } {
       -npertask { set arg(npertask) $val }
       -testrun { set arg(testrun) $val }
       -workdir { set arg(workdir) $val }
+      -np { set arg(np) $val }
       default { puts "Unknown argument $name"; return  }
     }
   }
@@ -564,6 +585,12 @@ proc ::MODELMAKER::abinitio { args } {
     set jobname $arg(jobname)
   } else {
     set jobname $model
+  }
+  
+  if { [info exists arg(np)] } {
+    set MPINP $arg(np)
+  } elseif { [string match "*mpi.*" $rosettaEXE] }  {
+    error "number of processors (-np) must be specified when using MPI version of Rosetta!"
   }
 
 

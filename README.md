@@ -52,5 +52,5 @@ modelmaker analyze -model rpn11_yeast_4ocm.pdb_full_length.pdb -template rpn11_y
 An example of how to use ModelMaker to refine a model against a mid-resolution density from the [tutorial](http://www.ks.uiuc.edu/Training/Tutorials/science/rosetta-mdff/rosetta-mdff-tutorial-html/node6.html) is below:
 
 ```
-modelmaker refine -model rpn11_yeast.pdb -anchor 1  -sel {"resid 212 to 228" "resid 296 to 306"} -density rpn11_model_5_2594_density.mrc -res 7.7 -nstruct 1 -jobname rpn11_refine -score -0.3
+modelmaker refine -model rpn11_yeast.pdb -anchor "resid 23"  -sel {"resid 212 to 228" "resid 296 to 306"} -density rpn11_model_5_2594_density.mrc -res 7.7 -nstruct 1 -jobname rpn11_refine -score -0.3
 ```

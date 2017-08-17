@@ -848,6 +848,12 @@ proc ::RosettaInputGenerator::make_bash_script {denswt rms res map jobname nstru
 	global rosettapath
 	global rosettaDBpath
 	global platform
+  
+  if { [string match "*mpi.*" $platform] } {
+    set mpi_args "mpiexec -np $::MODELMAKER::MPINP"      
+  } else {
+    set mpi_args ""
+  }
 	return "#!/bin/bash
 	JOBNAME=\"\${1/%}\"
 	MOL=\"\${2/%}\"
@@ -855,7 +861,7 @@ proc ::RosettaInputGenerator::make_bash_script {denswt rms res map jobname nstru
   		echo Need job name!
   		exit
 	fi
-	$rosettapath/rosetta_scripts.$platform \\
+	$mpi_args $rosettapath/rosetta_scripts.$platform \\
 			-database $rosettaDBpath \\
 			-nstruct $nstruct \\
 		-parser::script_vars denswt=$denswt rms=$rms reso=$res map=$::MODELMAKER::workdir/setup-$jobname/$map testmap=$::MODELMAKER::workdir/setup-$jobname/$map \\
@@ -922,7 +928,14 @@ proc ::RosettaInputGenerator::make_abinitio_test_script {jobname nstruct} \
 	global rosettapath
 	global rosettaDBpath
 	global platform
+  
+  if { [string match "*mpi.*" $platform] } {
+    set mpi_args "mpiexec -np $::MODELMAKER::MPINP"      
+  } else {
+    set mpi_args ""
+  }
 	return "
+
 #!/bin/bash
 JOBNAME=\"\${1/%}\"
 MOL=\"\${2/%}\"
@@ -932,7 +945,7 @@ if \[ -z \"\$1\" \]\; then
   exit
 fi
 
-$rosettapath/rosetta_scripts.$platform \\
+$mpi_args $rosettapath/rosetta_scripts.$platform \\
     -database $rosettaDBpath \\
 	-nstruct $nstruct \\
 	-run:test_cycles \\
@@ -957,10 +970,15 @@ proc ::RosettaInputGenerator::make_insertion_local_script {jobname mol nstruct f
 	global rosettapath
 	global rosettaDBpath
 	global platform
+  if { [string match "*mpi.*" $platform] } {
+    set mpi_args "mpiexec -np $::MODELMAKER::MPINP"      
+  } else {
+    set mpi_args ""
+  }
 	return "
 #!/bin/bash
 
-$rosettapath/minirosetta.$platform \\
+$mpi_args $rosettapath/minirosetta.$platform \\
 	-run::shuffle \\
 	-abinitio::close_loops \\
 	-short_frag_cycles 2 \\
@@ -1069,6 +1087,12 @@ proc ::RosettaInputGenerator::make_abinitio_local_script {jobname nstruct} \
 	global rosettapath
 	global rosettaDBpath
 	global platform
+  
+  if { [string match "*mpi.*" $platform] } {
+    set mpi_args "mpiexec -np $::MODELMAKER::MPINP"      
+  } else {
+    set mpi_args ""
+  }
 	return "
 #!/bin/bash
 JOBNAME=\"\${1/%}\"
@@ -1079,7 +1103,7 @@ if \[ -z \"\$1\" \]\; then
   exit
 fi
 
-$rosettapath/rosetta_scripts.$platform \\
+$mpi_args $rosettapath/rosetta_scripts.$platform \\
     -database $rosettaDBpath \\
 	  -nstruct $nstruct \\
     -out::prefix \${JOBNAME}_ \\
