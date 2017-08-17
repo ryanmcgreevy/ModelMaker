@@ -3,6 +3,7 @@
 
 namespace eval ::FindSelection {
 	namespace export find_selection
+	namespace export get_anchor_residue
 	set version 0.1
 	set description "Convert VMD selection to Rosetta selection"
 }
@@ -12,6 +13,32 @@ proc find_selection {args} \
 {
 	return [eval ::FindSelection::find_selection $args]
 }
+
+proc get_anchor_residue {args} \
+{
+	return [eval ::FindSelection::get_anchor_residue $args]
+}
+
+proc ::FindSelection::get_anchor_residue {MOL selection} \
+{
+	set searchmol [mol new $MOL.pdb]
+	set searchsel [atomselect $searchmol "$selection"]
+	set vmd_resids [lsort -unique -integer [$searchsel get residue]]
+	set ros_resids []
+	foreach vmd_resid $vmd_resids {
+		lappend ros_resids [expr $vmd_resid +1]
+	}
+	mol delete $searchmol
+	if {[llength $ros_resids] > 1} {
+		puts "WARNING: Please specify only ONE anchor residue! Will use the first residue in the list only!"
+	}
+	if {[llength $ros_resids] == 0} {
+		puts "ERROR: atom selection for anchor residue is empty! Exiting."
+		exit
+	}
+	return [lindex $ros_resids 0]
+}
+
 
 #config should contain bb and chi settings for span for each selection, such as [list {0 1} {1 1}]
 # first: chi, second: bb
