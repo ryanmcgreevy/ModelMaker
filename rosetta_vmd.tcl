@@ -63,6 +63,9 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 	set chains [lindex $find_sel 2]
 	set constraints [lindex $find_sel 3]
 
+  set anchor [get_anchor_residue $::MODELMAKER::workdir/setup-$jobname/$mol $anchor]
+	#puts "anchor residue converted: $anchor"
+
 	set ros_config [list $chains $spans $exclude [list $anchor $constraints]]
 
 	######################
@@ -139,6 +142,9 @@ proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapn
 	set exclude [lindex $find_sel 1]
 	set chains [lindex $find_sel 2]
 	set constraints [lindex $find_sel 3]
+
+	set anchor [get_anchor_residue $::MODELMAKER::workdir/setup-$jobname/$mol $anchor]
+	#puts "anchor residue converted: $anchor"
 
 	set ros_config [list $chains $spans $exclude [list $anchor $constraints]]
 	######################
@@ -219,6 +225,9 @@ proc start_rosetta_basic_refine {jobname mol selections anchor sidechains_only b
 	set exclude [lindex $find_sel 1]
 	set chains [lindex $find_sel 2]
 	set constraints [lindex $find_sel 3]
+
+	set anchor [get_anchor_residue $::MODELMAKER::workdir/setup-$jobname/$mol $anchor]
+	#puts "anchor residue converted: $anchor"
 
 	set ros_config [list $chains $spans $exclude [list $anchor $constraints]]
 
@@ -310,6 +319,9 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 	set exclude [lindex $find_sel 1]
 	set chains [lindex $find_sel 2]
 	set constraints [lindex $find_sel 3]
+
+	set anchor [get_anchor_residue $::MODELMAKER::workdir/setup-$jobname/$mol $anchor]
+	#puts "anchor residue converted: $anchor"
 
 	set ros_config [list $chains $spans $exclude [list $anchor $constraints]]
 
