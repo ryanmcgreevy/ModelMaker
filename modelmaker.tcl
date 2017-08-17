@@ -1111,7 +1111,7 @@ proc ::MODELMAKER::pdb2seq {args} {
       ASN { set res "N" }
       ASP { set res "D" }
       THR { set res "T" }
-
+      default { set res "X" }
     }
     
     lappend sequence $res
