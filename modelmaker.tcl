@@ -454,7 +454,7 @@ proc ::MODELMAKER::abinitio_usage { } {
   variable DefaultTestRun
   variable DefaultWorkDir
   puts "Usage: modelmaker abinitio -model <full length template pdb> -fragfiles <list of fragment files> \
-    -sel <list of atomselection texts with selections to fold> -anchor <anchor residue for coordinate restraints> \
+    -sel <list of atomselection texts with selections to fold> -anchor <atomselection text for anchor residue for coordinate restraints> \
      ?options?"
   puts "Options:"
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "

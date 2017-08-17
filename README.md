@@ -36,7 +36,7 @@ An example of how to use ModelMaker to fold
 protein termini from the [tutorial](http://www.ks.uiuc.edu/Training/Tutorials/science/rosetta-mdff/rosetta-mdff-tutorial-html/node4.html) is below:
 
 ```
-modelmaker abinitio -model rpn11_yeast_4ocm.pdb_full_length.pdb -anchor 1 -fragfiles {{rpn11_yeast_23-306_frag9 rpn11_yeast_23-306_frag3}} -sel "resid 213 to 306" -nstruct 5
+modelmaker abinitio -model rpn11_yeast_4ocm.pdb_full_length.pdb -anchor "resid 23" -fragfiles {{rpn11_yeast_23-306_frag9 rpn11_yeast_23-306_frag3}} -sel "resid 213 to 306" -nstruct 5
 
 modelmaker analyze -model rpn11_yeast_4ocm.pdb_full_length.pdb -template rpn11_yeast_4ocm.pdb_full_length.pdb -nstruct 5 -align_template "resid 23 to 212" -comps {{ss 210 306 "A"}}
 
