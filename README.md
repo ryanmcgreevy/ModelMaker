@@ -34,7 +34,8 @@ the following command:
 ./scons.py bin mode=release extras=mpi
 ```
 Then you will need to set your ``env(ROSETTAEXE)`` environment variable to the prefix
-of the MPI binaries (usually mpi.\*)
+of the MPI binaries (usually mpi.\*) and set the ``-np`` option in the ModelMaker commands
+to specify the number of processors to use.
 
 In VMD's TkConsole, type `modelmaker` to see a list of commands. You can also
 type `modelmaker command` where 'command' is one of the available ModelMaker commands
