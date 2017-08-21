@@ -849,7 +849,7 @@ proc ::RosettaInputGenerator::make_bash_script {denswt rms res map jobname nstru
 	global rosettaDBpath
 	global platform
   
-  if { [string match "*mpi.*" $platform] } {
+  if { [string match "*mpi*" $platform] } {
     set mpi_args "mpiexec -np $::MODELMAKER::MPINP"      
   } else {
     set mpi_args ""
@@ -929,7 +929,7 @@ proc ::RosettaInputGenerator::make_abinitio_test_script {jobname nstruct} \
 	global rosettaDBpath
 	global platform
   
-  if { [string match "*mpi.*" $platform] } {
+  if { [string match "*mpi*" $platform] } {
     set mpi_args "mpiexec -np $::MODELMAKER::MPINP"      
   } else {
     set mpi_args ""
@@ -970,7 +970,7 @@ proc ::RosettaInputGenerator::make_insertion_local_script {jobname mol nstruct f
 	global rosettapath
 	global rosettaDBpath
 	global platform
-  if { [string match "*mpi.*" $platform] } {
+  if { [string match "*mpi*" $platform] } {
     set mpi_args "mpiexec -np $::MODELMAKER::MPINP"      
   } else {
     set mpi_args ""
@@ -1088,7 +1088,7 @@ proc ::RosettaInputGenerator::make_abinitio_local_script {jobname nstruct} \
 	global rosettaDBpath
 	global platform
   
-  if { [string match "*mpi.*" $platform] } {
+  if { [string match "*mpi*" $platform] } {
     set mpi_args "mpiexec -np $::MODELMAKER::MPINP"      
   } else {
     set mpi_args ""

@@ -20,6 +20,22 @@ package require modelmaker
 Make sure to replace the paths with the correct ones specific to the location of
 your Rosetta and ModelMaker folders.
 
+You can also set the ``env(ROSETTAEXE)`` environment variable to use a specific
+set of Rosetta binaries. This environment variable should be set to the binary prefix
+you wish to use, but will be set by default depending on your platform. (e.g., on OSX,
+this environment variable will usually be 
+``static.macosclangrelease``)
+
+
+If you want to use the parallel MPI version of Rosetta, you must compile the MPI binaries with
+the following command:
+
+```
+./scons.py bin mode=release extras=mpi
+```
+Then you will need to set your ``env(ROSETTAEXE)`` environment variable to the prefix
+of the MPI binaries (usually mpi.\*)
+
 In VMD's TkConsole, type `modelmaker` to see a list of commands. You can also
 type `modelmaker command` where 'command' is one of the available ModelMaker commands
 to see more information about it. 
