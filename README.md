@@ -33,6 +33,8 @@ the following command:
 ```
 ./scons.py bin mode=release extras=mpi
 ```
+For more information please see the [Rosetta Documentation](https://www.rosettacommons.org/docs/latest/rosetta_basics/MPI).
+
 Then you will need to set your ``env(ROSETTAEXE)`` environment variable to the prefix
 of the MPI binaries (usually mpi.\* where \* is the rest of the specific platform,
 like ``macosclangrelease`` or ``linuxgccrelease``) and set the ``-np`` option in the ModelMaker commands
