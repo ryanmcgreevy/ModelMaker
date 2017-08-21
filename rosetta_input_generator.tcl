@@ -828,7 +828,7 @@ proc ::RosettaInputGenerator::make_default_scfxn {} \
 			<Reweight scoretype=\"pro_close\" weight=\"0.0\"/>
 			<Reweight scoretype=\"elec_dens_fast\" weight=\"%%denswt%%\"/>
 		</ScoreFunction>
-		<ScoreFunction name=\"dens\" weights=\"talaris2013_cart\">
+		<ScoreFunction name=\"dens\" weights=\"ref2015_cart\">
 			<Reweight scoretype=\"elec_dens_fast\" weight=\"%%denswt%%\"/>
 			<Set scale_sc_dens_byres=\"R:0.76,K:0.76,E:0.76,D:0.76,M:0.76,C:0.81,Q:0.81,H:0.81,N:0.81,T:0.81,S:0.81,Y:0.88,W:0.88,A:0.88,F:0.88,P:0.88,I:0.88,L:0.88,V:0.88\"/>
 		</ScoreFunction>
