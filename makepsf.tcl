@@ -20,7 +20,7 @@ proc auto_makepsf {args} \
   return [eval ::MakePsf::auto_makepsf $args]
 }
 
-proc ::MakePsf::auto_makepsf {MOL topdir topnames ch_seg mutations} \
+proc ::MakePsf::auto_makepsf {MOL topnames ch_seg mutations} \
 {
   ##########
   # !!!!!! #
@@ -33,7 +33,7 @@ proc ::MakePsf::auto_makepsf {MOL topdir topnames ch_seg mutations} \
     resetpsf
 
     foreach top $topnames {
-      topology $topdir/$top
+      topology $top
     }
 
 

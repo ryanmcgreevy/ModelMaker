@@ -3,6 +3,7 @@
 #because it should not assume the presence or behavior of those commands, especially
 #since people (like me) have some of those commands aliased.
 package require RosettaVMD
+package require MakePsf
 
 package provide modelmaker 0.1
 
@@ -63,6 +64,13 @@ namespace eval ::MODELMAKER {
   #variable DefaultSidechain "no"
   variable DefaultRefineMode "backbone"
   variable DefaultPDB2SeqSel "protein" 
+  variable DefaultTopFiles [list [file join $env(CHARMMTOPDIR) top_all36_prot.rtf] \
+    [file join $env(CHARMMTOPDIR) top_all36_lipid.rtf] \
+    [file join $env(CHARMMTOPDIR) top_all36_na.rtf] \
+    [file join $env(CHARMMTOPDIR) top_all36_carb.rtf] \
+    [file join $env(CHARMMTOPDIR) top_all36_cgenff.rtf] \
+    [file join $env(CHARMMTOPDIR) toppar_all36_carb_glycopeptide.str] \
+    [file join $env(CHARMMTOPDIR) toppar_water_ions_namd.str] ]
   variable MPINP
   variable settings
   set ::MODELMAKER::settings(username) ""
@@ -113,6 +121,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::pdb2seq $args]
   } elseif { $command == "seqsub" } {
     return [eval ::MODELMAKER::seqsub $args]
+  } elseif { $command == "makepsf" } {
+    return [eval ::MODELMAKER::makepsf $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -1157,12 +1167,9 @@ proc ::MODELMAKER::pdb2seq {args} {
 }
 
 proc ::MODELMAKER::seqsub_usage { } {
-  puts "Usage: mdodelmaker seqsub ?options?"
-  puts "Options:"
-  puts "  -i <input fasta> "
-  puts "  -o <filename> (output file name) "
-  puts "  -start <residue number> (starting residue number) "
-  puts "  -end <residue number> (ending residue number) "
+  puts "Usage: mdodelmaker seqsub -i <input fasta> -o <filename> (output file name) \
+    -start <residue number> (starting residue number) \
+    -end <residue number> (ending residue number) "
 
 }
 
@@ -1219,3 +1226,61 @@ proc ::MODELMAKER::seqsub { args } {
   close $outfile
 }
 
+proc ::MODELMAKER::makepsf_usage {} {
+  variable DefaultTopFiles
+  puts "Usage: mdodelmaker makepsf -pdb <input pdb file> ?options?"
+  puts "Options:"
+  puts "  -topfiles <list of topology files to use>(Default: $DefaultTopFiles) "
+  puts "  -chseg <list of 'name' 'chain' 'segname' lists> (Default: from input pdb)"
+}
+
+proc ::MODELMAKER::makepsf { args } {
+  variable DefaultTopFiles
+
+  set nargs [llength [lindex $args 0]]
+  if {$nargs == 0} {
+    makepsf_usage
+    error ""
+  }
+  
+  foreach {name val} $args {
+    switch -- $name {
+      -pdb { set arg(pdb) $val }
+      -topfiles { set arg(topfiles) $val }
+      default { puts "Unknown argument $name"; return  }
+    }
+  }
+  
+  if { [info exists arg(pdb)] } {
+    set pdb [string range $arg(pdb) 0 [expr [string last ".pdb" $arg(pdb)] - 1 ]]
+  } else {
+    error "input pdb file required"
+  }
+  
+  if { [info exists arg(topfiles)] } {
+    set topfiles $arg(topfiles)
+  } else {
+    set topfiles $DefaultTopFiles
+  }
+  
+  if { [info exists arg(chseg)] } {
+    set chseg $arg(chseg)
+  } else {
+    set mol [mol new $pdb.pdb]
+    set sel [atomselect $mol "all"]
+    set chains [$sel get chain]
+    set segnames [$sel get segname]
+    #get unique list
+    foreach chain $chains {dict set tmp $chain 1}
+    set chains [dict keys $tmp]
+    foreach segname $segnames {dict set tmp2 $segname 1}
+    set segnames [dict keys $tmp2]
+
+    foreach chain $chains segname $segnames {
+      lappend chseg  [list $pdb $chain $segname]
+    }
+  
+  }
+  set chseg [list {"rpn11" "A" "AP1"}]
+  auto_makepsf $pdb $topfiles $chseg ""
+}
