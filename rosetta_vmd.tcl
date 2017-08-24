@@ -86,31 +86,36 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 		file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
 		file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
 		file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
-		set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" "$jobname" "$mol.pdb" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
-    set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
-		while {$current < $nstruct} {
-			set n 5
-			puts "Files are not yet available."
-			puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
-			after [expr {int($n * 1000)}]
-		  set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
-			if {$cluster} {
-				set logfile [open "rosetta_log_$jobname.log" r]
-				set dt [read $logfile]
-				close $logfile
-				set lns [split $dt "\n"]
-				set infoline [lindex $lns 0]
-				set res [regexp {([0-9]+)} $infoline jobid]
-				set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
-				set status [check_clusterjob $username $jobid $tasks]
-				if {$status == 0} {
-					break
-				}
-			}
-		}
-		puts $output
-		puts "Rosetta finished"
-	}
+    set logfile [open $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log a]
+    set script [open "| $::MODELMAKER::workdir/run-$jobname/$jobname.sh $jobname $mol.pdb 2>@stderr &" r]
+    set numfiles 0
+    while {[gets $script line] >= 0} {
+      puts $logfile $line
+      set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
+      if { $current > $numfiles} {
+        puts "Current number of files: $current - [expr double($current)/($nstruct) * 100.0] % complete"
+        set numfiles $current
+        
+        if {$cluster} {
+          set logfile [open "rosetta_log_$jobname.log" r]
+          set dt [read $logfile]
+          close $logfile
+          set lns [split $dt "\n"]
+          set infoline [lindex $lns 0]
+          set res [regexp {([0-9]+)} $infoline jobid]
+          set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
+          set status [check_clusterjob $username $jobid $tasks]
+          if {$status == 0} {
+            break
+          }
+        }
+      }
+    }
+
+    close $logfile
+    puts "Rosetta finished."
+	
+  }
 
 	# Scoring
 	#exec mv {*}[glob *.sc] sc_out/
@@ -164,30 +169,34 @@ proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapn
 		file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
 		file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
 		file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
-		set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" "$jobname" "$mol.pdb" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
-    set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
-		while {$current < $nstruct} {
-			set n 5
-			puts "Files are not yet available."
-			puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
-			after [expr {int($n * 1000)}]
-		  set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
-			if {$cluster} {
-				set logfile [open "rosetta_log_$jobname.log" r]
-				set dt [read $logfile]
-				close $logfile
-				set lns [split $dt "\n"]
-				set infoline [lindex $lns 0]
-				set res [regexp {([0-9]+)} $infoline jobid]
-				set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
-				set status [check_clusterjob $username $jobid $tasks]
-				if {$status == 0} {
-					break
-				}
-			}
-		}
-		puts $output
-		puts "Rosetta finished"
+    set logfile [open $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log a]
+    set script [open "| $::MODELMAKER::workdir/run-$jobname/$jobname.sh $jobname $mol.pdb 2>@stderr &" r]
+    set numfiles 0
+    while {[gets $script line] >= 0} {
+      puts $logfile $line
+      set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
+      if { $current > $numfiles} {
+        puts "Current number of files: $current - [expr double($current)/($nstruct) * 100.0] % complete"
+        set numfiles $current
+        
+        if {$cluster} {
+          set logfile [open "rosetta_log_$jobname.log" r]
+          set dt [read $logfile]
+          close $logfile
+          set lns [split $dt "\n"]
+          set infoline [lindex $lns 0]
+          set res [regexp {([0-9]+)} $infoline jobid]
+          set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
+          set status [check_clusterjob $username $jobid $tasks]
+          if {$status == 0} {
+            break
+          }
+        }
+      }
+    }
+
+    close $logfile
+    puts "Rosetta finished."
 	}
 
 	# MOL max_structures
@@ -357,27 +366,30 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 	file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
 	file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
 	file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
-	set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" "$jobname" "$mol.pdb" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
-  set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
-	while {$current < $nstruct} {
-		set n 5
-		puts "Files are not yet available."
-		puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
-		after [expr {int($n * 1000)}]
+	set logfile [open $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log a]
+  set script [open "| $::MODELMAKER::workdir/run-$jobname/$jobname.sh $jobname $mol.pdb 2>@stderr &" r]
+	set numfiles 0
+  while {[gets $script line] >= 0} {
+		puts $logfile $line
 		set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
-		if {$cluster} {
-			set logfile [open "rosetta_log_$jobname.log" r]
-			set dt [read $logfile]
-			close $logfile
-			set lns [split $dt "\n"]
-			set infoline [lindex $lns 0]
-			set res [regexp {([0-9]+)} $infoline jobid]
-			set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
-			set status [check_clusterjob $username $jobid $tasks]
-			if {$status == 0} {
-				break
-			}
-		}
+    if { $current > $numfiles} {
+      puts "Current number of files: $current - [expr double($current)/($nstruct) * 100.0] % complete"
+      set numfiles $current
+      
+      if {$cluster} {
+        set logfile [open "rosetta_log_$jobname.log" r]
+        set dt [read $logfile]
+        close $logfile
+        set lns [split $dt "\n"]
+        set infoline [lindex $lns 0]
+        set res [regexp {([0-9]+)} $infoline jobid]
+        set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
+        set status [check_clusterjob $username $jobid $tasks]
+        if {$status == 0} {
+          break
+        }
+      }
+    }
 	}
 #	puts "pdbs: [glob *.pdb]"
 #  puts "score: [glob -nocomplain *.sc] pwd: [pwd]"
@@ -386,8 +398,8 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 #  }
 #	file rename {*}[glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*.pdb] $::MODELMAKER::workdir/run-$jobname/pdb_out/
 
-  puts $output
-	puts "Rosetta abinitio finished."
+	close $logfile
+  puts "Rosetta abinitio finished."
 }
 
 
@@ -424,36 +436,35 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fasta nstruct {cl
 	file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
 	file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
 	file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
-	set output [exec "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" >> $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log &]
-	set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/$jobname*.pdb ] ]
-	while {$current < $nstruct} {
-		set n 20
-		puts "Files are not yet available."
-		puts "Current number: $current - [expr double($current)/($nstruct) * 100.0] %"
-		after [expr {int($n * 1000)}]
-		set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/$jobname*.pdb ] ]
-		if {$cluster} {
-			set logfile [open "rosetta_log_$jobname.log" r]
-			set dt [read $logfile]
-			close $logfile
-			set lns [split $dt "\n"]
-			set infoline [lindex $lns 0]
-			set res [regexp {([0-9]+)} $infoline jobid]
-			set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
-			set status [check_clusterjob $username $jobid $tasks]
-			if {$status == 0} {
-				break
-			}
-		}
-	}
   file mkdir $::MODELMAKER::workdir/run-$jobname/intermediates
+  set logfile [open $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log a]
+  set script [open "| $::MODELMAKER::workdir/run-$jobname/$jobname.sh 2>@stderr &" r]
+  set numfiles 0
+  while {[gets $script line] >= 0} {
+    puts $logfile $line
+    set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/$jobname*.pdb ] ]
+    if { $current > $numfiles} {
+      puts "Current number of files: $current - [expr double($current)/($nstruct) * 100.0] % complete"
+      set numfiles $current
+      
+      if {$cluster} {
+        set logfile [open "rosetta_log_$jobname.log" r]
+        set dt [read $logfile]
+        close $logfile
+        set lns [split $dt "\n"]
+        set infoline [lindex $lns 0]
+        set res [regexp {([0-9]+)} $infoline jobid]
+        set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
+        set status [check_clusterjob $username $jobid $tasks]
+        if {$status == 0} {
+          break
+        }
+      }
+    }
+  }
 	file rename {*}[glob $::MODELMAKER::workdir/run-$jobname/pdb_out/loops_closed*.pdb] $::MODELMAKER::workdir/run-$jobname/intermediates/
-#  file rename {*}[glob $::MODELMAKER::workdir/run-$jobname/*.sc] $::MODELMAKER::workdir/run-$jobname/sc_out/
-#	file rename {*}[glob $::MODELMAKER::workdir/run-$jobname/*.pdb] $::MODELMAKER::workdir/run-$jobname/pdb_out/
 
-	puts $output
 	puts "Rosetta insertion folding finished."
-	#cd $::MODELMAKER::workdir
 }
 
 proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template align_rosetta analysis_components {insertion 0} args} \
