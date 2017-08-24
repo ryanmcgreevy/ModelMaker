@@ -855,8 +855,8 @@ proc ::RosettaInputGenerator::make_bash_script {denswt rms res map jobname nstru
     set mpi_args ""
   }
 	return "#!/bin/bash
-	JOBNAME=\"\${1/%}\"
-	MOL=\"\${2/%}\"
+	JOBNAME=\"\${1}\"
+	MOL=\"\${2}\"
 	if \[ \-z \"\$1\" \]\; then
   		echo Need job name!
   		exit
@@ -886,8 +886,8 @@ proc ::RosettaInputGenerator::make_cluster_script {denswt rms res map jobname ns
 	global platform
 	return "#!/bin/bash
 export PATH=\$(pwd)
-JOBNAME=\"\${1/%}\"
-MOL=\"\${2/%}\"
+JOBNAME=\"\${1}\"
+MOL=\"\${2}\"
 
 if \[ -z \"\$1\" \]\; then
   echo Need job name!
@@ -939,8 +939,8 @@ proc ::RosettaInputGenerator::make_abinitio_test_script {jobname nstruct} \
 	return "
 
 #!/bin/bash
-JOBNAME=\"\${1/%}\"
-MOL=\"\${2/%}\"
+JOBNAME=\"\${1}\"
+MOL=\"\${2}\"
 
 if \[ -z \"\$1\" \]\; then
   echo Need job name!
@@ -1097,8 +1097,8 @@ proc ::RosettaInputGenerator::make_abinitio_local_script {jobname nstruct} \
   }
 	return "
 #!/bin/bash
-JOBNAME=\"\${1/%}\"
-MOL=\"\${2/%}\"
+JOBNAME=\"\${1}\"
+MOL=\"\${2}\"
 
 if \[ -z \"\$1\" \]\; then
   echo Need job name!
@@ -1127,8 +1127,8 @@ proc ::RosettaInputGenerator::make_abinitio_cluster_script {jobname nstruct task
 	global rosettaDBpath
 	return "#!/bin/bash
 export PATH=\$(pwd)
-JOBNAME=\"\${1/%}\"
-MOL=\"\${2/%}\"
+JOBNAME=\"\${1}\"
+MOL=\"\${2}\"
 
 if \[ -z \"\$1\" \]\; then
   echo Need job name!
