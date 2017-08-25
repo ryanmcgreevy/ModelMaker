@@ -70,7 +70,7 @@ proc ::AutoMDFF::auto_mdff_init {jobname MOL mapname fixedselection gscale minSt
 	#make _potential
 	mdff griddx -i $mapname.dx -o ${mapname}_potential.dx
 
-	auto_makepsf $MOL $topdir $topfiles $ch_seg $mutations
+	auto_makepsf $MOL $topfiles $ch_seg $mutations
 	#autopsf -mol top -top ../top_all27_prot_lipid_na.inp
 
 

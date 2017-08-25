@@ -67,7 +67,7 @@ namespace eval ::MODELMAKER {
   variable DefaultFixed "none"
   variable DefaultBestN 1
   variable DefaultNumSteps 10000
-  variable DefaultMinsteps 200
+  variable DefaultMinSteps 200
   variable DefaultGScale 0.3
   variable DefaultTopFiles [list [file join $env(CHARMMTOPDIR) top_all36_prot.rtf] \
     [file join $env(CHARMMTOPDIR) top_all36_lipid.rtf] \
@@ -94,6 +94,8 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  refine                -- refine a structure with Rosetta using a density" 
   puts "  pdb2seq               -- get the single-letter amino acid sequence" 
   puts "  seqsub                -- extract subrange of fasta sequence" 
+  puts "  makepsf               -- make a .psf file from a pdb" 
+  puts "  mdff            -- run an MDFF simulation" 
   return
 
 }
@@ -128,6 +130,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::seqsub $args]
   } elseif { $command == "makepsf" } {
     return [eval ::MODELMAKER::makepsf $args]
+  } elseif { $command == "mdff" } {
+    return [eval ::MODELMAKER::mdff $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -1290,25 +1294,35 @@ proc ::MODELMAKER::makepsf { args } {
   auto_makepsf $pdb $topfiles $chseg ""
 }
 
-proc ::MODELMAKER::start_mdff_usage { } {
+proc ::MODELMAKER::mdff_usage { } {
   variable DefaultFixed
   variable DefaultBestN
   variable DefaultNumSteps
-  variable DefaultMinsteps
+  variable DefaultMinSteps
   variable DefaultGScale
+  
+  puts "Usage: mdodelmaker start_mdff -pdb <input pdb file> -density <input density file> \
+    -res <resolution of density in Angstroms> ?options?"
+  puts "Options:"
+  puts "  -jobname    <name prefix for job> (default: taken from -model)> "
+  puts "  -fixed      <atomselect text for fixed atoms> (default: $DefaultFixed)> "
+  puts "  -gscale     <grid scaling factor for fitting forces> (default: $DefaultGScale)> "
+  puts "  -minsteps   <number of minimization steps> (default: $DefaultMinSteps)> "
+  puts "  -numsteps   <number of simulation steps> (default: $DefaultNumSteps)> "
+  puts "  -bestN      <best number of structures from previous refinement to fit with MDFF> (default: $DefaultBestN)> "
 
 }
 
-proc ::MODELMAKER::start_mdff { args } {
+proc ::MODELMAKER::mdff { args } {
   variable DefaultFixed
   variable DefaultBestN
   variable DefaultNumSteps
-  variable DefaultMinsteps
+  variable DefaultMinSteps
   variable DefaultGScale
 
   set nargs [llength [lindex $args 0]]
   if {$nargs == 0} {
-    start_mdff_usage
+    mdff_usage
     error ""
   }
   

@@ -592,9 +592,9 @@ proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res 
 			set prefix ${jobname}_${mol}_best$i
 			exec mkdir -p $folder
 
-			exec cp rosetta_output_$jobname/$prefix.pdb $folder/$prefix.pdb
+			file copy $::MODELMAKER::workdir/run-$jobname/$prefix.pdb $folder/$prefix.pdb
 
-			exec cp $mapname.dx $folder/
+			file copy $mapname.dx $folder/
 			cd $folder
 
 			#arguments: jobname MOL mapname fixedselection gscale minSteps num ch_seg topdir topfile parfile
