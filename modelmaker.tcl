@@ -95,7 +95,7 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  pdb2seq               -- get the single-letter amino acid sequence" 
   puts "  seqsub                -- extract subrange of fasta sequence" 
   puts "  makepsf               -- make a .psf file from a pdb" 
-  puts "  mdff            -- run an MDFF simulation" 
+  puts "  mdff                  -- run an MDFF simulation" 
   return
 
 }
@@ -1301,7 +1301,7 @@ proc ::MODELMAKER::mdff_usage { } {
   variable DefaultMinSteps
   variable DefaultGScale
   
-  puts "Usage: mdodelmaker start_mdff -pdb <input pdb file> -density <input density file> \
+  puts "Usage: mdodelmaker mdff -pdb <input pdb file> -density <input density file> \
     -res <resolution of density in Angstroms> ?options?"
   puts "Options:"
   puts "  -jobname    <name prefix for job> (default: taken from -model)> "
