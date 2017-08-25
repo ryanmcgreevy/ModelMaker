@@ -1281,6 +1281,5 @@ proc ::MODELMAKER::makepsf { args } {
     }
   
   }
-  set chseg [list {"rpn11" "A" "AP1"}]
   auto_makepsf $pdb $topfiles $chseg ""
 }

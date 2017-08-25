@@ -148,6 +148,7 @@ proc ::MakePsf::auto_makepsf {MOL topnames ch_seg mutations} \
     # Overwrite labels with new ones #
     ##################################
     coordpdb $segName.pdb $segName
+    file delete $segName.pdb
   }
 
   ###############################################
