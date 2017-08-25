@@ -1247,6 +1247,7 @@ proc ::MODELMAKER::makepsf { args } {
     switch -- $name {
       -pdb { set arg(pdb) $val }
       -topfiles { set arg(topfiles) $val }
+      -chseg { set arg(chseg) $val }
       default { puts "Unknown argument $name"; return  }
     }
   }
