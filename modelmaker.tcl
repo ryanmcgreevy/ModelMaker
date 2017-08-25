@@ -64,6 +64,11 @@ namespace eval ::MODELMAKER {
   #variable DefaultSidechain "no"
   variable DefaultRefineMode "backbone"
   variable DefaultPDB2SeqSel "protein" 
+  variable DefaultFixed "none"
+  variable DefaultBestN 1
+  variable DefaultNumSteps 10000
+  variable DefaultMinsteps 200
+  variable DefaultGScale 0.3
   variable DefaultTopFiles [list [file join $env(CHARMMTOPDIR) top_all36_prot.rtf] \
     [file join $env(CHARMMTOPDIR) top_all36_lipid.rtf] \
     [file join $env(CHARMMTOPDIR) top_all36_na.rtf] \
@@ -1283,4 +1288,95 @@ proc ::MODELMAKER::makepsf { args } {
   
   }
   auto_makepsf $pdb $topfiles $chseg ""
+}
+
+proc ::MODELMAKER::start_mdff_usage { } {
+  variable DefaultFixed
+  variable DefaultBestN
+  variable DefaultNumSteps
+  variable DefaultMinsteps
+  variable DefaultGScale
+
+}
+
+proc ::MODELMAKER::start_mdff { args } {
+  variable DefaultFixed
+  variable DefaultBestN
+  variable DefaultNumSteps
+  variable DefaultMinsteps
+  variable DefaultGScale
+
+  set nargs [llength [lindex $args 0]]
+  if {$nargs == 0} {
+    start_mdff_usage
+    error ""
+  }
+  
+  foreach {name val} $args {
+    switch -- $name {
+      -jobname { set arg(jobname) $val }
+      -pdb { set arg(pdb) $val }
+      -density { set arg(density) $val }
+      -fixed { set arg(fixed) $val }
+      -gscale { set arg(gscale) $val }
+      -density { set arg(density) $val }
+      -minsteps { set arg(minsteps) $val }
+      -numsteps { set arg(numsteps) $val }
+      -res { set arg(res) $val }
+      -bestN { set arg(bestN) $val }
+      default { puts "Unknown argument $name"; return  }
+    }
+  }
+  
+  if { [info exists arg(pdb)] } {
+    set pdb [string range $arg(pdb) 0 [expr [string last ".pdb" $arg(pdb)] - 1 ]]
+  } else {
+    error "input pdb file required!"
+  }
+  
+  
+  if { [info exists arg(density)] } {    
+    set density [string range $arg(density) 0 [expr [string last ".*" $arg(density)] - 1 ]]
+  } else {
+    error "A density file must be specified!"
+  }
+  
+  if { [info exists arg(res)] } {
+    set res $arg(res)
+  } else {
+    error "resolution of density must be specified!"
+  }
+  
+  if { [info exists arg(jobname)] } {
+    set jobname $arg(jobname)
+  } else {
+    set jobname $pdb
+  }
+  if { [info exists arg(fixed)] } {
+    set fixed $arg(fixed)
+  } else {
+    set fixed $DefaultFixed
+  }
+  if { [info exists arg(gscale)] } {
+    set gscale $arg(gscale)
+  } else {
+    set gscale $DefaultGScale
+  }
+  if { [info exists arg(minsteps)] } {
+    set minsteps $arg(minsteps)
+  } else {
+    set minsteps $DefaultMinSteps
+  }
+  if { [info exists arg(numsteps)] } {
+    set numsteps $arg(numsteps)
+  } else {
+    set numsteps $DefaultNumSteps
+  }
+  if { [info exists arg(bestN)] } {
+    set bestN $arg(bestN)
+  } else {
+    set bestN $DefaultBestN
+  }
+#start_mdff_run step1 rpn11_human_27-310_fit rpn11_human_27-310_emd4002_3_3.9_density "not (resid 164 to 184 or resid 222 to 242 or resid 266 to 280 or resid 296 to 310)" 0.6 400 20000 3.9 $bestN
+  start_mdff_run $jobname $pdb $density $fixed $gscale $minsteps $numsteps $res $bestN
 }
