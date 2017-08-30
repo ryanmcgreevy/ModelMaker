@@ -39,7 +39,7 @@ set dName $mapname
 set outName [lindex [molinfo $pdb get filename] 0 1]
 #set res $res
 
-set dens_mol [mol new $dName.dx]
+set dens_mol [mol new $dName]
 
 #mdff check -ccc -map $dName.dx -res $res -cccseltext "protein and noh" -cccfile ${outName}_ccc.txt
 set cc_file [open ${outName}_ccc.txt w]
@@ -50,7 +50,7 @@ for {set i 0} {$i < $numframes} {incr i} {
 	# TODO: Ryan mdffi
 	# set current_cc [mdffi cc [atomselect $pdb "protein and noh" frame $i] -mol $dens_mol -res $res -thresholddensity 1.0]
 	# set current_cc 0
-	set current_cc [mdff ccc [atomselect $pdb "protein and noh" frame $i] -i $dName.dx -res $res]
+	set current_cc [mdff ccc [atomselect $pdb "protein and noh" frame $i] -i $dName -res $res]
 	# [mdffi cc $resSel -mol $dens_mol -res $resolution -spacing $spacing]
 	puts $cc_file "$i $current_cc"
 }
@@ -62,7 +62,7 @@ mdff check -mol $pdb -rmsd -rmsdseltext "backbone" -rmsdfile ${outName}_rmsd.txt
 mol delete $dens_mol
 
 animate write pdb $outName-last.pdb beg [expr $numframes -1] end [expr $numframes -1] sel [atomselect $pdb all] 
-set last_ccc [mdff ccc [atomselect $pdb "protein and noh" frame [expr $numframes -1]] -i $dName.dx -res $res]
+set last_ccc [mdff ccc [atomselect $pdb "protein and noh" frame [expr $numframes -1]] -i $dName -res $res]
 set f [open "last_ccc.txt" "w"]
 puts $f $last_ccc
 close $f

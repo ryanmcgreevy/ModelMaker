@@ -69,6 +69,7 @@ namespace eval ::MODELMAKER {
   variable DefaultNumSteps 10000
   variable DefaultMinSteps 200
   variable DefaultGScale 0.3
+  variable DefaultDCDFreq 100
   variable DefaultTopFiles [list [file join $env(CHARMMTOPDIR) top_all36_prot.rtf] \
     [file join $env(CHARMMTOPDIR) top_all36_lipid.rtf] \
     [file join $env(CHARMMTOPDIR) top_all36_na.rtf] \
@@ -76,6 +77,14 @@ namespace eval ::MODELMAKER {
     [file join $env(CHARMMTOPDIR) top_all36_cgenff.rtf] \
     [file join $env(CHARMMTOPDIR) toppar_all36_carb_glycopeptide.str] \
     [file join $env(CHARMMTOPDIR) toppar_water_ions_namd.str] ]
+
+  variable DefaultParFiles [list [file join $env(CHARMMPARDIR) par_all36_prot.prm]\
+    [file join $env(CHARMMPARDIR) par_all36_lipid.prm] \
+  [file join $env(CHARMMPARDIR) par_all36_na.prm] [file join $env(CHARMMPARDIR) par_all36_carb.prm] \
+  [file join $env(CHARMMPARDIR) par_all36_cgenff.prm] [file join $env(CHARMMPARDIR) toppar_all36_carb_glycopeptide.str]\
+  [file join $env(CHARMMPARDIR) toppar_water_ions_namd.str]]
+ 
+  
   variable MPINP
   variable settings
   set ::MODELMAKER::settings(username) ""
@@ -1300,16 +1309,24 @@ proc ::MODELMAKER::mdff_usage { } {
   variable DefaultNumSteps
   variable DefaultMinSteps
   variable DefaultGScale
+  variable DefaultTopFiles
+  variable DefaultParFiles
+  variable DefaultDCDFreq
   
   puts "Usage: mdodelmaker mdff -pdb <input pdb file> -density <input density file> \
     -res <resolution of density in Angstroms> ?options?"
   puts "Options:"
-  puts "  -jobname    <name prefix for job> (default: taken from -model)> "
-  puts "  -fixed      <atomselect text for fixed atoms> (default: $DefaultFixed)> "
-  puts "  -gscale     <grid scaling factor for fitting forces> (default: $DefaultGScale)> "
-  puts "  -minsteps   <number of minimization steps> (default: $DefaultMinSteps)> "
-  puts "  -numsteps   <number of simulation steps> (default: $DefaultNumSteps)> "
-  puts "  -bestN      <best number of structures from previous refinement to fit with MDFF> (default: $DefaultBestN)> "
+  puts "  -jobname    <name prefix for job> (default: taken from -model) "
+  puts "  -fixed      <atomselect text for fixed atoms> (default: $DefaultFixed) "
+  puts "  -gscale     <grid scaling factor for fitting forces> (default: $DefaultGScale) "
+  puts "  -minsteps   <number of minimization steps> (default: $DefaultMinSteps) "
+  puts "  -numsteps   <number of simulation steps> (default: $DefaultNumSteps) "
+  puts "  -bestN      <best number of structures from previous refinement to fit with MDFF> (default: $DefaultBestN) "
+  puts "  -chseg      <list of 'name' 'chain' 'segname' lists> (Default: from input pdb)"
+  puts "  -topfiles   <list of topology files to use>(Default: $DefaultTopFiles) "
+  puts "  -parfiles   <list of parameter files to use>(Default: $DefaultParFiles) "
+  puts "  -dcdfreq    <frequencey of dcd output>(Default: $DefaultDCDFreq) "
+  puts "  -namdargs   <arguments to pass to namd> (default: none)"
 
 }
 
@@ -1319,6 +1336,9 @@ proc ::MODELMAKER::mdff { args } {
   variable DefaultNumSteps
   variable DefaultMinSteps
   variable DefaultGScale
+  variable DefaultTopFiles
+  variable DefaultParFiles
+  variable DefaultDCDFreq
 
   set nargs [llength [lindex $args 0]]
   if {$nargs == 0} {
@@ -1338,6 +1358,10 @@ proc ::MODELMAKER::mdff { args } {
       -numsteps { set arg(numsteps) $val }
       -res { set arg(res) $val }
       -bestN { set arg(bestN) $val }
+      -topfiles { set arg(topfiles) $val }
+      -parfiles { set arg(parfiles) $val }
+      -dcdfreq { set arg(dcdfreq) $val }
+      -namdargs { set arg(namdargs) $val }
       default { puts "Unknown argument $name"; return  }
     }
   }
@@ -1350,7 +1374,8 @@ proc ::MODELMAKER::mdff { args } {
   
   
   if { [info exists arg(density)] } {    
-    set density [string range $arg(density) 0 [expr [string last ".*" $arg(density)] - 1 ]]
+    #set density [string range $arg(density) 0 [expr [string last ".*" $arg(density)] - 1 ]]
+    set density $arg(density)
   } else {
     error "A density file must be specified!"
   }
@@ -1366,31 +1391,80 @@ proc ::MODELMAKER::mdff { args } {
   } else {
     set jobname $pdb
   }
+ 
   if { [info exists arg(fixed)] } {
     set fixed $arg(fixed)
   } else {
     set fixed $DefaultFixed
   }
+ 
   if { [info exists arg(gscale)] } {
     set gscale $arg(gscale)
   } else {
     set gscale $DefaultGScale
   }
+ 
   if { [info exists arg(minsteps)] } {
     set minsteps $arg(minsteps)
   } else {
     set minsteps $DefaultMinSteps
   }
+ 
   if { [info exists arg(numsteps)] } {
     set numsteps $arg(numsteps)
   } else {
     set numsteps $DefaultNumSteps
   }
+ 
   if { [info exists arg(bestN)] } {
     set bestN $arg(bestN)
   } else {
     set bestN $DefaultBestN
   }
+  
+  if { [info exists arg(chseg)] } {
+    set chseg $arg(chseg)
+  } else {
+    set mol [mol new $pdb.pdb]
+    set sel [atomselect $mol "all"]
+    set chains [$sel get chain]
+    set segnames [$sel get segname]
+    #get unique list
+    foreach chain $chains {dict set tmp $chain 1}
+    set chains [dict keys $tmp]
+    foreach segname $segnames {dict set tmp2 $segname 1}
+    set segnames [dict keys $tmp2]
+
+    foreach chain $chains segname $segnames {
+      lappend chseg  [list $pdb $chain $segname]
+    }
+  
+  }
+  
+  if { [info exists arg(topfiles)] } {
+    set topfiles $arg(topfiles)
+  } else {
+    set topfiles $DefaultTopFiles
+  }
+  
+  if { [info exists arg(parfiles)] } {
+    set parfiles $arg(parfiles)
+  } else {
+    set parfiles $DefaultParFiles
+  }
+  
+  if { [info exists arg(dcdfreq)] } {
+    set dcdfreq $arg(dcdfreq)
+  } else {
+    set dcdfreq $DefaultDCDFreq
+  }
+ 
+  if { [info exists arg(namdargs)] } {
+    set namdargs $arg(namdargs)
+  } else {
+    set namdargs ""
+  }
 #start_mdff_run step1 rpn11_human_27-310_fit rpn11_human_27-310_emd4002_3_3.9_density "not (resid 164 to 184 or resid 222 to 242 or resid 266 to 280 or resid 296 to 310)" 0.6 400 20000 3.9 $bestN
-  start_mdff_run $jobname $pdb $density $fixed $gscale $minsteps $numsteps $res $bestN
+  start_mdff_run $jobname $pdb $density $fixed $gscale $minsteps $numsteps $res $bestN \
+    $chseg "" $topfiles $parfiles $dcdfreq $namdargs
 }

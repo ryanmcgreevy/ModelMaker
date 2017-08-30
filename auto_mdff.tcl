@@ -18,7 +18,7 @@ proc auto_mdff_init {args} \
 	return [eval ::AutoMDFF::auto_mdff_init $args]
 }
 
-proc ::AutoMDFF::auto_mdff_init {jobname MOL mapname fixedselection gscale minSteps num ch_seg mutations topdir topfiles parfiles} \
+proc ::AutoMDFF::auto_mdff_init {jobname MOL mapname fixedselection gscale minSteps num ch_seg mutations topfiles parfiles} \
 {
 	package require MakePsf
 	set short $jobname
@@ -68,7 +68,7 @@ proc ::AutoMDFF::auto_mdff_init {jobname MOL mapname fixedselection gscale minSt
 	#mol new $MOL.pdb
 
 	#make _potential
-	mdff griddx -i $mapname.dx -o ${mapname}_potential.dx
+	mdff griddx -i $mapname -o ${mapname}_potential.dx
 
 	auto_makepsf $MOL $topfiles $ch_seg $mutations
 	#autopsf -mol top -top ../top_all27_prot_lipid_na.inp
@@ -96,10 +96,10 @@ proc ::AutoMDFF::auto_mdff_init {jobname MOL mapname fixedselection gscale minSt
 	$restraint set occupancy 1.0
 	$all writepdb fixed.pdb
 
-	set pfiles []
-	foreach par $parfiles {
-		lappend pfiles $topdir/$par
-	}
+#	set pfiles []
+#	foreach par $parfiles {
+#		lappend pfiles $par
+#	}
 
 	puts [pwd]
 	#setup mdff
@@ -107,7 +107,7 @@ proc ::AutoMDFF::auto_mdff_init {jobname MOL mapname fixedselection gscale minSt
 	if {$IMD} {
 		#mdff setup -o [pwd]/$::outname -psf ${MOL}_autopsf.psf -pdb ${MOL}_autopsf.pdb -griddx ${MOL}_${cutoff}_${EMDB_ID}_density.dx -gridpdb ${MOL}_autopsf-grid.pdb -extrab [list ${MOL}-extrabonds.txt ${MOL}-cispeptide.txt ${MOL}-chirality.txt] -gscale $gridscale -minsteps $minSteps -numsteps $num --imd -imdport $IMDPort -imdfreq $IMDfreq -fixpdb fixed.pdb
 		} else {
-			mdff setup -o $outname -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -griddx ${mapname}_potential.dx -gridpdb ${MOL}-psfout-grid.pdb -extrab [list ${MOL}-extrabonds.txt ${MOL}-cispeptide.txt ${MOL}-chirality.txt] -gscale $gridscale -minsteps $minSteps -numsteps $num -fixpdb fixed.pdb -dir [pwd] -parfiles [list $pfiles]
+			mdff setup -o $outname -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -griddx ${mapname}_potential.dx -gridpdb ${MOL}-psfout-grid.pdb -extrab [list ${MOL}-extrabonds.txt ${MOL}-cispeptide.txt ${MOL}-chirality.txt] -gscale $gridscale -minsteps $minSteps -numsteps $num -fixpdb fixed.pdb -dir [pwd] -parfiles $parfiles
 	}
 }
 

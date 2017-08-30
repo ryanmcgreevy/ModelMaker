@@ -569,17 +569,17 @@ proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template
 }
 
 # MDFF only starts with pdb created by rosetta
-proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res bestN {score 1} {cascade 0} {config 0} {gridconfig 0} {pdbfolder 0} args} \
+proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res bestN ch_seg mutations topfile parfile dcdfreq namdArgs {score 1} {cascade 0} {config 0} {gridconfig 0} {pdbfolder 0} args} \
 {
 	package require AnalysisMDFF
-	global ch_seg
-	global mutations
-	global parfiles
-	global topdir
-	global topfiles
-	global dcdfreq
-	global path
-	global namdArgs
+#	global ch_seg
+#	global mutations
+#	global parfiles
+#	global topdir
+#	global topfiles
+#	global dcdfreq
+	#global path
+	#global namdArgs
 	global rosettapath
 	global rosettaDBpath
 	global platform
@@ -594,15 +594,15 @@ proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res 
 
 			file copy $::MODELMAKER::workdir/run-$jobname/$prefix.pdb $folder/$prefix.pdb
 
-			file copy $mapname.dx $folder/
+			file copy $mapname $folder/
 			cd $folder
 
 			#arguments: jobname MOL mapname fixedselection gscale minSteps num ch_seg topdir topfile parfile
-			auto_mdff_init ${jobname}_$i $prefix $mapname $fixedselection $gscale $minSteps $num $ch_seg $mutations $topdir $topfiles $parfiles
+			auto_mdff_init ${jobname}_$i $prefix $mapname $fixedselection $gscale $minSteps $num $ch_seg $mutations $topfile $parfile
 
 			exec sed -i -e "s/dcdfreq.*/dcdfreq\ ${dcdfreq}/g" mdff_template.namd
 			puts "Starting NAMD with job $jobname-$i"
-			exec $path/namd2 $namdArgs mdff_${jobname}_$i-step1.namd > mdff_${jobname}_$i-step1.log
+			exec namd2 $namdArgs mdff_${jobname}_$i-step1.namd > mdff_${jobname}_$i-step1.log
 			puts "NAMD finished"
 
 			puts "Analysis started."
@@ -625,7 +625,7 @@ proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res 
 				exec $rosettapath/score.$platform -database $rosettaDBpath -out:file:scorefile ${jobname}_$i-mdff.sc -ignore_zero_occupancy false -in:file:s $outname.pdb > ${jobname}_$i-scoring.log
 				lappend scores [list $i [readscorefile ${jobname}_$i-mdff.sc]]
 			}
-			exec cp $outname.pdb ../full_length_model/$prefix-mdff.pdb
+			#exec cp $outname.pdb ../full_length_model/$prefix-mdff.pdb
 			cd ..
 		}
 	} elseif {$bestN == 0} {
@@ -659,7 +659,7 @@ proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res 
 
 			for {set i 1} {$i <= [llength $config]} {incr i} {
 				puts "Running NAMD step $i"
-				exec $path/namd2 $namdArgs mdff_${prefix}_step$i.namd > mdff_${prefix}_step$i.log
+				exec namd2 $namdArgs mdff_${prefix}_step$i.namd > mdff_${prefix}_step$i.log
 				puts "Finished NAMD step $i"
 			}
 			puts "Analysis started."
@@ -677,7 +677,7 @@ proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res 
 
 			exec sed -i -e "s/dcdfreq.*/dcdfreq\ ${dcdfreq}/g" mdff_template.namd
 			puts "Starting NAMD with job $jobname"
-			exec $path/namd2 $namdArgs mdff_${jobname}-step1.namd > mdff_${jobname}-step1.log
+			exec namd2 $namdArgs mdff_${jobname}-step1.namd > mdff_${jobname}-step1.log
 			puts "NAMD finished"
 
 			puts "Analysis started."
@@ -723,7 +723,7 @@ proc start_mdff_run {jobname mol mapname fixedselection gscale minSteps num res 
 
 			for {set k 1} {$k <= [llength $config]} {incr k} {
 				puts "Running NAMD step $k"
-				exec $path/namd2 $namdArgs mdff_${prefix}_step$k.namd > mdff_${prefix}_step$k.log
+				exec namd2 $namdArgs mdff_${prefix}_step$k.namd > mdff_${prefix}_step$k.log
 				puts "Finished NAMD step $k"
 			}
 			puts "Analysis started."
