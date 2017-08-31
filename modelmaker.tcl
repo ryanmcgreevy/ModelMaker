@@ -1250,6 +1250,7 @@ proc ::MODELMAKER::makepsf_usage {} {
   puts "Options:"
   puts "  -topfiles <list of topology files to use>(Default: $DefaultTopFiles) "
   puts "  -chseg <list of 'name' 'chain' 'segname' lists> (Default: from input pdb)"
+  puts "  -prot  <list of resids and their protonation state, e.g, 279 HSE> (Default: none)"
 }
 
 proc ::MODELMAKER::makepsf { args } {
@@ -1266,6 +1267,7 @@ proc ::MODELMAKER::makepsf { args } {
       -pdb { set arg(pdb) $val }
       -topfiles { set arg(topfiles) $val }
       -chseg { set arg(chseg) $val }
+      -prot { set arg(prot) $val }
       default { puts "Unknown argument $name"; return  }
     }
   }
@@ -1280,6 +1282,12 @@ proc ::MODELMAKER::makepsf { args } {
     set topfiles $arg(topfiles)
   } else {
     set topfiles $DefaultTopFiles
+  }
+  
+  if { [info exists arg(prot)] } {
+    set prot $arg(prot)
+  } else {
+    set prot ""
   }
   
   if { [info exists arg(chseg)] } {
@@ -1300,7 +1308,7 @@ proc ::MODELMAKER::makepsf { args } {
     }
   
   }
-  auto_makepsf $pdb $topfiles $chseg ""
+  auto_makepsf $pdb $topfiles $chseg $prot
 }
 
 proc ::MODELMAKER::mdff_usage { } {
