@@ -1240,7 +1240,7 @@ proc ::MODELMAKER::seqsub { args } {
   }
   close $infile
   set outfile [open $output w]
-  puts $outfile [string range $sequence [expr $start - 1] $end]
+  puts $outfile [string range $sequence [expr $start - 1] [expr $end - 1] ]
   close $outfile
 }
 
