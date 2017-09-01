@@ -50,8 +50,8 @@ for {set i 0} {$i < $numframes} {incr i} {
 	# TODO: Ryan mdffi
 	# set current_cc [mdffi cc [atomselect $pdb "protein and noh" frame $i] -mol $dens_mol -res $res -thresholddensity 1.0]
 	# set current_cc 0
-	set current_cc [mdff ccc [atomselect $pdb "protein and noh" frame $i] -i $dName -res $res]
-	# [mdffi cc $resSel -mol $dens_mol -res $resolution -spacing $spacing]
+  set current_cc [mdffi cc [atomselect $pdb "protein and noh" frame $i] -mol $dens_mol -res $res -thresholddensity 0.1]
+  #[mdff ccc [atomselect $pdb "protein and noh" frame $i] -i $dName -res $res]
 	puts $cc_file "$i $current_cc"
 }
 close $cc_file
@@ -83,12 +83,12 @@ foreach var $ch_seg {
 ::AnalysisMDFF::gnuplot "reset"
 ::AnalysisMDFF::setGnuplotOutput "$outName-ccc"
 ::AnalysisMDFF::gnuplot "plot \"${outName}_ccc.txt\" using 1:2 w lines t \"CCC: $outName\""
-exec $gnuplotexe "gnuplot"
+exec gnuplot "gnuplot"
 
 ::AnalysisMDFF::launch_gnuplot
 ::AnalysisMDFF::gnuplot "reset"
 ::AnalysisMDFF::setGnuplotOutput "$outName-rmsd"
 ::AnalysisMDFF::gnuplot "plot \"${outName}_rmsd.txt\" using 1:2 w lines t \"RMSD: $outName\""
-exec $gnuplotexe "gnuplot"
+exec gnuplot "gnuplot"
 
 }
