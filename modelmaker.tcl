@@ -4,6 +4,10 @@
 #since people (like me) have some of those commands aliased.
 package require RosettaVMD
 package require MakePsf
+package require ssrestraints
+package require cispeptide
+package require chirality
+package require mdff
 
 package provide modelmaker 0.1
 
@@ -140,7 +144,7 @@ proc ::MODELMAKER::modelmaker { args } {
   } elseif { $command == "makepsf" } {
     return [eval ::MODELMAKER::makepsf $args]
   } elseif { $command == "mdff" } {
-    return [eval ::MODELMAKER::mdff $args]
+    return [eval ::MODELMAKER::quick_mdff $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -1311,7 +1315,7 @@ proc ::MODELMAKER::makepsf { args } {
   auto_makepsf $pdb $topfiles $chseg $prot
 }
 
-proc ::MODELMAKER::mdff_usage { } {
+proc ::MODELMAKER::quick_mdff_usage { } {
   variable DefaultFixed
   variable DefaultBestN
   variable DefaultNumSteps
@@ -1338,7 +1342,7 @@ proc ::MODELMAKER::mdff_usage { } {
 
 }
 
-proc ::MODELMAKER::mdff { args } {
+proc ::MODELMAKER::quick_mdff { args } {
   variable DefaultFixed
   variable DefaultBestN
   variable DefaultNumSteps
@@ -1350,7 +1354,7 @@ proc ::MODELMAKER::mdff { args } {
 
   set nargs [llength [lindex $args 0]]
   if {$nargs == 0} {
-    mdff_usage
+    quick_mdff_usage
     error ""
   }
   
@@ -1473,6 +1477,60 @@ proc ::MODELMAKER::mdff { args } {
     set namdargs ""
   }
 #start_mdff_run step1 rpn11_human_27-310_fit rpn11_human_27-310_emd4002_3_3.9_density "not (resid 164 to 184 or resid 222 to 242 or resid 266 to 280 or resid 296 to 310)" 0.6 400 20000 3.9 $bestN
-  start_mdff_run $jobname $pdb $density $fixed $gscale $minsteps $numsteps $res $bestN \
+  #start_mdff_run $jobname $pdb $density $fixed $gscale $minsteps $numsteps $res $bestN \
     $chseg "" $topfiles $parfiles $dcdfreq $namdargs
+  #quick_mdff $jobname $pdb $density $fixed $gscale $minsteps $numsteps $res $bestN \
+    $chseg $topfiles $parfiles $dcdfreq $namdargs
+  
+  set MOL $pdb
+  set mapname $density
+	
+  #make _potential
+	mdff griddx -i $mapname -o ${mapname}_potential.dx
+
+  set mutations ""
+	auto_makepsf $MOL $topfiles $chseg $mutations
+	#autopsf -mol top -top ../top_all27_prot_lipid_na.inp
+
+
+	#make grid
+	mdff gridpdb -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -o ${MOL}-psfout-grid.pdb
+
+	#make ssrestraints
+	ssrestraints -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -o ${MOL}-extrabonds.txt -hbonds
+
+	#make cispeptide
+	mol delete all
+	mol new ${MOL}.psf
+	mol addfile ${MOL}-psfout.pdb
+	cispeptide restrain -o ${MOL}-cispeptide.txt
+
+	#chirality
+	chirality restrain -o ${MOL}-chirality.txt
+
+	#fix pdb
+	set all [atomselect top all]
+	$all set occupancy 0.0
+	set restraint [atomselect top "$fixed"]
+	$restraint set occupancy 1.0
+	$all writepdb fixed.pdb
+	
+  
+  #set workdir "${jobname}-mdff/"
+  
+  set workdir [pwd]
+  		
+  mdff setup -o $jobname -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -griddx ${mapname}_potential.dx -gridpdb ${MOL}-psfout-grid.pdb -extrab [list ${MOL}-extrabonds.txt ${MOL}-cispeptide.txt ${MOL}-chirality.txt] -gscale $gscale -minsteps $minsteps -numsteps $numsteps -fixpdb fixed.pdb -dir $workdir -parfiles $parfiles
+			
+  exec sed -i -e "s/dcdfreq.*/dcdfreq\ ${dcdfreq}/g" mdff_template.namd
+  puts "Starting NAMD with job $jobname"
+  exec namd2 $namdargs ${jobname}-step1.namd > mdff_${jobname}-step1.log
+  puts "NAMD finished"
+
+  set results [mol new ${MOL}.psf]
+  mol addfile ${jobname}-step1.dcd waitfor all
+  set sel [atomselect $results all]
+  $sel frame last
+  format_pdb $sel ${jobname}-step1-result.pdb
 }
+
