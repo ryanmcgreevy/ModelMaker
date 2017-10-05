@@ -38,7 +38,12 @@ proc ::RosettaScoring::score_refinement {MOL max_structures jobname} \
   mol delete all
   #mol new ./pdb_out/${MOL}_[format %04i [lindex $pdb 0]].pdb waitfor all
   for {set i 0} {$i < [llength $pdb]} {incr i} {
-   mol new $::MODELMAKER::workdir/run-$jobname/pdb_out/${MOL}_[format %04i [lindex $pdb $i]].pdb
+   if { [llength $pdb] < 10000} {
+    mol new $::MODELMAKER::workdir/run-$jobname/pdb_out/${MOL}_[format %04i [lindex $pdb $i]].pdb
+   } else {
+    set offset [expr floor(log10([llength $pdb])) + 1] 
+    mol new $::MODELMAKER::workdir/run-$jobname/pdb_out/${MOL}_[format %0${offset}i [lindex $pdb $i]].pdb
+   }
    [atomselect top all] writepdb $::MODELMAKER::workdir/run-$jobname/${MOL}_best[expr $i + 1].pdb
  }
 

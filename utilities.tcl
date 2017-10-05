@@ -69,8 +69,13 @@ proc ::RosettaUtilities::align_rosetta_local {start end MOL template tempMol sel
 	set temp [atomselect $ml "($sel_temp) and backbone and noh"]
 
 	for {set x $start} {$x<=$end} {incr x} {
-		set index [mol new ./pdb_out/${MOL}_[format %04i  $x].pdb]
-
+	  
+    if {$end < 10000} {
+      set offset 4
+    } else {
+      set offset [expr floor(log10($end)) + 1] 
+    }
+    set index [mol new ./pdb_out/${MOL}_[format %0${offset}i  $x].pdb]
 		set sel [atomselect $index "($sel_rosetta) and backbone and noh"]
 		set transformation_matrix [measure fit $sel $temp]
 		set move_sel [atomselect $index "all"]
