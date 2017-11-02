@@ -27,7 +27,7 @@ proc ::MakePsf::auto_makepsf {MOL topnames ch_seg mutations} \
   ##########
     puts "running auto_makepsf"
     mol new $MOL.pdb
-    puts "$ch_seg"
+#    puts "$ch_seg"
 
     package require psfgen
     resetpsf
@@ -112,10 +112,11 @@ proc ::MakePsf::auto_makepsf {MOL topnames ch_seg mutations} \
    ####################################
 
    ### input file structure: name chain segname 
-   #set inputfile [open "${MOL}_chains.txt" r]
-   #set data [read $inputfile]
-   #close $inputfile
-   #set ch_seg [split $data "\n"]
+#   set inputfile [open "${MOL}_chains.txt" r]
+#   set data [read $inputfile]
+#   close $inputfile
+#   set ch_seg [split $data "\n"]
+   
    foreach var $ch_seg {
     puts "name:[lindex $var 0] chain:[lindex $var 1] segname:[lindex $var 2]" 
     set chainID [lindex $var 1]

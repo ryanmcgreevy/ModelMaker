@@ -1253,8 +1253,8 @@ proc ::MODELMAKER::makepsf_usage {} {
   puts "Usage: mdodelmaker makepsf -pdb <input pdb file> ?options?"
   puts "Options:"
   puts "  -topfiles <list of topology files to use>(Default: $DefaultTopFiles) "
-  puts "  -chseg <list of 'name' 'chain' 'segname' lists> (Default: from input pdb)"
-  puts "  -prot  <list of resids and their protonation state, e.g, 279 HSE> (Default: none)"
+  puts "  -chseg    <file containing lines of desired 'name' 'chain' 'segname'> (Default: from input pdb)"
+  puts "  -prot     <list of resids and their protonation state, e.g, 279 HSE> (Default: none)"
 }
 
 proc ::MODELMAKER::makepsf { args } {
@@ -1295,7 +1295,13 @@ proc ::MODELMAKER::makepsf { args } {
   }
   
   if { [info exists arg(chseg)] } {
-    set chseg $arg(chseg)
+  
+   ### input file structure: name chain segname 
+    set inputfile [open $arg(chseg) r]
+    set data [read $inputfile]
+    close $inputfile
+    set chseg [split $data "\n"]
+  
   } else {
     set mol [mol new $pdb.pdb]
     set sel [atomselect $mol "all"]
@@ -1334,7 +1340,7 @@ proc ::MODELMAKER::quick_mdff_usage { } {
   puts "  -minsteps   <number of minimization steps> (default: $DefaultMinSteps) "
   puts "  -numsteps   <number of simulation steps> (default: $DefaultNumSteps) "
   puts "  -bestN      <best number of structures from previous refinement to fit with MDFF> (default: $DefaultBestN) "
-  puts "  -chseg      <list of 'name' 'chain' 'segname' lists> (Default: from input pdb)"
+  puts "  -chseg      <file containing lines of desired 'name' 'chain' 'segname'> (Default: from input pdb)"
   puts "  -topfiles   <list of topology files to use>(Default: $DefaultTopFiles) "
   puts "  -parfiles   <list of parameter files to use>(Default: $DefaultParFiles) "
   puts "  -dcdfreq    <frequencey of dcd output>(Default: $DefaultDCDFreq) "
@@ -1435,7 +1441,11 @@ proc ::MODELMAKER::quick_mdff { args } {
   }
   
   if { [info exists arg(chseg)] } {
-    set chseg $arg(chseg)
+   ### input file structure: name chain segname 
+    set inputfile [open $arg(chseg) r]
+    set data [read $inputfile]
+    close $inputfile
+    set chseg [split $data "\n"]
   } else {
     set mol [mol new $pdb.pdb]
     set sel [atomselect $mol "all"]
