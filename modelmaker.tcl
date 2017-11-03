@@ -1376,6 +1376,7 @@ proc ::MODELMAKER::quick_mdff { args } {
       -numsteps { set arg(numsteps) $val }
       -res { set arg(res) $val }
       -bestN { set arg(bestN) $val }
+      -chseg { set arg(chseg) $val }
       -topfiles { set arg(topfiles) $val }
       -parfiles { set arg(parfiles) $val }
       -dcdfreq { set arg(dcdfreq) $val }
