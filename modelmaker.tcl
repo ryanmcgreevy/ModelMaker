@@ -214,7 +214,8 @@ proc ::MODELMAKER::insertion { args } {
     #set model $arg(model)
   #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
   #extension. Need to change RosettaVMD to not require this.
-    set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
+    #set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
+    set model [file rootname [file tail $arg(model)]]
   } else {
     error "A full model pdb file must be specified!"
   }
@@ -278,7 +279,7 @@ proc ::MODELMAKER::insertion { args } {
   file mkdir $::MODELMAKER::workdir/setup-$jobname
   file mkdir $::MODELMAKER::workdir/run-$jobname
 
-  file copy $model.pdb $::MODELMAKER::workdir/setup-$jobname
+  file copy $arg(model) $::MODELMAKER::workdir/setup-$jobname
   file copy $fasta.fasta $::MODELMAKER::workdir/setup-$jobname
   foreach fragfile $fragfiles {
     puts $fragfile
@@ -383,7 +384,8 @@ proc ::MODELMAKER::refine { args } {
   }
 
   if { [info exists arg(model)] } {
-    set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
+    #set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
+    set model [file rootname [file tail $arg(model)]]
     #set model $arg(model)
   } else {
     error "A full model pdb file must be specified!"
@@ -483,7 +485,7 @@ proc ::MODELMAKER::refine { args } {
   file mkdir $::MODELMAKER::workdir/setup-$jobname
   file mkdir $::MODELMAKER::workdir/run-$jobname
 
-  file copy $model.pdb $::MODELMAKER::workdir/setup-$jobname
+  file copy $arg(model) $::MODELMAKER::workdir/setup-$jobname
   
   if { $mode == "cartesian" } {
     set csflag 1
@@ -566,7 +568,8 @@ proc ::MODELMAKER::abinitio { args } {
   }
 
   if { [info exists arg(model)] } {
-    set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
+    #set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
+    set model [file rootname [file tail $arg(model)]]
     #set model $arg(model)
   } else {
     error "A full model pdb file must be specified!"
@@ -647,7 +650,7 @@ proc ::MODELMAKER::abinitio { args } {
   file mkdir $::MODELMAKER::workdir/setup-$jobname
   file mkdir $::MODELMAKER::workdir/run-$jobname
 
-  file copy $model.pdb $::MODELMAKER::workdir/setup-$jobname
+  file copy $arg(model) $::MODELMAKER::workdir/setup-$jobname
   foreach fragfile [lindex $fragfiles 0] {
     file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
   }
