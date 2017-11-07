@@ -1345,7 +1345,6 @@ proc ::MODELMAKER::quick_mdff_usage { } {
   puts "  -gscale     <grid scaling factor for fitting forces> (default: $DefaultGScale) "
   puts "  -minsteps   <number of minimization steps> (default: $DefaultMinSteps) "
   puts "  -numsteps   <number of simulation steps> (default: $DefaultNumSteps) "
- # puts "  -bestN      <best number of structures from previous refinement to fit with MDFF> (default: $DefaultBestN) "
   puts "  -chseg      <file containing lines of desired 'name' 'chain' 'segname'> (Default: from input pdb)"
   puts "  -topfiles   <list of topology files to use>(Default: $DefaultTopFiles) "
   puts "  -parfiles   <list of parameter files to use>(Default: $DefaultParFiles) "
@@ -1383,7 +1382,6 @@ proc ::MODELMAKER::quick_mdff { args } {
       -minsteps { set arg(minsteps) $val }
       -numsteps { set arg(numsteps) $val }
       -res { set arg(res) $val }
-#      -bestN { set arg(bestN) $val }
       -chseg { set arg(chseg) $val }
       -topfiles { set arg(topfiles) $val }
       -parfiles { set arg(parfiles) $val }
