@@ -62,6 +62,7 @@ namespace eval ::MODELMAKER {
   variable DefaultAlignTemplate "all"
   variable DefaultInsertion "no"
   variable DefaultWorkDir "[pwd]/workdir"
+  variable DefaultMDFFWorkDir "[pwd]/mdff-workdir"
   variable workdir $DefaultWorkDir
   variable DefaultScore -0.3
   #variable DefaultCSFlag 1
@@ -1330,10 +1331,12 @@ proc ::MODELMAKER::quick_mdff_usage { } {
   variable DefaultTopFiles
   variable DefaultParFiles
   variable DefaultDCDFreq
+  variable DefaultMDFFWorkDir
   
   puts "Usage: mdodelmaker mdff -pdb <input pdb file> -density <input density file> \
     -res <resolution of density in Angstroms> ?options?"
   puts "Options:"
+  puts "  -workdir    <working/project directory for job> (default: $DefaultMDFFWorkDir)>"
   puts "  -jobname    <name prefix for job> (default: taken from -model) "
   puts "  -fixed      <atomselect text for fixed atoms> (default: $DefaultFixed) "
   puts "  -gscale     <grid scaling factor for fitting forces> (default: $DefaultGScale) "
@@ -1357,6 +1360,7 @@ proc ::MODELMAKER::quick_mdff { args } {
   variable DefaultTopFiles
   variable DefaultParFiles
   variable DefaultDCDFreq
+  variable DefaultMDFFWorkDir
 
   set nargs [llength [lindex $args 0]]
   if {$nargs == 0} {
@@ -1366,6 +1370,7 @@ proc ::MODELMAKER::quick_mdff { args } {
   
   foreach {name val} $args {
     switch -- $name {
+      -workdir { set arg(workdir) $val }
       -jobname { set arg(jobname) $val }
       -pdb { set arg(pdb) $val }
       -density { set arg(density) $val }
@@ -1403,6 +1408,12 @@ proc ::MODELMAKER::quick_mdff { args } {
     set res $arg(res)
   } else {
     error "resolution of density must be specified!"
+  }
+  
+  if { [info exists arg(workdir)] } {
+    set workdir $arg(workdir)
+  } else {
+    set workdir $DefaultMDFFWorkDir
   }
   
   if { [info exists arg(jobname)] } {
@@ -1495,53 +1506,69 @@ proc ::MODELMAKER::quick_mdff { args } {
   
   set MOL $pdb
   set mapname $density
+  
+  if { [file exists $workdir] } {
+    puts "The working directory already exists!"
+    exit 1
+  }
+
+
+  file mkdir $workdir
 	
   #make _potential
-	mdff griddx -i $mapname -o ${mapname}_potential.dx
+	mdff griddx -i $mapname -o [file join $workdir ${mapname}_potential.dx]
 
   set mutations ""
 	auto_makepsf $MOL $topfiles $chseg $mutations
 	#autopsf -mol top -top ../top_all27_prot_lipid_na.inp
-
+  file rename -force ${MOL}.psf $workdir
+  file rename -force ${MOL}-psfout.pdb $workdir
 
 	#make grid
-	mdff gridpdb -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -o ${MOL}-psfout-grid.pdb
+	mdff gridpdb -psf [file join $workdir ${MOL}.psf] -pdb [file join $workdir ${MOL}-psfout.pdb] -o [file join $workdir ${MOL}-psfout-grid.pdb]
 
 	#make ssrestraints
-	ssrestraints -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -o ${MOL}-extrabonds.txt -hbonds
+	ssrestraints -psf [file join $workdir ${MOL}.psf] -pdb [file join $workdir ${MOL}-psfout.pdb] -o [file join $workdir ${MOL}-extrabonds.txt] -hbonds
 
 	#make cispeptide
 	mol delete all
-	mol new ${MOL}.psf
-	mol addfile ${MOL}-psfout.pdb
-	cispeptide restrain -o ${MOL}-cispeptide.txt
+	mol new [file join $workdir ${MOL}.psf]
+	mol addfile [file join $workdir ${MOL}-psfout.pdb]
+	cispeptide restrain -o [file join $workdir ${MOL}-cispeptide.txt]
 
 	#chirality
-	chirality restrain -o ${MOL}-chirality.txt
+	chirality restrain -o [file join $workdir ${MOL}-chirality.txt]
 
 	#fix pdb
 	set all [atomselect top all]
 	$all set occupancy 0.0
 	set restraint [atomselect top "$fixed"]
 	$restraint set occupancy 1.0
-	$all writepdb fixed.pdb
+	$all writepdb [file join $workdir fixed.pdb]
 	
   
   #set workdir "${jobname}-mdff/"
-  
-  set workdir [pwd]
   		
   mdff setup -o $jobname -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -griddx ${mapname}_potential.dx -gridpdb ${MOL}-psfout-grid.pdb -extrab [list ${MOL}-extrabonds.txt ${MOL}-cispeptide.txt ${MOL}-chirality.txt] -gscale $gscale -minsteps $minsteps -numsteps $numsteps -fixpdb fixed.pdb -dir $workdir -parfiles $parfiles
 			
-  exec sed -i -e "s/dcdfreq.*/dcdfreq\ ${dcdfreq}/g" mdff_template.namd
+  #exec sed -i -e "s/dcdfreq.*/dcdfreq\ ${dcdfreq}/g" mdff_template.namd
+  
+  set frpdb [open mdff_template.namd "r"]
+  set spdb [read $frpdb]
+  close $frpdb
+  set fwpdb [open mdff_template.namd "w"]
+  regsub -all "dcdfreq.*" $spdb "dcdfreq ${dcdfreq}" spdb
+  puts $fwpdb $spdb
+  close $fwpdb
+  
   puts "Starting NAMD with job $jobname"
-  exec namd2 $namdargs ${jobname}-step1.namd > mdff_${jobname}-step1.log
+  exec namd2 $namdargs [file join $workdir ${jobname}-step1.namd] > [file join $workdir mdff_${jobname}-step1.log]
   puts "NAMD finished"
 
-  set results [mol new ${MOL}.psf]
-  mol addfile ${jobname}-step1.dcd waitfor all
+  set results [mol new [file join $workdir ${MOL}.psf]]
+  mol addfile [file join $workdir ${jobname}-step1.dcd] waitfor all
   set sel [atomselect $results all]
   $sel frame last
-  format_pdb $sel ${jobname}-step1-result.pdb
+  format_pdb $sel [file join $workdir ${jobname}-step1-result.pdb]
 }
 
