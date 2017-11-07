@@ -129,6 +129,18 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 		puts "Scoring cluster run."
 		score_refinement_cluster $jobname ${jobname}_$mol $bestN
 	}
+  
+  foreach pdb [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] {
+    puts "PDB: $pdb"
+    puts "TRIMMING: ${jobname}_${mol}"
+    set number [string trimleft [file tail $pdb] "${jobname}_${mol}"]
+    puts "NUMBER: $number"
+    set newname "${jobname}_${number}"
+    puts "NEWNAME: $newname"
+    file rename -force $pdb  [file join $::MODELMAKER::workdir/run-$jobname/pdb_out/ $newname]
+  }
+
+
 }
 
 proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapname mapresolution score_dens bestN nstruct {cluster 0} {nPerTask 5} {scoreOnly 0} args} \

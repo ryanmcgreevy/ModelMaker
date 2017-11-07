@@ -44,7 +44,7 @@ proc ::RosettaScoring::score_refinement {MOL max_structures jobname} \
     set offset [expr int(floor(log10([llength $pdb]))) + 1] 
     mol new $::MODELMAKER::workdir/run-$jobname/pdb_out/${MOL}_[format %0${offset}i [lindex $pdb $i]].pdb
    }
-   [atomselect top all] writepdb $::MODELMAKER::workdir/run-$jobname/${MOL}_best[expr $i + 1].pdb
+   [atomselect top all] writepdb $::MODELMAKER::workdir/run-$jobname/${jobname}_best[expr $i + 1].pdb
  }
 
  #animate write pdb ${MOL}_rosetta_scoring_min_$max_structures.pdb beg 0 end [expr $max_structures-1] skip 1 0
