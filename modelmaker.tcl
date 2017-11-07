@@ -1554,11 +1554,11 @@ proc ::MODELMAKER::quick_mdff { args } {
 			
   #exec sed -i -e "s/dcdfreq.*/dcdfreq\ ${dcdfreq}/g" mdff_template.namd
   
-  set frpdb [open mdff_template.namd "r"]
+  set frpdb [open [file join $workdir mdff_template.namd] "r"]
   set spdb [read $frpdb]
   close $frpdb
-  set fwpdb [open mdff_template.namd "w"]
-  regsub -all "dcdfreq.*" $spdb "dcdfreq ${dcdfreq}" spdb
+  set fwpdb [open [file join $workdir mdff_template.namd] "w"]
+  regsub -all "dcdfreq *\n" $spdb "dcdfreq ${dcdfreq}\n" spdb
   puts $fwpdb $spdb
   close $fwpdb
   
