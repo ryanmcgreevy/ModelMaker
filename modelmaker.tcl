@@ -1353,7 +1353,7 @@ proc ::MODELMAKER::quick_mdff_usage { } {
   puts "  -ss         <secondary structure restraint file> (default: auto-generated)"
   puts "  -cis        <cispeptide restraint file> (default: auto-generated)"
   puts "  -chir       <chirality restraint file> (default: auto-generated)"
-  puts "  -extrab     <additional extrabonds files> (default: none)"
+  puts "  -extrab     <list of additional extrabonds files> (default: none)"
 
 }
 
