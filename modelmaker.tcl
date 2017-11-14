@@ -1281,7 +1281,7 @@ proc ::MODELMAKER::makepsf { args } {
   }
   
   if { [info exists arg(pdb)] } {
-    set pdb [string range $arg(pdb) 0 [expr [string last ".pdb" $arg(pdb)] - 1 ]]
+    set pdb $arg(pdb)
   } else {
     error "input pdb file required"
   }
@@ -1307,7 +1307,7 @@ proc ::MODELMAKER::makepsf { args } {
     set chseg [split $data "\n"]
   
   } else {
-    set mol [mol new $pdb.pdb]
+    set mol [mol new $pdb]
     set sel [atomselect $mol "all"]
     set chains [$sel get chain]
     set segnames [$sel get segname]
@@ -1392,14 +1392,13 @@ proc ::MODELMAKER::quick_mdff { args } {
   }
   
   if { [info exists arg(pdb)] } {
-    set pdb [string range $arg(pdb) 0 [expr [string last ".pdb" $arg(pdb)] - 1 ]]
+    set pdb $arg(pdb)
   } else {
     error "input pdb file required!"
   }
   
   
   if { [info exists arg(density)] } {    
-    #set density [string range $arg(density) 0 [expr [string last ".*" $arg(density)] - 1 ]]
     set density $arg(density)
   } else {
     error "A density file must be specified!"
@@ -1420,7 +1419,7 @@ proc ::MODELMAKER::quick_mdff { args } {
   if { [info exists arg(jobname)] } {
     set jobname $arg(jobname)
   } else {
-    set jobname $pdb
+    set jobname [file rootname [file tail $pdb]]
   }
  
   if { [info exists arg(fixed)] } {
@@ -1460,7 +1459,7 @@ proc ::MODELMAKER::quick_mdff { args } {
     close $inputfile
     set chseg [split $data "\n"]
   } else {
-    set mol [mol new $pdb.pdb]
+    set mol [mol new $pdb]
     set sel [atomselect $mol "all"]
     set chains [$sel get chain]
     set segnames [$sel get segname]
@@ -1505,7 +1504,7 @@ proc ::MODELMAKER::quick_mdff { args } {
   #quick_mdff $jobname $pdb $density $fixed $gscale $minsteps $numsteps $res $bestN \
     $chseg $topfiles $parfiles $dcdfreq $namdargs
   
-  set MOL $pdb
+  set MOL [file rootname [file tail $pdb]]
   set mapname $density
   
   if { [file exists $workdir] } {
@@ -1520,7 +1519,7 @@ proc ::MODELMAKER::quick_mdff { args } {
 	mdff griddx -i $mapname -o [file join $workdir ${mapname}_potential.dx]
 
   set mutations ""
-	auto_makepsf $MOL $topfiles $chseg $mutations
+	auto_makepsf $pdb $topfiles $chseg $mutations
 	#autopsf -mol top -top ../top_all27_prot_lipid_na.inp
   file rename -force ${MOL}.psf $workdir
   file rename -force ${MOL}-psfout.pdb $workdir

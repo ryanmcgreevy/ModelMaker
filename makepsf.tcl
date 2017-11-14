@@ -26,7 +26,8 @@ proc ::MakePsf::auto_makepsf {MOL topnames ch_seg mutations} \
   # !!!!!! #
   ##########
     puts "running auto_makepsf"
-    mol new $MOL.pdb
+    mol new $MOL
+    set molname  [file rootname [file tail $MOL]]
 #    puts "$ch_seg"
 
     package require psfgen
@@ -161,11 +162,11 @@ proc ::MakePsf::auto_makepsf {MOL topnames ch_seg mutations} \
   ####################################
   #writepdb $MOL-psftemp.pdb
 
-  writepdb $MOL-psfout.pdb
-  writepsf $MOL.psf
+  writepdb $molname-psfout.pdb
+  writepsf $molname.psf
   # Rafael first psf file before guesscoord???
-  mol new $MOL.psf
-  mol addfile $MOL-psfout.pdb
+  mol new $molname.psf
+  mol addfile $molname-psfout.pdb
 
   foreach var $ch_seg {
     puts "name:[lindex $var 0] chain:[lindex $var 1] segname:[lindex $var 2]" 
@@ -174,5 +175,5 @@ proc ::MakePsf::auto_makepsf {MOL topnames ch_seg mutations} \
     $sel set chain $chain
   }
   set tot [atomselect [molinfo top] "all"]
-  $tot writepdb $MOL-psfout.pdb
+  $tot writepdb $molname-psfout.pdb
 }
