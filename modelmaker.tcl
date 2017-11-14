@@ -1350,6 +1350,10 @@ proc ::MODELMAKER::quick_mdff_usage { } {
   puts "  -parfiles   <list of parameter files to use>(Default: $DefaultParFiles) "
   puts "  -dcdfreq    <frequencey of dcd output>(Default: $DefaultDCDFreq) "
   puts "  -namdargs   <arguments to pass to namd> (default: none)"
+  puts "  -ss         <secondary structure restraint file> (default: auto-generated)"
+  puts "  -cis        <cispeptide restraint file> (default: auto-generated)"
+  puts "  -chir       <chirality restraint file> (default: auto-generated)"
+  puts "  -extrab     <additional extrabonds files> (default: none)"
 
 }
 
@@ -1387,6 +1391,10 @@ proc ::MODELMAKER::quick_mdff { args } {
       -parfiles { set arg(parfiles) $val }
       -dcdfreq { set arg(dcdfreq) $val }
       -namdargs { set arg(namdargs) $val }
+      -ss { set arg(ss) $val }
+      -cis { set arg(cis) $val }
+      -chir { set arg(chir) $val }
+      -extrab { set arg(extrab) $val }
       default { puts "Unknown argument $name"; return  }
     }
   }
@@ -1498,6 +1506,31 @@ proc ::MODELMAKER::quick_mdff { args } {
   } else {
     set namdargs ""
   }
+  
+  if { [info exists arg(ss)] } {
+    set ss $arg(ss)
+  } else {
+    set ss ""
+  }
+
+
+  if { [info exists arg(cis)] } {
+    set cis $arg(cis)
+  } else {
+    set cis ""
+  }
+
+  if { [info exists arg(chir)] } {
+    set chir $arg(chir)
+  } else {
+    set chir ""
+  }
+
+  if { [info exists arg(extrab)] } {
+    set extrab $arg(extrab)
+  } else {
+    set extrab ""
+  }
 #start_mdff_run step1 rpn11_human_27-310_fit rpn11_human_27-310_emd4002_3_3.9_density "not (resid 164 to 184 or resid 222 to 242 or resid 266 to 280 or resid 296 to 310)" 0.6 400 20000 3.9 $bestN
   #start_mdff_run $jobname $pdb $density $fixed $gscale $minsteps $numsteps $res $bestN \
     $chseg "" $topfiles $parfiles $dcdfreq $namdargs
@@ -1527,17 +1560,33 @@ proc ::MODELMAKER::quick_mdff { args } {
 	#make grid
 	mdff gridpdb -psf [file join $workdir ${MOL}.psf] -pdb [file join $workdir ${MOL}-psfout.pdb] -o [file join $workdir ${MOL}-psfout-grid.pdb]
 
-	#make ssrestraints
-	ssrestraints -psf [file join $workdir ${MOL}.psf] -pdb [file join $workdir ${MOL}-psfout.pdb] -o [file join $workdir ${MOL}-extrabonds.txt] -hbonds
 
-	#make cispeptide
-	mol delete all
-	mol new [file join $workdir ${MOL}.psf]
-	mol addfile [file join $workdir ${MOL}-psfout.pdb]
-	cispeptide restrain -o [file join $workdir ${MOL}-cispeptide.txt]
+	#make ssrestraints
+	if { $ss == ""} {
+    ssrestraints -psf [file join $workdir ${MOL}.psf] -pdb [file join $workdir ${MOL}-psfout.pdb] -o [file join $workdir ${MOL}-ssrestraints.txt] -hbonds
+    lappend extrab ${MOL}-ssrestraints.txt
+  } else {
+    lappend extrab $ss
+  }
+	
+  #make cispeptide
+  if { $cis == ""} {
+	  mol delete all
+	  mol new [file join $workdir ${MOL}.psf]
+	  mol addfile [file join $workdir ${MOL}-psfout.pdb]
+	  cispeptide restrain -o [file join $workdir ${MOL}-cispeptide.txt]
+    lappend extrab ${MOL}-cispeptide.txt
+  } else {
+    lappend extrab $cis
+  }
 
 	#chirality
-	chirality restrain -o [file join $workdir ${MOL}-chirality.txt]
+  if { $chir == ""} {
+	  chirality restrain -o [file join $workdir ${MOL}-chirality.txt]
+    lappend extrab ${MOL}-chirality.txt
+  } else {
+    lappend extrab $chir
+  }
 
 	#fix pdb
 	set all [atomselect top all]
@@ -1549,7 +1598,7 @@ proc ::MODELMAKER::quick_mdff { args } {
   
   #set workdir "${jobname}-mdff/"
   		
-  mdff setup -o $jobname -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -griddx ${mapname}_potential.dx -gridpdb ${MOL}-psfout-grid.pdb -extrab [list ${MOL}-extrabonds.txt ${MOL}-cispeptide.txt ${MOL}-chirality.txt] -gscale $gscale -minsteps $minsteps -numsteps $numsteps -fixpdb fixed.pdb -dir $workdir -parfiles $parfiles
+  mdff setup -o $jobname -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -griddx ${mapname}_potential.dx -gridpdb ${MOL}-psfout-grid.pdb -extrab $extrab -gscale $gscale -minsteps $minsteps -numsteps $numsteps -fixpdb fixed.pdb -dir $workdir -parfiles $parfiles
 			
   #exec sed -i -e "s/dcdfreq.*/dcdfreq\ ${dcdfreq}/g" mdff_template.namd
   
