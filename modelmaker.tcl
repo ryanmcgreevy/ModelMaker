@@ -498,6 +498,16 @@ proc ::MODELMAKER::refine { args } {
   } else {
     start_rosetta_refine $jobname $model $sel $anchor $csflag $density $res $score $bestN $nstruct
   }
+  
+  set inmol [mol new $arg(model)]
+  foreach pdb [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*_best*.pdb] {
+    set outmol [mol new $pdb]
+    regen_ids $inmol $outmol
+    set sel [atomselect $outmol all]
+    $sel writepdb $pdb
+    $sel delete  
+  }
+
 }
 
 proc ::MODELMAKER::abinitio_usage { } {
@@ -1630,8 +1640,8 @@ proc ::MODELMAKER::regen_ids {INMOL OUTMOL} {
   foreach res $resids {
     set insel [atomselect $INMOL "resid $res"]
     set outsel [atomselect $OUTMOL "resid $res"]
-    $outsel set chain [$insel get chain]
-    $outsel set segname [$insel get segname]
+    $outsel set chain [lindex [$insel get chain] 0]
+    $outsel set segname [lindex [$insel get segname] 0]
     $insel delete
     $outsel delete
   }
