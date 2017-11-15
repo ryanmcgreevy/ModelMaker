@@ -926,24 +926,31 @@ proc ::MODELMAKER::full_length_model { args } {
 #    set output $template
 #  }
 
+  set name [file rootname [file tail $template]]
   set mol [mol new $template]
   set sel [atomselect $mol "protein and noh"] 
-  format_pdb $sel "$template.formatted.pdb" 
+  format_pdb $sel "$name.formatted.pdb" 
   #this assume only 9 and 3 length fragment files and in a specific order. Can
   #we implement some logic to look at the provided files and determine what all we have?
   exec [glob $rosettaPath/full_length_model.$rosettaEXE] -in:file:fasta $fasta \
     -loops:frag_files [lindex $fragfiles 0] [lindex $fragfiles 1] none \
     -loops:frag_sizes 9 3 1 \
-    -in:file::s "$template.formatted.pdb" \
-    -overwrite >> $template-full_length_model.log
+    -in:file::s "$name.formatted.pdb" \
+    -overwrite >> $name-full_length_model.log
   
-  file delete "$template.formatted.pdb"
-  set full_mol [mol new ${template}.formatted.pdb_full_length.pdb]
+  file delete "$name.formatted.pdb"
+  set full_mol [mol new ${name}.formatted.pdb_full_length.pdb]
+ 
+  set chain [lindex [$sel get chain] 0]
+  set segname [lindex [$sel get segname] 0]
   set full_sel [atomselect $full_mol all]
+  if {$chain != ""} { $full_sel set chain $chain } 
+  if {$segname != ""} { $full_sel set segname $segname }
   renumber $full_sel $resstart
-  $full_sel writepdb ${template}_full_length.pdb
+  
+  $full_sel writepdb ${name}_full_length.pdb
   mol delete $full_mol
-  file delete ${template}.formatted.pdb_full_length.pdb
+  file delete ${name}.formatted.pdb_full_length.pdb
 
 }
 
