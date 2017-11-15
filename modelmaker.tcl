@@ -1614,10 +1614,26 @@ proc ::MODELMAKER::quick_mdff { args } {
   exec namd2 $namdargs [file join $workdir ${jobname}-step1.namd] > [file join $workdir mdff_${jobname}-step1.log]
   puts "NAMD finished"
 
+	set inmol [mol new [file join $workdir ${MOL}-psfout.pdb]]
   set results [mol new [file join $workdir ${MOL}.psf]]
   mol addfile [file join $workdir ${jobname}-step1.dcd] waitfor all
+  regen_ids $inmol $results
   set sel [atomselect $results all]
   $sel frame last
   format_pdb $sel [file join $workdir ${jobname}-step1-result.pdb]
+}
+
+proc ::MODELMAKER::regen_ids {INMOL OUTMOL} {
+  
+  set sel [atomselect $OUTMOL all]
+  set resids [lsort -integer -unique [$sel get resid]]
+  foreach res $resids {
+    set insel [atomselect $INMOL "resid $res"]
+    set outsel [atomselect $OUTMOL "resid $res"]
+    $outsel set chain [$insel get chain]
+    $outsel set segname [$insel get segname]
+    $insel delete
+    $outsel delete
+  }
 }
 
