@@ -502,7 +502,7 @@ proc ::MODELMAKER::refine { args } {
   set inmol [mol new $arg(model)]
   foreach pdb [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/*_best*.pdb] {
     set outmol [mol new $pdb]
-    regen_ids $inmol $outmol
+    regen_segnames $inmol $outmol
     set sel [atomselect $outmol all]
     $sel writepdb $pdb
     $sel delete  
@@ -1634,37 +1634,46 @@ proc ::MODELMAKER::quick_mdff { args } {
 	set inmol [mol new [file join $workdir ${MOL}-psfout.pdb]]
   set results [mol new [file join $workdir ${MOL}.psf]]
   mol addfile [file join $workdir ${jobname}-step1.dcd] waitfor all
-  regen_ids $inmol $results
+  regen_chains $inmol $results
   set sel [atomselect $results all]
   $sel frame last
   format_pdb $sel [file join $workdir ${jobname}-step1-result.pdb]
 }
 
-proc ::MODELMAKER::regen_ids {INMOL OUTMOL} {
+proc ::MODELMAKER::regen_chains {INMOL OUTMOL} {
+  
+
+  
+  set sel [atomselect $OUTMOL "all"]
+  set segnamesout [$sel get segname]
+  #get unique list
+  foreach segname $segnamesout {dict set tmp2 $segname 1}
+  set segnamesout [dict keys $tmp2]
+  
+  foreach segnameout $segnamesout {
+    set outsel [atomselect $OUTMOL "segname $segnameout"]
+    set insel [atomselect $INMOL "segname $segnameout"]
+    $outsel set chain [lindex [$insel get chain] 0]
+  }
+}
+
+proc ::MODELMAKER::regen_segnames {INMOL OUTMOL} {
   
   set sel [atomselect $INMOL "all"]
-  set chainsin [$sel get chain]
   set segnamesin [$sel get segname]
   #get unique list
-  foreach chain $chainsin {dict set tmp $chain 1}
-  set chainsin [dict keys $tmp]
   foreach segname $segnamesin {dict set tmp2 $segname 1}
   set segnamesin [dict keys $tmp2]
 
   
   set sel [atomselect $OUTMOL "all"]
-  set chainsout [$sel get chain]
   set segnamesout [$sel get segname]
   #get unique list
-  foreach chain $chainsout {dict set tmp $chain 1}
-  set chainsout [dict keys $tmp]
   foreach segname $segnamesout {dict set tmp2 $segname 1}
   set segnamesout [dict keys $tmp2]
   
-
-  foreach chainin $chainsin segnamein $segnamesin segnameout $segnamesout {
+  foreach segnamein $segnamesin segnameout $segnamesout {
     set sel [atomselect $OUTMOL "segname $segnameout"]
-    $sel set chain $chainin
     $sel set segname $segnamein
   }
 }
