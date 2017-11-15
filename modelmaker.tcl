@@ -1635,15 +1635,29 @@ proc ::MODELMAKER::quick_mdff { args } {
 
 proc ::MODELMAKER::regen_ids {INMOL OUTMOL} {
   
-  set sel [atomselect $OUTMOL all]
-  set resids [lsort -integer -unique [$sel get resid]]
-  foreach res $resids {
-    set insel [atomselect $INMOL "resid $res"]
-    set outsel [atomselect $OUTMOL "resid $res"]
-    $outsel set chain [lindex [$insel get chain] 0]
-    $outsel set segname [lindex [$insel get segname] 0]
-    $insel delete
-    $outsel delete
+  set sel [atomselect $INMOL "all"]
+  set chainsin [$sel get chain]
+  set segnamesin [$sel get segname]
+  #get unique list
+  foreach chain $chainsin {dict set tmp $chain 1}
+  set chainsin [dict keys $tmp]
+  foreach segname $segnamesin {dict set tmp2 $segname 1}
+  set segnamesin [dict keys $tmp2]
+
+  
+  set sel [atomselect $OUTMOL "all"]
+  set chainsout [$sel get chain]
+  set segnamesout [$sel get segname]
+  #get unique list
+  foreach chain $chainsout {dict set tmp $chain 1}
+  set chainsout [dict keys $tmp]
+  foreach segname $segnamesout {dict set tmp2 $segname 1}
+  set segnamesout [dict keys $tmp2]
+  
+
+  foreach chainin $chainsin segnamein $segnamesin segnameout $segnamesout {
+    set sel [atomselect $OUTMOL "segname $segnameout"]
+    $sel set chain $chainin
+    $sel set segname $segnamein
   }
 }
-
