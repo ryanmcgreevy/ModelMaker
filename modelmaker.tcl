@@ -1544,7 +1544,7 @@ proc ::MODELMAKER::quick_mdff { args } {
   }
 
   if { [info exists arg(extrab)] } {
-    set extrab $arg(extrab)
+    set extrab [file rootname [file tail $arg(extrab)]]
   } else {
     set extrab ""
   }
@@ -1565,6 +1565,10 @@ proc ::MODELMAKER::quick_mdff { args } {
 
   file mkdir $workdir
 	
+   if { [info exists arg(extrab)] } {
+    file copy $arg(extrab) $workdir
+  }
+  
   #make _potential
 	mdff griddx -i $mapname -o [file join $workdir ${mapname}_potential.dx]
 
