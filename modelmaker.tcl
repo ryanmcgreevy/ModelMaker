@@ -1544,7 +1544,10 @@ proc ::MODELMAKER::quick_mdff { args } {
   }
 
   if { [info exists arg(extrab)] } {
-    set extrab [file rootname [file tail $arg(extrab)]]
+    set extrab  ""
+    foreach extrab_file $arg(extrab) {
+      lappend extrab [file rootname [file tail $extrab_file]]
+    }
   } else {
     set extrab ""
   }
@@ -1566,7 +1569,9 @@ proc ::MODELMAKER::quick_mdff { args } {
   file mkdir $workdir
 	
    if { [info exists arg(extrab)] } {
-    file copy $arg(extrab) $workdir
+    foreach extrab_file $arg(extrab) {
+      file copy $extrab_file $workdir
+    }
   }
   
   #make _potential
