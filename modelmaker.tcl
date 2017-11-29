@@ -89,6 +89,7 @@ namespace eval ::MODELMAKER {
   [file join $env(CHARMMPARDIR) par_all36_cgenff.prm] [file join $env(CHARMMPARDIR) toppar_all36_carb_glycopeptide.str]\
   [file join $env(CHARMMPARDIR) toppar_water_ions_namd.str]]
  
+  variable DefaultThreshold 0.1 
   
   variable MPINP
   variable settings
@@ -110,6 +111,7 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  seqsub                -- extract subrange of fasta sequence" 
   puts "  makepsf               -- make a .psf file from a pdb" 
   puts "  mdff                  -- run an MDFF simulation" 
+  puts "  cccolor               -- calculate local cross correlations" 
   return
 
 }
@@ -146,6 +148,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::makepsf $args]
   } elseif { $command == "mdff" } {
     return [eval ::MODELMAKER::quick_mdff $args]
+  } elseif { $command == "cccolor" } {
+    return [eval ::MODELMAKER::cccolor $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -1686,3 +1690,110 @@ proc ::MODELMAKER::regen_segnames {INMOL OUTMOL} {
     $sel set segname $segnamein
   }
 }
+
+proc ::MODELMAKER::cccolor_usage { } {
+  variable DefaultThreshold  
+  puts "Usage: mdodelmaker cccolor -pdb <input pdb file> -density <input density file> \
+    -res <resolution of density in Angstroms> ?options?"
+  puts "Options:"
+  puts "  -threshold    <ignore density below threshold value> (default: $DefaultThreshold)>"
+  puts "  -spacing      <grid spacing of simulated map> (default: matches input map)>"
+  puts "  -sel          <selection text to calculate correlations on> (default: all)>"
+  puts "  -mode         <calculate correlations for secondary structure (ss) or individual residue (res)> (default: ss)>"
+  puts "  -ressel       <selection text of resid range if performing per-resiude calculation (e.g., resid 1 to 20) > (default: all)>"
+  puts "  -bbonly       <calculate per-residue correlation for backbone atoms only (options: on or off)> (default: off)>"
+
+}
+
+proc ::MODELMAKER::cccolor { args } {
+  variable DefaultThreshold  
+  
+  global env
+
+  set nargs [llength [lindex $args 0]]
+  if {$nargs == 0} {
+    cccolor_usage
+    error ""
+  }
+  
+  foreach {name val} $args {
+    switch -- $name {
+      -pdb { set arg(pdb) $val }
+      -density { set arg(density) $val }
+      -res { set arg(res) $val }
+      -threshold { set arg(threshold) $val }
+      -spacing { set arg(spacing) $val }
+      -sel { set arg(sel) $val }
+      -mode { set arg(mode) $val }
+      -ressel { set arg(ressel) $val }
+      -bbonly { set arg(bbonly) $val }
+      default { puts "Unknown argument $name"; return  }
+    }
+  }
+  
+  if { [info exists arg(pdb)] } {
+    set pdb $arg(pdb)
+  } else {
+    error "input pdb file required!"
+  }
+  
+  if { [info exists arg(density)] } {
+    set density $arg(density)
+  } else {
+    error "density map required!"
+  }
+  
+  if { [info exists arg(res)] } {
+    set res $arg(res)
+  } else {
+    error "density map resolution required!"
+  }
+  
+  if { [info exists arg(threshold)] } {
+    set threshold $arg(threshold)
+  } else {
+    set threshold $DefaultThreshold
+  }
+  
+  if { [info exists arg(spacing)] } {
+    set spacing $arg(spacing)
+  } else {
+    set spacing -1
+  }
+ 
+  if { [info exists arg(sel)] } {
+    set sel $arg(sel)
+  } else {
+    set sel "all"
+  }
+  
+  if { [info exists arg(mode)] } {
+    set mode $arg(mode)
+  } else {
+    set mode "ss"
+  }
+  
+  if { [info exists arg(ressel)] } {
+    set ressel $arg(mode)
+  } else {
+    set ressel "all"
+  }
+  
+  if { [info exists arg(bbonly)] } {
+    set bbonly $arg(bbonly)
+  } else {
+    set bbonly 0
+  }
+  
+#  set MOL [file rootname [file tail $pdb]]
+  
+  set ss_on 0
+  set res_on 0
+  switch $mode {
+    "ss" { set ss_on 1  }
+    "res" { set res_on 1 }
+    default { puts "Unknown correlation mode $mode"; return }
+  }
+  ::CCColor::cccolor $pdb $density $res $threshold $spacing $ss_on $res_on $sel $ressel "/usr/tmp" $bbonly
+}
+

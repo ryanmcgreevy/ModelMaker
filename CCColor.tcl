@@ -16,7 +16,7 @@ proc cccolor {args} \
 #####################
 # input files
 ####################
-proc ::CCColor::cccolor {MOL mapname resolution threshold spacing cutoff ss_on res_on gen_sel res_sel {tempfolder "/usr/tmp"} {bb_only 0} args} {
+proc ::CCColor::cccolor {MOL mapname resolution threshold spacing ss_on res_on gen_sel res_sel {tempfolder "/usr/tmp"} {bb_only 0} args} {
 	#################
 	# Program settings
 	#################
@@ -30,15 +30,17 @@ proc ::CCColor::cccolor {MOL mapname resolution threshold spacing cutoff ss_on r
 	#######################
 	## MAIN PROGRAM
 	########################
-	set pdb [mol new $MOL.pdb]
+	set pdb [mol new $MOL]
 
-	### set beta for all
+  set MOL [file rootname [file tail $MOL]]
+	
+  ### set beta for all
 	set defaultBeta 0
 	[atomselect $pdb all] set beta $defaultBeta
 
 	set atomSel [atomselect $pdb "$gen_sel"]
 
-	set dens_mol [mol new $mapname.dx]
+	set dens_mol [mol new $mapname]
 
 	#source getSS.tcl
 	
@@ -76,9 +78,13 @@ proc ::CCColor::cccolor {MOL mapname resolution threshold spacing cutoff ss_on r
 					puts $log [$ssSel num]
 					#    volmap mask $ssSel -o mask.dx -cutoff $cutoff
 					#   volutil -mult ${emdbName}_density.dx mask.dx -o compare.dx
-					set CCSS [mdff ccc $ssSel -i $mapname.dx -res $resolution -spacing $spacing -thresholddensity $threshold]
-					# set CCSS [mdffi cc $ssSel -mol $dens_mol -res $resolution -spacing $spacing -thresholddensity $threshold]
-					#set CCSS 0.0
+					#set CCSS [mdff ccc $ssSel -i $mapname.dx -res $resolution -spacing $spacing -thresholddensity $threshold]
+					if {$spacing != -1} {
+           set CCSS [mdffi cc $ssSel -mol $dens_mol -res $resolution -spacing $spacing -thresholddensity $threshold]
+					} else {
+           set CCSS [mdffi cc $ssSel -mol $dens_mol -res $resolution -thresholddensity $threshold]
+          }
+          #set CCSS 0.0
 					set str [string range "$CCSS" 1 3]
 					if {[string equal $str "nan"] || [string equal $str "NaN"]} {
 						$ssSel set beta -1.0
@@ -116,6 +122,11 @@ proc ::CCColor::cccolor {MOL mapname resolution threshold spacing cutoff ss_on r
 						#volutil -mult ${emdbName}_density.dx mask.dx -o compare.dx
 						set CCres [mdff ccc $resSel -i $mapname.dx -res $resolution -spacing $spacing -thresholddensity $threshold]
 						# set CCres [mdffi cc $resSel -mol $dens_mol -res $resolution -spacing $spacing -thresholddensity $threshold]
+            if {$spacing != -1} {
+             set CCres [mdffi cc $resSel -mol $dens_mol -res $resolution -spacing $spacing -thresholddensity $threshold]
+            } else {
+             set CCres [mdffi cc $resSel -mol $dens_mol -res $resolution -thresholddensity $threshold]
+            }
 						set str [string range "$CCres" 1 3]
 						if {[string equal $str "nan"] || [string equal $str "NaN"]} {
 							$resSel set beta -1.0
