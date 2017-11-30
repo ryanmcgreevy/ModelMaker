@@ -283,7 +283,10 @@ proc ::MODELMAKER::insertion { args } {
   file mkdir $::MODELMAKER::workdir/setup-$jobname
   file mkdir $::MODELMAKER::workdir/run-$jobname
 
-  file copy $arg(model) $::MODELMAKER::workdir/setup-$jobname
+  set tmpmol [mol new $arg(model)]
+  set tmpsel [atomselect $tmpmol "noh"]
+  $tmpsel writepdb "$::MODELMAKER::workdir/setup-$jobname/[file tail $arg(model)]"
+  
   file copy $fasta.fasta $::MODELMAKER::workdir/setup-$jobname
   foreach fragfile $fragfiles {
     puts $fragfile
@@ -489,8 +492,10 @@ proc ::MODELMAKER::refine { args } {
   file mkdir $::MODELMAKER::workdir/setup-$jobname
   file mkdir $::MODELMAKER::workdir/run-$jobname
 
-  file copy $arg(model) $::MODELMAKER::workdir/setup-$jobname
-  
+  set tmpmol [mol new $arg(model)]
+  set tmpsel [atomselect $tmpmol "noh"]
+  $tmpsel writepdb "$::MODELMAKER::workdir/setup-$jobname/[file tail $arg(model)]"
+    
   if { $mode == "cartesian" } {
     set csflag 1
   } else {
@@ -664,7 +669,10 @@ proc ::MODELMAKER::abinitio { args } {
   file mkdir $::MODELMAKER::workdir/setup-$jobname
   file mkdir $::MODELMAKER::workdir/run-$jobname
 
-  file copy $arg(model) $::MODELMAKER::workdir/setup-$jobname
+  set tmpmol [mol new $arg(model)]
+  set tmpsel [atomselect $tmpmol "noh"]
+  $tmpsel writepdb "$::MODELMAKER::workdir/setup-$jobname/[file tail $arg(model)]"
+  
   foreach fragfile [lindex $fragfiles 0] {
     file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
   }
