@@ -1550,7 +1550,7 @@ proc ::MODELMAKER::quick_mdff { args } {
   if { [info exists arg(extrab)] } {
     set extrab  ""
     foreach extrab_file $arg(extrab) {
-      lappend extrab [file rootname [file tail $extrab_file]]
+      lappend extrab [file tail $extrab_file]
     }
   } else {
     set extrab ""
