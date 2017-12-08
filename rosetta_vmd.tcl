@@ -13,7 +13,6 @@ package require AutoMDFF
 package require RosettaScoring
 package require CCColor
 package require FindSelection
-package require CheckCluster
 package require RosettaUtilities
 package require SSAnalysis
 

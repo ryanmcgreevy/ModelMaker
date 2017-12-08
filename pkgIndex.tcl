@@ -8,6 +8,5 @@ package ifneeded AnalysisMDFF 0.1 [list source [file join $dir analysis_mdff.tcl
 package ifneeded CCColor 0.1 [list source [file join $dir CCColor.tcl]]
 package ifneeded FindSelection 0.1 [list source [file join $dir find_selection.tcl]]
 package ifneeded DensitySelector 0.1 [list source [file join $dir pdb_density_selector.tcl]]
-package ifneeded CheckCluster 0.1 [list source [file join $dir check_clusterjob.tcl]]
 package ifneeded RosettaUtilities 0.1 [list source [file join $dir utilities.tcl]]
 package ifneeded SSAnalysis 0.1 [list source [file join $dir ss_analysis.tcl]]
