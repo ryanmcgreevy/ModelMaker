@@ -1694,8 +1694,10 @@ proc ::MODELMAKER::regen_segnames {INMOL OUTMOL} {
   set segnamesout [dict keys $tmp2]
   
   foreach segnamein $segnamesin segnameout $segnamesout {
-    set sel [atomselect $OUTMOL "segname $segnameout"]
-    $sel set segname $segnamein
+    if {$segnamein != "" && $segnameout != ""} {
+      set sel [atomselect $OUTMOL "segname $segnameout"]
+      $sel set segname $segnamein
+    }
   }
 }
 
