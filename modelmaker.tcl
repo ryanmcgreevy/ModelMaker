@@ -160,9 +160,6 @@ proc ::MODELMAKER::insertion { args } {
   variable rosettaPath
   variable DefaultWorkDir
   variable MPINP
- #These need to be changed in the underlying package to refer to the variable instead.
-#e.g., $::MODELMAKER::rosettaDBpath
-#instead of using these 'global' variables which gets confusing and dangerous.
   global rosettapath
   global rosettaDBpath
   global platform
@@ -313,9 +310,6 @@ proc ::MODELMAKER::refine { args } {
   variable DefaultScore
   variable MPINP
   variable DefaultRefineMode
- #These need to be changed in the underlying package to refer to the variable instead.
-#e.g., $::MODELMAKER::rosettaDBpath
-#instead of using these 'global' variables which gets confusing and dangerous.
   global rosettapath
   global rosettaDBpath
   global platform
@@ -339,13 +333,11 @@ proc ::MODELMAKER::refine { args } {
       -sel { set arg(sel) $val }
       -anchor { set arg(anchor) $val }
       -nstruct { set arg(nstruct) $val }
-      #-csflag { set arg(csflag) $val }
       -density { set arg(density) $val }
       -res { set arg(res) $val }
       -score { set arg(score) $val }
       -bestN { set arg(bestN) $val }
       -workdir { set arg(workdir) $val }
-      #-sidechain { set arg(sidechain) $val }
       -mode { set arg(mode) $val }
       -np { set arg(np) $val }
       default { puts "Unknown argument $name"; return  }
@@ -353,9 +345,7 @@ proc ::MODELMAKER::refine { args } {
   }
 
   if { [info exists arg(model)] } {
-    #set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
     set model [file rootname [file tail $arg(model)]]
-    #set model $arg(model)
   } else {
     error "A full model pdb file must be specified!"
   }
@@ -373,7 +363,6 @@ proc ::MODELMAKER::refine { args } {
   }
   
   if { [info exists arg(density)] } {
-    #set density $arg(density)
     set density [string range $arg(density) 0 [expr [string last ".mrc" $arg(density)] - 1 ]]
   } else {
     error "A density file must be specified!"
@@ -390,18 +379,6 @@ proc ::MODELMAKER::refine { args } {
   } else {
     set mode $DefaultRefineMode
   }
-  
- # if { [info exists arg(csflag)] } {
- #   set csflag $arg(csflag)
- # } else {
- #   set csflag $DefaultCSFlag
- # }
-  
- # if { [info exists arg(sidechain)] } {
- #   set sidechain $arg(sidechain)
- # } else {
- #   set sidechain $DefaultSidechain
- # }
   
   if { [info exists arg(score)] } {
     set score $arg(score)
@@ -496,9 +473,6 @@ proc ::MODELMAKER::abinitio_usage { } {
   puts "  -nstruct    <number of structures to predict> (default: $DefaultNStruct)> "
   puts "  -testrun    <test run flag (0 or 1)> (default: $DefaultTestRun)> "
   puts "  -np         <Number of processors to use. MPI version only> "
-#hide these until wider functionality
-#  puts "  -cluster    <run on cluster flag (0 or 1)> (default: $DefaultCluster)> "
-#  puts "  -npertask   <tasks per job on cluster> (default: $DefaultNPerTask)> "
 }
 
 proc ::MODELMAKER::abinitio { args } {
@@ -512,14 +486,10 @@ proc ::MODELMAKER::abinitio { args } {
   variable rosettaPath
   variable DefaultWorkDir
   variable MPINP
- #These need to be changed in the underlying package to refer to the variable instead.
-#e.g., $::MODELMAKER::rosettaDBpath
-#instead of using these 'global' variables which gets confusing and dangerous.
- global rosettapath
- global rosettaDBpath
- global platform
+  global rosettapath
+  global rosettaDBpath
+  global platform
 
-#$::env(PATH)
 
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
@@ -549,9 +519,7 @@ proc ::MODELMAKER::abinitio { args } {
   }
 
   if { [info exists arg(model)] } {
-    #set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
     set model [file rootname [file tail $arg(model)]]
-    #set model $arg(model)
   } else {
     error "A full model pdb file must be specified!"
   }
@@ -638,7 +606,6 @@ proc ::MODELMAKER::abinitio { args } {
   foreach fragfile [lindex $fragfiles 0] {
     file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
   }
-  #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $nstruct $cluster $npertask $testrun
   start_rosetta_abinitio $jobname $model $sel $anchor $fragfiles $nstruct $cluster $npertask $testrun
 }
 
@@ -656,7 +623,7 @@ proc ::MODELMAKER::analyze_usage { } {
   puts "  -align_rosetta       <selection text of predicted models for alignment> (default: taken from -align_template)> "
   puts "  -insertion   <analyzing output from insertion? 'yes' or 'no'> (default: $DefaultInsertion)"
 #hide these until wider functionality
-#  puts "  -cluster    <run on cluster flag (0 or 1)> (default: $DefaultCluster)> "
+#  puts "  -cluster    <clustering mode to use> (default: $DefaultCluster)> "
 
 }
 
@@ -692,16 +659,12 @@ proc ::MODELMAKER::analyze { args } {
 
   puts $arg(model)
   if { [info exists arg(model)] } {
-  #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
-  #extension. Need to change RosettaVMD to not require this.
     set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
   } else {
     error "A full model pdb file must be specified!"
   }
 
   if { [info exists arg(template)] } {
-  #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
-  #extension. Need to change RosettaVMD to not require this.
     # get the full path of the template file
     set dir [file dirname $arg(template)]
     if { $dir == "." } {
@@ -776,19 +739,15 @@ proc ::MODELMAKER::analyze { args } {
     exit 1
   }
 
- #These need to be changed in the underlying package to refer to the variable instead.
-#e.g., $::MODELMAKER::rosettaDBpath
-#instead of using these 'global' variables which gets confusing and dangerous.
- global rosettapath
- global rosettaDBpath
- global platform
+  global rosettapath
+  global rosettaDBpath
+  global platform
 
- global packagePath
- global vmdexe
+  global packagePath
+  global vmdexe
 #can we avoid this or make it optional?
- global gnuplotexe
+  global gnuplotexe
 
-#$::env(PATH)
 
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
@@ -796,7 +755,7 @@ proc ::MODELMAKER::analyze { args } {
 
   set packagePath $::env(RosettaVMDDIR)
 
-#assumes in PATH which should be reasonable
+#assumes in PATH which should be reasonable requirement
   set vmdexe "vmd"
   set gnuplotexe "gnuplot"
 
@@ -810,7 +769,6 @@ proc ::MODELMAKER::analyze { args } {
       set insert_model ""
     }
   }
-  #jobname mol bestN nstruct cluster align_template align_rosetta analysis_components
   analyze_abinitio $jobname $modelname $template $bestN $nstruct $cluster $align_template \
     $align_rosetta $comps {*}$insert_model
 }
@@ -835,7 +793,6 @@ proc ::MODELMAKER::full_length_model_usage { } {
   puts "Usage: modelmaker full_length_model -template <template pdb> -fragfiles <list of fragment files> \
     -fasta <fasta file> ?options?"
   puts "Options:"
- # puts "  -output <output file prefix (default: template name)> "
   puts "  -resstart <id of first residue> (default: $DefaultResStart)> "
 
 }
@@ -854,11 +811,9 @@ proc ::MODELMAKER::full_length_model { args } {
   foreach {name val} $args {
     switch -- $name {
       -template { set arg(template) $val }
-      #-name { set arg(name) $val }
       -fragfiles { set arg(fragfiles) $val }
       -fasta { set arg(fasta) $val }
       -resstart { set arg(resstart) $val }
-      #-output { set arg(output) $val }
       default { puts "Unknown argument $name"; return  }
     }
   }
@@ -881,24 +836,12 @@ proc ::MODELMAKER::full_length_model { args } {
     error "A fasta file must be specified!"
   }
 
-  #if { [info exists arg(name)] } {
-  #  set name $arg(name)
-  #} else {
-  #  error "A model name must be specified!"
-  #}
 
   if { [info exists arg(resstart)] } {
     set resstart $arg(resstart)
   } else {
     set resstart $DefaultResStart
   }
-
-#  if { [info exists arg(output)] } {
-#    set output $arg(output)
-#  } else {
-#    #this mimics the default rosetta behaviour
-#    set output $template
-#  }
 
   set name [file rootname [file tail $template]]
   set mol [mol new $template]
@@ -933,15 +876,12 @@ proc ::MODELMAKER::full_length_model { args } {
 
 
 proc ::MODELMAKER::gapfind_usage { } {
-
   variable defaultGapfindSel
- # variable defaultGapfindMol
 
   puts "Usage: mdodelmaker gapfind ?options?"
   puts "Options:"
   puts "  -i <input pdb> "
   puts "  -sel <atom selection text> (default: $defaultGapfindSel)"
-  #puts "  -mol <molid> (find gaps in already loaded molecule) (default: $defaultGapfindMol)"
   puts "  -mol <molid> (find gaps in already loaded molecule)"
 
 }
@@ -951,18 +891,12 @@ proc ::MODELMAKER::gapfind_usage { } {
 proc ::MODELMAKER::gapfind { args } {
 
   variable defaultGapfindSel
- # variable defaultGapfindMol
 
   set nargs [llength [lindex $args 0]]
   if {$nargs == 0} {
     gapfind_usage
     error ""
   }
-
-#  set MOL coot_corr_of_9_refine_4_fin_fixed
-
-#  mol delete all
-#  mol new $MOL.pdb
 
   foreach {name val} $args {
     switch -- $name {
@@ -994,37 +928,31 @@ proc ::MODELMAKER::gapfind { args } {
   if { [info exists arg(mol)] } {
     set inputmol $arg(mol)
   } else {
-  #  set inputmol $defaultGapfindMol
     set inputmol ""
   }
 
   if { $inputpdb != ""} {
     set MOLID [mol new $inputpdb]
   } else {
-    set MOLID $inputmol ;#[molinfo $inputmol get id]
+    set MOLID $inputmol ;
   }
 
   set molname [molinfo $MOLID get name]
 
   set chains [lsort -unique [[atomselect $MOLID $inputsel] get chain]]
-#set generalOut [open "$MOL-missing.html" w]
   foreach chain $chains {
     puts $chain
     set counter 0
     set sel [atomselect $MOLID "chain $chain"]
     set residues [lsort -integer -unique [$sel get resid]]
     set missing []
-    #puts $residues
     #set first [lindex $residues 0]
     set first 1
     set last [lindex $residues end]
     set delta [expr $last - $first]
-    #puts "$first $last $delta"
     for {set i $first} {$i <= $delta} {incr i} {
-      #puts $i
       set d [expr $i - $first - $counter]
       if {$i != [lindex $residues $d]} {
-        #puts "$i"
         lappend missing $i
         incr counter
       }
@@ -1036,11 +964,6 @@ proc ::MODELMAKER::gapfind { args } {
     }
     close $f
     }
-    #puts $generalOut "<head>"
-    #puts $generalOut "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
-    #puts $generalOut "</head>"
-    #puts $generalOut "<h1> chain $chain </h1>"
-    #puts $generalOut [html::tableFromList $missing]
   }
 
 }
@@ -1073,7 +996,6 @@ proc ::MODELMAKER::pdb2seq_usage { } {
   puts "Options:"
   puts "  -i <input pdb> "
   puts "  -sel <atom selection text> (default: $DefaultPDB2SeqSel)"
-  #puts "  -mol <molid> (find gaps in already loaded molecule) (default: $defaultGapfindMol)"
   puts "  -mol <molid> (find gaps in already loaded molecule)"
   puts "  -o   <filename> (output sequence to a file instead)"
 
@@ -1131,7 +1053,7 @@ proc ::MODELMAKER::pdb2seq {args} {
   if { $inputpdb != ""} {
     set MOLID [mol new $inputpdb]
   } else {
-    set MOLID $inputmol;#[molinfo $inputmol get id]
+    set MOLID $inputmol
   }
   
 
@@ -1525,11 +1447,6 @@ proc ::MODELMAKER::quick_mdff { args } {
   } else {
     set extrab ""
   }
-#start_mdff_run step1 rpn11_human_27-310_fit rpn11_human_27-310_emd4002_3_3.9_density "not (resid 164 to 184 or resid 222 to 242 or resid 266 to 280 or resid 296 to 310)" 0.6 400 20000 3.9 $bestN
-  #start_mdff_run $jobname $pdb $density $fixed $gscale $minsteps $numsteps $res $bestN \
-    $chseg "" $topfiles $parfiles $dcdfreq $namdargs
-  #quick_mdff $jobname $pdb $density $fixed $gscale $minsteps $numsteps $res $bestN \
-    $chseg $topfiles $parfiles $dcdfreq $namdargs
   
   set MOL [file rootname [file tail $pdb]]
   set mapname $density
@@ -1553,7 +1470,6 @@ proc ::MODELMAKER::quick_mdff { args } {
 
   set mutations ""
 	auto_makepsf $pdb $topfiles $chseg $mutations
-	#autopsf -mol top -top ../top_all27_prot_lipid_na.inp
   file rename -force ${MOL}.psf $workdir
   file rename -force ${MOL}-psfout.pdb $workdir
 
@@ -1596,11 +1512,9 @@ proc ::MODELMAKER::quick_mdff { args } {
 	$all writepdb [file join $workdir fixed.pdb]
 	
   
-  #set workdir "${jobname}-mdff/"
   		
   mdff setup -o $jobname -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -griddx ${mapname}_potential.dx -gridpdb ${MOL}-psfout-grid.pdb -extrab $extrab -gscale $gscale -minsteps $minsteps -numsteps $numsteps -fixpdb fixed.pdb -dir $workdir -parfiles $parfiles
 			
-  #exec sed -i -e "s/dcdfreq.*/dcdfreq\ ${dcdfreq}/g" mdff_template.namd
   
   set frpdb [open [file join $workdir mdff_template.namd] "r"]
   set spdb [read $frpdb]
@@ -1624,9 +1538,6 @@ proc ::MODELMAKER::quick_mdff { args } {
 }
 
 proc ::MODELMAKER::regen_chains {INMOL OUTMOL} {
-  
-
-  
   set sel [atomselect $OUTMOL "all"]
   set segnamesout [$sel get segname]
   #get unique list
@@ -1756,8 +1667,6 @@ proc ::MODELMAKER::cccolor { args } {
   } else {
     set bbonly 0
   }
-  
-#  set MOL [file rootname [file tail $pdb]]
   
   set ss_on 0
   set res_on 0

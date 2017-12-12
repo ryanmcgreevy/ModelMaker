@@ -31,11 +31,6 @@ proc refine_with_rosetta {args} \
 	return [eval ::RosettaInputGenerator::refine_with_rosetta $args]
 }
 
-#proc refine_sidechains_rosetta {args} \
-#{
-#	return [eval ::RosettaInputGenerator::refine_sidechains_rosetta $args]
-#}
-
 proc rosetta_abinitio {args} \
 {
 	return [eval ::RosettaInputGenerator::rosetta_abinitio $args]
@@ -78,8 +73,6 @@ proc ::RosettaInputGenerator::refine_with_rosetta {jobname MOL mapname res score
 	}
 	puts $converted
 
-#	exec mkdir -p "rosetta_input_$jobname"
-#	exec mkdir -p "rosetta_output_$jobname"
 	###############################
 	#	ROSETTA XML SCRIPT
 	###############################
@@ -148,19 +141,7 @@ proc ::RosettaInputGenerator::refine_with_rosetta {jobname MOL mapname res score
 	###############################
 	#	BATCH SUBMISSION SCRIPT
 	###############################
-	if {!$cluster} {
-		set bashscript [::RosettaInputGenerator::make_bash_script 25 1.5 $res $mapname.mrc $jobname $nstruct]
-	} else {
-		set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
-		puts "Tasks: $tasks"
-		if {$tasks < 1 || $nPerTask < 1 || $nstruct < 1 || $nstruct < $nPerTask} {
-			puts "Please provide valid input for submission on cluster!"
-			::RosettaInputGenerator::wrong_input
-		}
-		puts "Preparing $nstruct structures on cluster. $tasks tasks with $nPerTask structures each."
-		set bashscript [::RosettaInputGenerator::make_cluster_script 25 1.5 $res $mapname.mrc $jobname $nstruct $tasks $nPerTask]
-	}
-
+	set bashscript [::RosettaInputGenerator::make_bash_script 25 1.5 $res $mapname.mrc $jobname $nstruct]
 
 	set script [open "$jobname.sh" w]
 	puts $script $bashscript
@@ -263,135 +244,13 @@ proc ::RosettaInputGenerator::rosetta_basic_refinement {jobname MOL nstruct clus
 	###############################
 	#	BATCH SUBMISSION SCRIPT
 	###############################
-	if {!$cluster} {
 		# jobname nstruct
-		set bashscript [::RosettaInputGenerator::make_abinitio_local_script $jobname $nstruct]
-	} else {
-		# TODO: implement
-		# set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
-		# puts "Tasks: $tasks"
-		# if {$tasks < 1 || $nPerTask < 1 || $nstruct < 1 || $nstruct < $nPerTask} {
-		# 	puts "Please provide valid input for submission on cluster!"
-		# 	::RosettaInputGenerator::wrong_input
-		# }
-		# puts "Preparing $nstruct structures on cluster. $tasks tasks with $nPerTask structures each."
-		# set bashscript [::RosettaInputGenerator::make_cluster_script 25 1.5 $res $mapname.mrc $jobname $nstruct $tasks $nPerTask]
-	}
-
-
-	set script [open "$jobname.sh" w]
+  set bashscript [::RosettaInputGenerator::make_abinitio_local_script $jobname $nstruct]
+	
+  set script [open "$jobname.sh" w]
 	puts $script $bashscript
 	close $script
 }
-
-
-# proc ::RosettaInputGenerator::refine_sidechains_rosetta {jobname MOL mapname res score_dens nstruct cluster nPerTask configuration} \
-# {
-# 	###############################
-# 	#	CONFIGURATION
-# 	###############################
-# 	set chains [lindex $configuration 0]
-# 	set spans [lindex $configuration 1]
-# 	set exclude [lindex $configuration 2]
-# 	set constraints [lindex $configuration 3]
-# 	set anchor_residue [lindex $constraints 0]
-# 	set anchor_spans [lindex $constraints 1]
-
-# 	set converted []
-# 	set conv_anchor_spans []
-# 	foreach ch $chains {
-# 		lappend converted $ch
-# 	}
-# 	foreach sp $spans {
-# 		lappend converted $sp
-# 	}
-# 	foreach anch $anchor_spans {
-# 		lappend conv_anchor_spans $anch
-# 	}
-# 	puts $converted
-
-# 	exec mkdir -p "rosetta_input_$jobname"
-# 	exec mkdir -p "rosetta_output_$jobname"
-# 	###############################
-# 	#	ROSETTA XML SCRIPT
-# 	###############################
-# 	set allMovers {}
-
-# 	set tot ""
-# 	#START SCRIPT
-# 	append tot "<ROSETTASCRIPTS>\n"
-
-# 	#LOAD SCRFXNS
-# 	#puts [make_default_scfxn]
-# 	append tot [make_default_scfxn]
-
-# 	#START MOVERS
-# 	append tot "<MOVERS>\n"
-
-# 	set denssetup [make_density_setup]
-# 	append tot $denssetup
-
-# 	append tot [make_centroid_mover "centroid"]
-
-# 	set min [make_cenmin cenmin 0 0 [list {"Chain" 1 0 0} {"Chain" 2 1 0}]]
-# 	# append tot $min
-
-# 	set re_cst [make_relaxcart relaxcart 1 [list {"Chain" 1 0 0} {"Span" 75 96 1 0}]]
-# 	append tot $re_cst
-
-# 	# set cart [make_cart_sample [list cen5_50 $score_dens cen cen dens_soft auto density %%rms%% 200 0 0 25 4 7 25 "1-18"]]
-# 	# append tot $cart
-
-# 	append tot [make_full_atom_mover "fullatom"]
-
-# 	# set fr [make_fastrelax relax 1 [list {"Chain" 1 1 0}]]
-# 	# append tot $fr
-
-# 	set cst [make_coord_cst {coordcst 20 CA 200 0} {{100 400}}]
-# 	append tot $cst
-
-# 	lappend allMovers "setupdens" "loaddens" "coordcst" "relaxcart" ;#[make_centroid_mover "centroid"] [make_full_atom_mover "fullatom"]
-
-# 	append tot "</MOVERS>\n"
-# 	#END MOVERS
-
-# 	#START PROTOCOLS
-
-# 	set prot [make_protocol $allMovers]
-# 	append tot $prot
-
-# 	#END PROTOCOLS
-
-# 	#append tot "<OUTPUT scorefxn=dens/> \n"
-# 	append tot "</ROSETTASCRIPTS>\n"
-
-# 	set f [open "$jobname.xml" w]
-# 	exec mv $jobname.xml rosetta_input_$jobname
-# 	puts $f $tot
-# 	close $f
-
-# 	###############################
-# 	#	BATCH SUBMISSION SCRIPT
-# 	###############################
-# 	if {!$cluster} {
-# 		set bashscript [make_bash_script 25 1.5 $res $mapname.mrc $jobname $nstruct]
-# 	} else {
-# 		set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
-# 		puts "Tasks: $tasks"
-# 		if {$tasks < 1 || $nPerTask < 1 || $nstruct < 1 || $nstruct < $nPerTask} {
-# 			puts "Please provide valid input for submission on cluster!"
-# 			wrong_input
-# 		}
-# 		puts "Preparing $nstruct structures on cluster. $tasks tasks with $nPerTask structures each."
-# 		set bashscript [make_cluster_script 25 1.5 $res $mapname.mrc $jobname $nstruct $tasks $nPerTask]
-# 	}
-
-
-# 	set script [open "$jobname.sh" w]
-# 	puts $script $bashscript
-# 	close $script
-# }
-
 
 proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles nstruct cluster nPerTask test configuration chain_idents} \
 {
@@ -511,15 +370,6 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles nstruct cl
 	###############################
 	if {$test} {
 		set bashscript [make_abinitio_test_script $jobname $nstruct]
-	} elseif {!$test && $cluster} {
-		set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
-		puts "Tasks: $tasks"
-		if {$tasks < 1 || $nPerTask < 1 || $nstruct < 1 || $nstruct < $nPerTask} {
-			puts "Please provide valid input for submission on cluster!"
-			wrong_input
-		}
-		puts "Preparing $nstruct structures on cluster. $tasks tasks with $nPerTask structures each."
-		set bashscript [make_abinitio_cluster_script $jobname $nstruct $tasks $nPerTask]
 	} elseif {!$test && !$cluster} {
 		set bashscript [make_abinitio_local_script $jobname $nstruct]
 	}
@@ -573,18 +423,7 @@ proc ::RosettaInputGenerator::rosetta_insertion {jobname MOL fragfiles fasta nst
 
 	set frag3 [lindex $fragfiles 1]
 	set frag9 [lindex $fragfiles 0]
-	if {!$cluster} {
-		set bashscript [::RosettaInputGenerator::make_insertion_local_script $jobname $MOL $nstruct $frag3 $frag9 $fasta]
-	} else {
-		set tasks [expr int(ceil(double($nstruct)/double($nPerTask)))]
-		puts "Tasks: $tasks"
-		if {$tasks < 1 || $nPerTask < 1 || $nstruct < 1 || $nstruct < $nPerTask} {
-			puts "Please provide valid input for submission on cluster!"
-			wrong_input
-		}
-		puts "Preparing $nstruct structures on cluster. $tasks tasks with $nPerTask structures each."
-		set bashscript [::RosettaInputGenerator::make_insertion_cluster_script $jobname $MOL $nstruct $frag3 $frag9 $fasta $tasks $nPerTask]
-	}
+  set bashscript [::RosettaInputGenerator::make_insertion_local_script $jobname $MOL $nstruct $frag3 $frag9 $fasta]
 	set script [open "$::MODELMAKER::workdir/run-$jobname/$jobname.sh" w]
 	puts $script $bashscript
 	close $script
@@ -879,52 +718,6 @@ proc ::RosettaInputGenerator::make_bash_script {denswt rms res map jobname nstru
 	"
 }
 
-proc ::RosettaInputGenerator::make_cluster_script {denswt rms res map jobname nstruct tasks nPerTask} \
-{
-	global rosettapath
-	global rosettaDBpath
-	global platform
-	return "#!/bin/bash
-export PATH=\$(pwd)
-JOBNAME=\"\${1}\"
-MOL=\"\${2}\"
-
-if \[ -z \"\$1\" \]\; then
-  echo Need job name!
-  exit
-fi
-/home/sgeadmin/bin/linux-x64/qsub -q linux -N \$JOBNAME -j y -o \${PATH}/OUTPUT_FILES << EOF
-#\$ -S /bin/bash
-#\$ -t 1-$tasks
-for i in {1..$nPerTask}
-do
-cd \${PATH}
-idx=\\\$(expr \\\$(expr \\\$SGE_TASK_ID - 1) \\\* $nPerTask + \\\$i)
-
-$rosettapath/rosetta_scripts.$platform \\
-        -database $rosettaDBpath \\
-	-nstruct 1 \\
-  -parser::script_vars denswt=$denswt rms=$rms reso=$res map=../rosetta_input_$jobname/$map testmap=../rosetta_input_$jobname/$map \\
-  -edensity::mapreso $res \\
-        -out::prefix \${JOBNAME}_ \\
-        -out::suffix \\\$idx \\
-	-s ../full_length_model/\${MOL} \\
-        -parser::protocol ../rosetta_input_$jobname/$jobname.xml \\
-        -parser:view \\
-        -overwrite \\
-	-restore_talaris_behavior \\
-        -ignore_zero_occupancy false \\
-	-seed_offset \\\$idx
-
-mv \${JOBNAME}*.pdb ./pdb_out/
-mv *.sc ./sc_out/
-done
-
-EOF
-
-"
-}
-
 proc ::RosettaInputGenerator::make_abinitio_test_script {jobname nstruct} \
 {
 	global rosettapath
@@ -1017,73 +810,6 @@ $mpi_args $rosettapath/minirosetta.$platform \\
 "
 }
 
-proc ::RosettaInputGenerator::make_insertion_cluster_script {jobname mol nstruct frag3 frag9 fasta tasks nPerTask} \
-{
-		global rosettapath
-	global rosettaDBpath
-	global platform
-	return "
-#!/bin/bash
-
-export PATH=\$(pwd)
-JOBNAME=$jobname
-
-/home/sgeadmin/bin/linux-x64/qsub -q linux -N \$JOBNAME -j y -o \${PATH}/OUTPUT_FILES << EOF
-#\$ -S /bin/bash
-#\$ -t 1-$tasks
-for i in {1..$nPerTask}
-do
-cd \${PATH}
-idx=\\\$(expr \\\$(expr \\\$SGE_TASK_ID - 1) \\\* $nPerTask + \\\$i)
-
-$rosettapath/minirosetta.$platform \\
-	-run::shuffle \\
-	-abinitio::close_loops \\
-	-short_frag_cycles 2 \\
-	-scored_frag_cycles 2 \\
-	-non_ideal_loop_closing \\
-	-alternative_closure_protocol \\
-	-fast_loops:window_accept_ratio .01 \\
-	-fast_loops:nr_scored_sampling_passes 4 \\
-	-fast_loops:min_breakout_good_loops 5 \\
-	-fast_loops:min_breakout_fast_loops 80 \\
-	-fast_loops:min_fast_loops 3 \\
-	-fast_loops:min_good_loops 0 \\
-	-fast_loops:nr_scored_fragments 20 \\
-	-fast_loops:vdw_delta 0.5 \\
-	-fast_loops:give_up 1000 \\
-	-random_grow_loops_by  4 \\
-	-increase_cycles 1 \\
-	-jumps:ramp_chainbreaks \\
-	-overlap_chainbreak \\
-	-relax::fast \\
-	-relax::default_repeats 1 \\
-	-out::shuffle_nstruct $nstruct \\
-	-out::prefix ${jobname}_${mol}_ \\
-	-out::suffix \\\$idx \\
-	-run::protocol broker \\
-	-in:file:fasta $::MODELMAKER::workdir/setup-$jobname/$fasta.fasta \\
-	-broker:setup $::MODELMAKER::workdir/setup-$jobname/input.tpb \\
-	-frag3 $::MODELMAKER::workdir/setup-$jobname/$frag3 \\
-	-frag9 $::MODELMAKER::workdir/setup-$jobname/$frag9 \\
-	-nstruct 1 \\
-	-overwrite
-
-
-
-mkdir -p intermediates
-mv loops_closed*.pdb ./intermediates/
-mv *.sc ./sc_out/
-mv $jobname*.pdb ./pdb_out/
-
-done
-
-EOF
-
-
-"
-}
-
 proc ::RosettaInputGenerator::make_abinitio_local_script {jobname nstruct} \
 {
 	global rosettapath
@@ -1121,48 +847,6 @@ $mpi_args $rosettapath/rosetta_scripts.$platform \\
 "
 }
 
-proc ::RosettaInputGenerator::make_abinitio_cluster_script {jobname nstruct tasks nPerTask} \
-{
-	global rosettapath
-	global rosettaDBpath
-	return "#!/bin/bash
-export PATH=\$(pwd)
-JOBNAME=\"\${1}\"
-MOL=\"\${2}\"
-
-if \[ -z \"\$1\" \]\; then
-  echo Need job name!
-  exit
-fi
-/home/sgeadmin/bin/linux-x64/qsub -q linux -N \$JOBNAME -j y -o \${PATH}/OUTPUT_FILES << EOF
-#\$ -S /bin/bash
-#\$ -t 1-$tasks
-for i in {1..$nPerTask}
-do
-cd \${PATH}
-idx=\\\$(expr \\\$(expr \\\$SGE_TASK_ID - 1) \\\* $nPerTask + \\\$i)
-
-$rosettapath/rosetta_scripts.linuxgccrelease \\
-        -database /Scr/scr-test-trudack/marc1/rosetta_bin_linux_2015.12.57698_bundle/main/database \\
-	-nstruct 1 \\
-        -out::prefix \${JOBNAME}_ \\
-        -out::suffix \\\$idx \\
-	-s ../full_length_model/\${MOL} \\
-        -parser::protocol ../rosetta_input_$jobname/$jobname.xml \\
-        -parser:view \\
-        -overwrite \\
-        -ignore_zero_occupancy false \\
-	-seed_offset \\\$idx
-
-mv \${JOBNAME}*.pdb ./pdb_out/
-mv *.sc ./sc_out/
-done
-
-EOF
-
-"
-}
-
 # RESIDUE TYPE MOVERS
 
 proc ::RosettaInputGenerator::make_centroid_mover {name} \
@@ -1174,9 +858,6 @@ proc ::RosettaInputGenerator::make_full_atom_mover {name} \
 {
 	return "<SwitchResidueTypeSetMover name=\"$name\" set=\"fa_standard\" />\n"
 }
-
-# /Scr/scr-test-trudack/marc1/rosetta_bin_linux_2015.12.57698_bundle/main/source/bin/rosetta_scripts.linuxgccrelease
-# -database /Scr/scr-test-trudack/marc1/rosetta_bin_linux_2015.12.57698_bundle/main/database
 
 proc ::RosettaInputGenerator::wrong_input {{str ""} args} \
 {
