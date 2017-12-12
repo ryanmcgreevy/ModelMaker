@@ -9,7 +9,6 @@
 package require mdff
 
 package require RosettaInputGenerator
-package require AutoMDFF
 package require RosettaScoring
 package require CCColor
 package require FindSelection

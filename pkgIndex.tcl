@@ -2,9 +2,7 @@ package ifneeded modelmaker 0.1 "set env(RosettaVMDDIR) [list $dir]; [list sourc
 package ifneeded RosettaVMD 0.1 "set env(RosettaVMDDIR) [list $dir]; [list source [file join $dir rosetta_vmd.tcl]]"
 package ifneeded RosettaInputGenerator 0.1 [list source [file join $dir rosetta_input_generator.tcl]]
 package ifneeded MakePsf 0.1 [list source [file join $dir makepsf.tcl]]
-package ifneeded AutoMDFF 0.1 [list source [file join $dir auto_mdff.tcl]]
 package ifneeded RosettaScoring 0.1 [list source [file join $dir rosetta_scoring_wrapper.tcl]]
-package ifneeded AnalysisMDFF 0.1 [list source [file join $dir analysis_mdff.tcl]]
 package ifneeded CCColor 0.1 [list source [file join $dir CCColor.tcl]]
 package ifneeded FindSelection 0.1 [list source [file join $dir find_selection.tcl]]
 package ifneeded DensitySelector 0.1 [list source [file join $dir pdb_density_selector.tcl]]
