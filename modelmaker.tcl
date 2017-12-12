@@ -1,7 +1,3 @@
-# general note: all underlying 'exec unix calls' should be changed to
-#use built in tcl commands (e.g., 'glob' to list files instead of 'exec ls -1v')
-#because it should not assume the presence or behavior of those commands, especially
-#since people (like me) have some of those commands aliased.
 package require RosettaVMD
 package require MakePsf
 package require ssrestraints
@@ -13,9 +9,6 @@ package provide modelmaker 0.1
 
 namespace eval ::MODELMAKER {
   variable defaultGapfindSel "protein"
-  #this should get auto-set depending on OS, but
-  #should maybe be changed to not rely on this because it would be
-  #best to be independent of any future naming conventions of rosetta. Use wildcard instead?
   if {[info exists env(ROSETTAEXE)]} {
     variable rosettaEXE $env(ROSETTAEXE)
   } else {
@@ -31,29 +24,17 @@ namespace eval ::MODELMAKER {
       }
     }
   }
-  #this environment variable needs to be set by user somehow once, probably
-  #in .vmdrc but also exposed in eventual GUI. If not set, whether running through command line
-  #or gui, if not present, perhaps pop up a dialog with a Browse button to allow user to get the path and
-  #proceed...
   if {[info exists env(ROSETTADB)]} {
     variable rosettadbpath $env(ROSETTADB)
   } else {
     variable rosettadbpath ""
   }
 
-  #currently set in .vmdrc like ROSETTADB, !!HOWEVER!!
-  #this should not be necessary to specify if we tell the user that
-  #the rosetta bin directory is on their PATH. Just setting this variable
-  #to PATH does not work currently because of underlying functions in the package but
-  #there should not be a reason this could be possible. Alternatively, we could have one
-  #single "ROSETTAPATH" variable that just points to where the user installed rosetta's
-  #top level directory. Then we can just use that and append the bin/ and database/ locations as needed.
   if {[info exists env(ROSETTAPATH)]} {
     variable rosettaPath $env(ROSETTAPATH)
   } else {
     variable rosettaPath ""
   }
- # variable defaultGapfindMol "top"
   variable DefaultNStruct 5000
   variable DefaultCluster 0
   variable DefaultNPerTask 1
@@ -65,8 +46,6 @@ namespace eval ::MODELMAKER {
   variable DefaultMDFFWorkDir "[pwd]/mdff-workdir"
   variable workdir $DefaultWorkDir
   variable DefaultScore -0.3
-  #variable DefaultCSFlag 1
-  #variable DefaultSidechain "no"
   variable DefaultRefineMode "backbone"
   variable DefaultPDB2SeqSel "protein" 
   variable DefaultFixed "none"
@@ -184,11 +163,9 @@ proc ::MODELMAKER::insertion { args } {
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
- global rosettapath
- global rosettaDBpath
- global platform
-
-#$::env(PATH)
+  global rosettapath
+  global rosettaDBpath
+  global platform
 
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
@@ -215,10 +192,6 @@ proc ::MODELMAKER::insertion { args } {
   }
 
   if { [info exists arg(model)] } {
-    #set model $arg(model)
-  #NOTE: Right now, because of RosettaVMD package, this needs to be the pdb name without the .pdb
-  #extension. Need to change RosettaVMD to not require this.
-    #set model [string range $arg(model) 0 [expr [string last ".pdb" $arg(model)] - 1 ]]
     set model [file rootname [file tail $arg(model)]]
   } else {
     error "A full model pdb file must be specified!"
@@ -240,7 +213,6 @@ proc ::MODELMAKER::insertion { args } {
   #NOTE: Right now, because of RosettaVMD package, this needs to be the fasta name without the .fasta
   #extension. Need to change RosettaVMD to not require this.
     set fasta [string range $arg(fasta) 0 [expr [string last ".fasta" $arg(fasta)] - 1 ]]
-  #  set fasta $arg(fasta)
   } else {
     error "A fasta file must be specified!"
   }
@@ -292,13 +264,10 @@ proc ::MODELMAKER::insertion { args } {
     puts $fragfile
     file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
   }
-  #start_rosetta_abinitio $jobname $model [list "$sel"] $anchor [list $fragfiles] $nstruct $cluster $npertask $testrun
   set currentPWD [pwd]
 
-  #start_rosetta_insertion rpn11_insertion rpn11_yeast_23-306_complete [list "resid 138 to 157"] [list "rpn11_yeast_23-306_frag9" "rpn11_yeast_23-306_frag3"] [pwd]/input rpn11_yeast_23-306 $nstruct
-  #cd $::MODELMAKER::workdir
   start_rosetta_insertion $jobname $model $sel $fragfiles $fasta $nstruct
-  #cd $currentPWD
+  
   set temp_mol [mol new $arg(model)]
   set temp_sel [atomselect $temp_mol all]
   set resstart [lindex [lsort -integer [$temp_sel get resid]] 0]
@@ -319,8 +288,6 @@ proc ::MODELMAKER::refine_usage { } {
   variable DefaultTestRun
   variable DefaultWorkDir
   variable DefaultScore
-  #variable DefaultCSFlag
-  #variable DefaultSidechain
   variable DefaultRefineMode
   puts "Usage: modelmaker refine -model <full length template pdb> \
     -sel <list of atomselection texts with selections to fold> -anchor <anchor residue for coordinate restraints> \
@@ -334,8 +301,6 @@ proc ::MODELMAKER::refine_usage { } {
   puts "  -bestN      <number of structures with best scores to save> (default: same as -nstruct) "
   puts "  -score      <Rosetta density score; lower values indicate lower weight> (default: $DefaultScore) "
   puts "  -np         <Number of processors to use. MPI version only> "
-  #puts "  -csflag     <CartesianSample flag (0 or 1) Only used for non-sidechain refinement> (default: $DefaultCSFlag)> "
-  #puts "  -sidechain  <refine side chains? (yes or no) (default: $DefaultSidechain)> "
 }
 
 proc ::MODELMAKER::refine { args } {
@@ -347,18 +312,15 @@ proc ::MODELMAKER::refine { args } {
   variable DefaultWorkDir
   variable DefaultScore
   variable MPINP
-  #variable DefaultCSFlag
- # variable DefaultSidechain
   variable DefaultRefineMode
  #These need to be changed in the underlying package to refer to the variable instead.
 #e.g., $::MODELMAKER::rosettaDBpath
 #instead of using these 'global' variables which gets confusing and dangerous.
- global rosettapath
- global rosettaDBpath
- global platform
- global packagePath
+  global rosettapath
+  global rosettaDBpath
+  global platform
+  global packagePath
 
-#$::env(PATH)
   set packagePath $::env(RosettaVMDDIR)
   set rosettapath $rosettaPath
   set rosettaDBpath $rosettadbpath
