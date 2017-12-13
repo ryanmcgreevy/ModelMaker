@@ -69,6 +69,7 @@ namespace eval ::MODELMAKER {
   [file join $env(CHARMMPARDIR) toppar_water_ions_namd.str]]
  
   variable DefaultThreshold 0.1 
+  variable DefaultMaskCutoff 2 
   
   variable MPINP
   variable settings
@@ -91,6 +92,7 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  makepsf               -- make a .psf file from a pdb" 
   puts "  mdff                  -- run an MDFF simulation" 
   puts "  cccolor               -- calculate local cross correlations" 
+  puts "  get_empty_density     -- find the unassigned empty density around a structure" 
   return
 
 }
@@ -129,6 +131,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::quick_mdff $args]
   } elseif { $command == "cccolor" } {
     return [eval ::MODELMAKER::cccolor $args]
+  } elseif { $command == "get_empty_density" } {
+    return [eval ::MODELMAKER::get_empty_density $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -1576,7 +1580,7 @@ proc ::MODELMAKER::regen_segnames {INMOL OUTMOL} {
 
 proc ::MODELMAKER::cccolor_usage { } {
   variable DefaultThreshold  
-  puts "Usage: mdodelmaker cccolor -pdb <input pdb file> -density <input density file> \
+  puts "Usage: modelmaker cccolor -pdb <input pdb file> -density <input density file> \
     -res <resolution of density in Angstroms> ?options?"
   puts "Options:"
   puts "  -threshold    <ignore density below threshold value> (default: $DefaultThreshold)>"
@@ -1678,3 +1682,56 @@ proc ::MODELMAKER::cccolor { args } {
   ::CCColor::cccolor $pdb $density $res $threshold $spacing $ss_on $res_on $sel $ressel "/usr/tmp" $bbonly
 }
 
+proc ::MODELMAKER::get_empty_density_usage { } {
+  variable DefaultMaskCutoff  
+  puts "Usage: modelmaker get_empty_density -pdb <input pdb file> -density <input density file> ?options?"
+  puts "Options:"
+  puts "  -cutoff    <Distance cutoff in Angstroms> (default: $DefaultMaskCutoff)>"
+
+}
+
+proc ::MODELMAKER::get_empty_density { args } {
+  variable DefaultMaskCutoff  
+  
+  set nargs [llength [lindex $args 0]]
+  if {$nargs == 0} {
+    get_empty_density_usage
+    error ""
+  }
+  
+  foreach {name val} $args {
+    switch -- $name {
+      -pdb { set arg(pdb) $val }
+      -density { set arg(density) $val }
+      -cutoff { set arg(cutoff) $val }
+      default { puts "Unknown argument $name"; return  }
+    }
+  }
+  
+  if { [info exists arg(pdb)] } {
+    set pdb $arg(pdb)
+  } else {
+    error "input pdb file required!"
+  }
+  
+  if { [info exists arg(density)] } {
+    set density $arg(density)
+  } else {
+    error "density map required!"
+  }
+  
+  if { [info exists arg(cutoff)] } {
+    set cutoff $arg(cutoff)
+  } else {
+    set cutoff $DefaultMaskCutoff
+  }
+  
+  set mol [mol new $pdb]
+  set sel [atomselect $mol "all"]
+
+  volmap mask $sel -o mask.dx -cutoff $cutoff
+  mdff griddx -i mask.dx -o mask_invert.dx
+  volutil -mult $density mask_invert.dx -o "[file rootname [file tail $density]]_empty.dx"
+  file delete -force mask.dx mask_invert.dx
+  mol delete $mol
+}
