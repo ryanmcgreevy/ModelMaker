@@ -1,7 +1,7 @@
 .SILENT:
 
 VMFILES = pkgIndex.tcl modelmaker.tcl CColor.tcl README.md clash_selection.tcl find_selection.tcl \
-helix-turn-cc.tcl makepsf.tcl pdb_density_selector.tcl rosetta_input_generator.tcl \
+helix-turn-cc.tcl makepsf.tcl rosetta_input_generator.tcl \
 rosetta_scoring_wrapper.tcl rosetta_vmd.tcl ss_analysis.tcl utilities.tcl
 
 VMVERSION = 0.1
