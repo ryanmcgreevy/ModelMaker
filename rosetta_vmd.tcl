@@ -28,7 +28,7 @@ namespace eval ::RosettaVMD {
 	namespace export make_dx_file
 	namespace export make_mrc_file
 	namespace export smooth_density
-	namespace export write_phenixpdb
+	namespace export write_rosettapdb
 
 	# Set up Variable
 	set version 0.1
@@ -67,10 +67,8 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 
 	######################
 	# Cleanup input file
-	exec sed -i -e {s/HSD/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
-	exec sed -i -e {s/HSE/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
-	exec sed -i -e {s/HSP/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
-	######################
+	write_rosettapdb $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+  ######################
 	puts "Rosetta started"
 	refine_with_rosetta $jobname $mol.pdb $mapname $mapresolution $score_dens $nstruct $cluster $nPerTask $ros_config $cartesian
 	file attributes $jobname.sh -permissions +x
@@ -134,9 +132,7 @@ proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapn
 	set ros_config [list $chains $spans $exclude [list $anchor $constraints]]
 	######################
 	# Cleanup input file
-	exec sed -i -e {s/HSD/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
-	exec sed -i -e {s/HSE/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
-	exec sed -i -e {s/HSP/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	write_rosettapdb $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
 	######################
   puts "Rosetta sidechain started"
 	refine_with_rosetta $jobname $mol.pdb $mapname $mapresolution $score_dens $nstruct $cluster $nPerTask $ros_config
@@ -199,9 +195,7 @@ proc start_rosetta_basic_refine {jobname mol selections anchor sidechains_only b
 
 	######################
 	# Cleanup input file
-	exec sed -i -e {s/HSD/HIS/g} full_length_model/$mol.pdb
-	exec sed -i -e {s/HSE/HIS/g} full_length_model/$mol.pdb
-	exec sed -i -e {s/HSP/HIS/g} full_length_model/$mol.pdb
+	write_rosettapdb full_length_model/$mol.pdb
 	######################
 	puts "Rosetta basic refinement (without density) started"
 	rosetta_basic_refinement $jobname $mol.pdb $nstruct $cluster $nPerTask $ros_config
@@ -245,9 +239,7 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 	}
 
 	# Cleanup input file
-	exec sed -i -e {s/HSD/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
-	exec sed -i -e {s/HSE/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
-	exec sed -i -e {s/HSP/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	write_rosettapdb $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
 
 
 	# MOL selections config {offset 4}
@@ -316,9 +308,7 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fasta nstruct {cl
 	}
 
 	# Cleanup input file
-	exec sed -i -e {s/HSD/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
-	exec sed -i -e {s/HSE/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
-	exec sed -i -e {s/HSP/HIS/g} $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
+	write_rosettapdb $::MODELMAKER::workdir/setup-$jobname/$mol.pdb
 
 
 	# MOL selections config {offset 4}
@@ -518,12 +508,7 @@ proc smooth_density {smoothr mapname} \
 }
 
 
-proc write_phenixpdb {filename seltext} {
-  set ml [mol new $filename.pdb]
-  set sel [atomselect $ml "$seltext"]
-  $sel set occupancy 1
-  $sel writepdb $filename-phenix.pdb
-
+proc write_rosettapdb {filename} {
   set frpdb [open $filename "r"]
   set spdb [read $frpdb]
   close $frpdb
@@ -536,7 +521,8 @@ proc write_phenixpdb {filename seltext} {
   regsub -all "GUA" $spdb "  G" spdb
   regsub -all "THY" $spdb "  T" spdb
   regsub -all "CYN" $spdb "CYS" spdb
-  regsub -all -line {^.*CRYST.*$} $spdb " " spdb
+  #I believe this line is fine for Rosetta
+  #regsub -all -line {^.*CRYST.*$} $spdb " " spdb
   puts $fwpdb $spdb
   close $fwpdb
 }
