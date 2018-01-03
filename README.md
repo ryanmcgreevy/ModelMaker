@@ -56,20 +56,16 @@ An example of how to use ModelMaker to fold
 protein termini from the [tutorial](http://www.ks.uiuc.edu/Training/Tutorials/science/rosetta-mdff/rosetta-mdff-tutorial-html/node4.html) is below:
 
 ```
-{% raw %}
 modelmaker abinitio -model rpn11_yeast_4ocm.pdb_full_length.pdb -anchor "resid 23" -fragfiles {{rpn11_yeast_23-306_frag9 rpn11_yeast_23-306_frag3}} -sel "resid 213 to 306" -nstruct 5
 
 modelmaker analyze -model rpn11_yeast_4ocm.pdb_full_length.pdb -template rpn11_yeast_4ocm.pdb_full_length.pdb -nstruct 5 -align_template "resid 23 to 212" -comps {{ss 210 306 "A"}}
-{$ endraw }
 ```
 An example of how to use ModelMaker to model amino acid insertions from the [tutorial](http://www.ks.uiuc.edu/Training/Tutorials/science/rosetta-mdff/rosetta-mdff-tutorial-html/node5.html) is below:
 
 ```
-{% raw %}
 modelmaker insertion -model rpn11_yeast_4ocm.pdb_full_length.pdb -fragfiles {rpn11_yeast_23-306_frag9 rpn11_yeast_23-306_frag3} -sel "resid 160 to 179" -nstruct 5 -fasta rpn11_yeast_23-306.fasta -jobname rpn11_insertion
 
 modelmaker analyze -model rpn11_yeast_4ocm.pdb_full_length.pdb -template rpn11_yeast_4ocm.pdb_full_length.pdb -nstruct 5 -align_template "resid 23 to 159 or resid 180 to 216" -comps  {{ss 160 179 "A"} {cluster 160 179 "A" 2}} -jobname rpn11_insertion -insertion yes
-{% endraw %}
 ```
 
 An example of how to use ModelMaker to refine a model against a mid-resolution density from the [tutorial](http://www.ks.uiuc.edu/Training/Tutorials/science/rosetta-mdff/rosetta-mdff-tutorial-html/node6.html) is below:
