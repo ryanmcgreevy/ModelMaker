@@ -1,1 +1,1 @@
-/home/ryanmcgreevy/Dropbox/plugins/modelmaker/README.md
+../README.md
