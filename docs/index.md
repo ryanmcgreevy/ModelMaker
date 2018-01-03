@@ -9,6 +9,3 @@ experience of structural biologists may be a desirable factor in structure refin
 Therefore, ModelMaker uniquely allows for incorporation of user expertise by taking advantage of
 interactive MDFF, allowing for manual manipulation of the structure.
 
-```
-test
-```
