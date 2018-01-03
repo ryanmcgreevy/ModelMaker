@@ -9,8 +9,9 @@ experience of structural biologists may be a desirable factor in structure refin
 Therefore, ModelMaker uniquely allows for incorporation of user expertise by taking advantage of
 interactive MDFF, allowing for manual manipulation of the structure.
 
-To use ModelMaker, you will need to download and install (in addition to VMD) [Rosetta](https://www.rosettacommons.org/). Installation details for ModelMaker itself can be found [here](Installation) in the wiki.
+To use ModelMaker, you will need to download and install (in addition to VMD) [Rosetta](https://www.rosettacommons.org/). 
+Installation details for ModelMaker itself can be found [here](https://github.com/ryanmcgreevy/ModelMaker/wiki/Installation) in the [wiki](https://github.com/ryanmcgreevy/ModelMaker/wiki).
 
-Once ModelMaker is installed, in VMD's TkConsole, type `modelmaker` to see a list of [commands](ModelMaker-Commands/). You can also
+Once ModelMaker is installed, in VMD's TkConsole, type `modelmaker` to see a list of [commands](https://github.com/ryanmcgreevy/ModelMaker/wiki/ModelMaker-Commands/). You can also
 type `modelmaker command` where 'command' is one of the available ModelMaker commands
 to see more information about it. 
