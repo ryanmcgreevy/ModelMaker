@@ -106,15 +106,15 @@ if input_dist == None:
 		natoms = len(traj_atoms)
 
 		ref_com = ref_atoms.center_of_mass()
-		ref_coordinates = ref_atoms.coordinates() - ref_com
-		traj_coordinates = traj_atoms.coordinates().copy()
+		ref_positions = ref_atoms.positions - ref_com
+		traj_positions = traj_atoms.positions.copy()
 
 		for ts in traj.trajectory[int(count+1):int(nframes):1]:
 		    x_com = traj_atoms.center_of_mass()
-		    traj_coordinates[:] = traj_atoms.coordinates() - x_com
+		    traj_positions[:] = traj_atoms.positions - x_com
 		    R = np.zeros((9,), dtype=np.float64)
-		    a = ref_coordinates.T.astype('float64')
-		    b = traj_coordinates.T.astype('float64')
+		    a = ref_positions.T.astype('float64')
+		    b = traj_positions.T.astype('float64')
 		    data[count2] = qcp.CalcRMSDRotationalMatrix(a, b, natoms, R, None)
 		    count2 += 1
 		count += 1
