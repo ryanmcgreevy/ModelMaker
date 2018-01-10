@@ -66,11 +66,12 @@ proc ::RosettaScoring::score_refinement_cluster {run MOL max_structures} \
 proc ::RosettaScoring::score_abinitio {run MOL max_structures cluster {extra 0} args} \
 {
   puts $MOL
-  if {$cluster} {
-    set pdb [::RosettaScoring::rosetta_scoring_cluster_consistent $max_structures $run $extra]
-    } else {
+#not sure why there is a need now for this difference with new cluster script...testing using the same
+#  if {$cluster} {
+#    set pdb [::RosettaScoring::rosetta_scoring_cluster_consistent $max_structures $run $extra]
+#    } else {
       set pdb [::RosettaScoring::rosetta_scoring $max_structures $run]
-    }
+#    }
     
 
     #set pdblist [lsort -dictionary [glob ../rosetta_output/pdb_out_aligned/*.pdb]]
@@ -234,7 +235,8 @@ proc ::RosettaScoring::rosetta_scoring_cluster_consistent {length_tot runname {e
 
   foreach file $file_list {
     puts "file: $file"
-    regexp -nocase [subst -nocommands -nobackslashes {${score_name}[0-9]*}] $file a 
+    #regexp -nocase [subst -nocommands -nobackslashes {${score_name}[0-9]*}] $file a 
+    set a [glob ./pdb_out/*]
     puts "a: $a"
     # set ident [string trim $a $score_name]
     set sc_length [string length $score_name]

@@ -626,8 +626,8 @@ proc ::MODELMAKER::analyze_usage { } {
   puts "  -align_template      <selection text of template PDB for alignment> (default: $DefaultAlignTemplate)> "
   puts "  -align_rosetta       <selection text of predicted models for alignment> (default: taken from -align_template)> "
   puts "  -insertion   <analyzing output from insertion? 'yes' or 'no'> (default: $DefaultInsertion)"
-#hide these until wider functionality
-#  puts "  -cluster    <clustering mode to use> (default: $DefaultCluster)> "
+#change these to more user-friendly designations and explain caveats
+  puts "  -cluster    <clustering mode to use. 0 for Rosetta, 1 for Python> (default: $DefaultCluster)> "
 
 }
 

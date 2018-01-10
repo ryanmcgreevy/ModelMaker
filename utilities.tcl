@@ -137,30 +137,68 @@ proc ::RosettaUtilities::make_cluster_input {MOL start end max_structures} \
 		animate write dcd cluster_input_${start}_${end}_${max_structures}.dcd beg 0 end [expr $max_structures-1] skip 1 sel $all top
 		animate write pdb cluster_input_${start}_${end}_${max_structures}.pdb beg 0 end [expr $max_structures-1] skip 1 sel $all top
 		animate write pdb cluster_input_start_${start}_${end}_${max_structures}.pdb beg 0 end 0 skip 1 sel $all top
+
+
 }
 
 proc ::RosettaUtilities::run_clustering {mol start end bestN} \
 {
-	# CLUSTER NUMBER
-	exec /home/juan/bin/clusterN.sh cluster_input_${start}_${end}_${bestN}.dcd  -s silhouette1.txt -p dissimilarity_matrix1.png > cluster_${bestN}_out1.log
-	set log [open cluster_${bestN}_out1.log r]
-	set dat [read $log]
-	close $log
-	set lines [split $dat "\n"]
-	set number 0
-    foreach line $lines {
-          if {[string match "*is the optimal number of clusters for the input dataset*" $line]} {
-          	set number [string map {\" ""} [lindex [split $line " "] 1] ]
-          	puts $number
-          }
-    }
-    if {$number == 0} {
-    	puts "Bad number of clusters!"
-    	return
-    }
-    # RUN CLUSTERING
-    exec /home/juan/bin/clusterN.sh cluster_input_${start}_${end}_${bestN}.dcd  -s silhouette2.txt -p dissimilarity_matrix2.png -n ${number} -c cluster_list_${bestN}.txt > cluster_${bestN}_out2.log
-    read_cluster_file $mol $bestN $number
+  puts "Running python clustering..."
+  set name cluster_input_${start}_${end}_${bestN}
+
+  set mol [mol new ${name}.pdb]
+  set sel [atomselect $mol "all"]
+  #$sel set occupancy 1
+  #$sel set beta 1
+  #$sel writepdb ${name}.pdb
+  $sel writepsf ${name}.psf
+
+#  set mol [mol new ${name}.pdb]
+#  set sel [atomselect $mol "all"]
+#  set chains [$sel get chain]
+#  set segnames [$sel get segname]
+##get unique list
+#  foreach chain $chains {dict set tmp $chain 1}
+#  set chains [dict keys $tmp]
+#  foreach segname $segnames {dict set tmp2 $segname 1}
+#  set segnames [dict keys $tmp2]
+
+#  foreach chain $chains segname $segnames {
+#    lappend chseg  [list ${name}.pdb $chain $segname]
+#  }
+  
+  global env 
+  #set topfiles [list [file join $env(CHARMMTOPDIR) top_all36_prot.rtf] \
+    [file join $env(CHARMMTOPDIR) top_all36_lipid.rtf] \
+    [file join $env(CHARMMTOPDIR) top_all36_na.rtf] \
+    [file join $env(CHARMMTOPDIR) top_all36_carb.rtf] \
+    [file join $env(CHARMMTOPDIR) top_all36_cgenff.rtf] \
+    [file join $env(CHARMMTOPDIR) toppar_all36_carb_glycopeptide.str] \
+    [file join $env(CHARMMTOPDIR) toppar_water_ions_namd.str] ]
+
+  #auto_makepsf ${name}.pdb $topfiles "" ""
+
+  exec python $env(RosettaVMDDIR)/clusterK.py -psf ${name}.psf -dcd ${name}.dcd
+#	# CLUSTER NUMBER
+#	exec /home/juan/bin/clusterN.sh cluster_input_${start}_${end}_${bestN}.dcd  -s silhouette1.txt -p dissimilarity_matrix1.png > cluster_${bestN}_out1.log
+#	set log [open cluster_${bestN}_out1.log r]
+#	set dat [read $log]
+#	close $log
+#	set lines [split $dat "\n"]
+#	set number 0
+#    foreach line $lines {
+#          if {[string match "*is the optimal number of clusters for the input dataset*" $line]} {
+#          	set number [string map {\" ""} [lindex [split $line " "] 1] ]
+#          	puts $number
+#          }
+#    }
+#    if {$number == 0} {
+#    	puts "Bad number of clusters!"
+#    	return
+#    }
+#    # RUN CLUSTERING
+#    exec /home/juan/bin/clusterN.sh cluster_input_${start}_${end}_${bestN}.dcd  -s silhouette2.txt -p dissimilarity_matrix2.png -n ${number} -c cluster_list_${bestN}.txt > cluster_${bestN}_out2.log
+#    read_cluster_file $mol $bestN $number
 }
 
 proc ::RosettaUtilities::run_vmd_clustering {mol start end bestN cutoff cluster_number} \
