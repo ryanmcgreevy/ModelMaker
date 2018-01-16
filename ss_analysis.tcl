@@ -1,3 +1,4 @@
+
 namespace eval ::SSAnalysis {
   set version 0.1
   set description "ss analysis"
@@ -74,7 +75,7 @@ proc ::SSAnalysis::ss_analysis {MOL max_structures resid_start resid_stop chain_
 
   }
 
-  #Iteration over all input structures to compute the occurance of each secondary structure element (in percentage) for each residue
+  #Iteration over all input structures to compute the occurrence of each secondary structure element (in percentage) for each residue
 
   set avg_seq ""
   for {set i 0} {$i < [llength $residues]} {incr i} {
