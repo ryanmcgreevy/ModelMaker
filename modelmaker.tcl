@@ -4,6 +4,7 @@ package require ssrestraints
 package require cispeptide
 package require chirality
 package require mdff
+package require SSAnalysis
 
 package provide modelmaker 0.1
 
@@ -1734,4 +1735,42 @@ proc ::MODELMAKER::get_empty_density { args } {
   volutil -mult $density mask_invert.dx -o "[file rootname [file tail $density]]_empty.dx"
   file delete -force mask.dx mask_invert.dx
   mol delete $mol
+}
+
+## Calling to the SSAnalysis package to analyze
+## secondary structures of a sequence of frames
+## Return: the persistence of each secondary structure 
+##      * per residue (in percentage) and the representative frame of 
+##        the most prevalent secondary structure (average ss)
+##  
+##      * dcd (and psf) file containing frames with the average ss
+##
+##      * dcd (and psf) file containing frames with the ss seq given 
+##        by the user
+
+proc ::MODELMAKER::ssanalysis_usage {} {
+
+  puts "ssanalysis: secondary structure analysis"
+  puts "Usage: ssanalysis \[args...\]"
+  puts "Args:"
+  puts "  -workdir    (optional) <working/project directory for job> (default: current folder)>"
+  puts "  -mol        (optional if -molfile provided) VMD molecule containing the frames to be analyzed"
+  puts "  -molfile    (optional if -mol provided) file containing the frames to be analyzed"
+  puts "  -strtcfile  (mandatory file if -molfile provided as dcd) structure file containing structure\
+   information (e.g. *.psf or *.pdb)"
+  puts "  -sel        atom selection text defining region to be analyzed (default:all )"
+  puts "  -output     prefix to be used in the naming of the output files (default: output)"
+  puts "  -seq    (optional)search ss patter e.g. HHH - three consecutive residues presenting\
+   alpha helix as secondary structure. the patterns length has to match the number of residues \
+   defined in the atom selection"
+   return
+}
+
+proc ::MODELMAKER::ssanalysis { args } {
+
+  if {[expr fmod([llength $args],2)] > 0.0 || [llength $args] == 0} {
+    ::MODELMAKER::ssanalysis_usage
+    return
+  }
+  return [eval ss_analysis $args] 
 }
