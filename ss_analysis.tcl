@@ -12,7 +12,7 @@
 #   Analyze the secondary structure from one or more frames, returning 
 #   
 #  
-package require qwikmd
+# package require qwikmd
 package require multiplot
  
 namespace eval ::SSAnalysis {
@@ -254,7 +254,7 @@ proc ::SSAnalysis::ss_analysis { args } {
   set legendList [list "Alpha Helix" "Turn" "Coil" "3-10 Helix" "Extended\nConformation" "Bridge" "Pi Helix"]
   set index 0
   foreach ssname $ssList {
-    set hexcols [QWIKMD::chooseColor $ssname]
+    set hexcols [chooseColor $ssname]
             
     set hexred [lindex $hexcols 0]
     set hexgreen [lindex $hexcols 1]
@@ -399,4 +399,45 @@ proc ::SSAnalysis::ss_analysis { args } {
   }
   close $f
   return
+}
+
+proc chooseColor {intensity} {
+
+  set field_color_type s 
+  
+  switch -exact $field_color_type {         
+    s {
+      if { [catch {
+        switch $intensity {
+
+          B {set red 180; set green 180; set blue 0}
+          C {set red 255; set green 255; set blue 255}
+          E {set red 255; set green 255; set blue 100}
+          T {set red 70; set green 150; set blue 150}
+          G {set red 20; set green 20; set blue 255}
+          H {set red 235; set green 130; set blue 235}
+          I {set red 225; set green 20; set blue 20}
+          default {set red 100; set green 100; set blue 100}
+        }
+        
+      } ] 
+         } { #badly formatted file, intensity may be a number
+        set red 0; set green 0; set blue 0 
+      }
+    }
+    default {
+      set c $colorscale(choice)
+      set red $colorscale($c,$intensity,r)
+      set green $colorscale($c,$intensity,g)
+      set blue $colorscale($c,$intensity,b)
+   } 
+  }
+  
+  #convert red blue green 0 - 255 to hex
+  set hexred     [format "%02x" $red]
+  set hexgreen   [format "%02x" $green]
+  set hexblue    [format "%02x" $blue]
+  set hexcols [list $hexred $hexgreen $hexblue]
+
+  return $hexcols
 }
