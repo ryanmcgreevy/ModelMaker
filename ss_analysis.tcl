@@ -12,7 +12,6 @@
 #   Analyze the secondary structure from one or more frames, returning 
 #   
 #  
-source /Projects/jribeiro/vmd/plugins/multiplot/multiplot.tcl
 package require qwikmd
 package require multiplot
  
