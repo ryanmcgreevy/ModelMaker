@@ -92,7 +92,8 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  seqsub                -- extract subrange of fasta sequence" 
   puts "  makepsf               -- make a .psf file from a pdb" 
   puts "  mdff                  -- run an MDFF simulation" 
-  puts "  cccolor               -- calculate local cross correlations" 
+  puts "  cccolor               -- calculate local cross correlations"
+  puts "  ssanalysis            -- analyze the secondary structure of the generated structures" 
   puts "  get_empty_density     -- find the unassigned empty density around a structure" 
   return
 
@@ -134,6 +135,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::cccolor $args]
   } elseif { $command == "get_empty_density" } {
     return [eval ::MODELMAKER::get_empty_density $args]
+  } elseif { $command == "ssanalysis" } {
+    return [eval ::MODELMAKER::ssanalysis $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -1743,10 +1746,11 @@ proc ::MODELMAKER::get_empty_density { args } {
 ##      * per residue (in percentage) and the representative frame of 
 ##        the most prevalent secondary structure (average ss)
 ##  
-##      * dcd (and psf) file containing frames with the average ss
+##      * dcd (and pdb) file containing frames with the average ss
 ##
-##      * dcd (and psf) file containing frames with the ss seq given 
+##      * dcd (and pdb) file containing frames with the ss pattern searched 
 ##        by the user
+##
 
 proc ::MODELMAKER::ssanalysis_usage {} {
 
@@ -1758,12 +1762,15 @@ proc ::MODELMAKER::ssanalysis_usage {} {
   puts "  -molfile    (optional if -mol provided) file containing the frames to be analyzed"
   puts "  -strtcfile  (mandatory file if -molfile provided as dcd) structure file containing structure\
    information (e.g. *.psf or *.pdb)"
-  puts "  -sel        atom selection text defining region to be analyzed (default:all )"
+  puts "  -avg        flag to calculate avg secondary structure <0 or 1> (default 0)"
+  puts "  -sel        (mandatory if -avg 1)atom selection text defining region to be analyzed (default:all )"
+  puts "  -showplot   show plot with average secondary structure analysis <0 or 1> (default 1)"  
+  puts "  -seqfind    flag to search for secondary sequence <0 or 1>"
+  puts "  -seq        (mandatory if -seqfind 1) nested list of searching ss element and atom selection pairs. Search for\
+    consecutive ss elements in the atom selection. - e.g. {{\"H\" \"resid 1 to 10\",\"C\" \"resid 15 to 22\"}} "
   puts "  -output     prefix to be used in the naming of the output files (default: output)"
-  puts "  -seq    (optional)search ss patter e.g. HHH - three consecutive residues presenting\
-   alpha helix as secondary structure. the patterns length has to match the number of residues \
-   defined in the atom selection"
-   return
+ 
+  return
 }
 
 proc ::MODELMAKER::ssanalysis { args } {
