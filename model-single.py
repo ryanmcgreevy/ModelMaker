@@ -12,12 +12,14 @@ parser.add_argument("-sequence", action="store", dest="SEQ", required=True,
 help='Sequence file (.seq) - required')
 parser.add_argument("-alignment", action="store", dest="ALIGN", required=True, 
 help='Alignment file (.aln) - required')
+parser.add_argument("-helix", action="store", dest="HELIX", nargs='+', required=False, default='', 
+help='list of residue ranges for forced alpha helix. - optional')
 args = parser.parse_args()
 
 template = os.path.splitext(args.TEMPLATE)[0]
 seq = os.path.splitext(args.SEQ)[0]
 align = args.ALIGN
-
+helix = args.HELIX
 log.verbose()
 env = environ()
 
@@ -29,8 +31,12 @@ class MyModel(automodel):
 #       rsr.append(file='my_rsrs1.rsr')
 
 #       Residues x through y should be an alpha helix:
-        rsr.add(secondary_structure.alpha(self.residue_range('8:', '17:')))
-        rsr.add(secondary_structure.alpha(self.residue_range('21:', '45:')))
+        i = 0
+        while i < len(helix):
+            rsr.add(secondary_structure.alpha(self.residue_range('%s:' % helix[i], '%s:' % helix[i+1])))
+            i += 2
+       # rsr.add(secondary_structure.alpha(self.residue_range('8:', '17:')))
+       # rsr.add(secondary_structure.alpha(self.residue_range('21:', '45:')))
 
 
 
