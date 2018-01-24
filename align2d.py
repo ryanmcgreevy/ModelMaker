@@ -1,10 +1,22 @@
 from modeller import *
-import sys
+#import sys
 import os.path
+import argparse
 
-inmodel = sys.argv[1]
-chain = sys.argv[2]
-sequence = sys.argv[3]
+parser = argparse.ArgumentParser(description=("This script performs a 2d alignment based on " +
+"a given structure and sequence using MODELLER."))
+
+parser.add_argument("-template", action="store", dest="TEMPLATE", required=True, 
+help='Template structure (.pdb) - required')
+parser.add_argument("-sequence", action="store", dest="SEQ", required=True, 
+help='Sequence file (.seq) - required')
+parser.add_argument("-chain", action="store", dest="CHAIN", required=True, 
+help='Chain ID - required')
+args = parser.parse_args()
+
+inmodel = args.TEMPLATE
+chain = args.CHAIN
+sequence = args.SEQ
 
 
 model_name = os.path.splitext(inmodel)[0]
