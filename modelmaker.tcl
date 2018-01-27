@@ -1764,7 +1764,8 @@ proc ::MODELMAKER::ssanalysis_usage {} {
    information (e.g. *.psf or *.pdb)"
   puts "  -avg        flag to calculate avg secondary structure <0 or 1> (default 0)"
   puts "  -sel        (mandatory if -avg 1)atom selection text defining region to be analyzed (default:all )"
-  puts "  -showplot   show plot with average secondary structure analysis <0 or 1> (default 1)"  
+  puts "  -plot       plot tool to be used to display average ss <multiplot or gnuplot> (default multiplot and gnuplot on text mode)"
+  puts "  -showplot   (only when plot = multiplot)show plot with average secondary structure analysis <0 or 1> (default 1)"  
   puts "  -seqfind    flag to search for secondary sequence <0 or 1>"
   puts "  -seq        (mandatory if -seqfind 1) nested list of searching ss element and atom selection pairs. Search for\
     consecutive ss elements in the atom selection. - e.g. {{\"H\" \"resid 1 to 10\",\"C\" \"resid 15 to 22\"}} "

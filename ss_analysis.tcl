@@ -70,6 +70,10 @@ proc ::SSAnalysis::ss_analysis { args } {
   set avg 0
   set seqfind 0
   set showplot 1
+  set plot multiplot
+  if {[catch {package require Tk}] == 1} {
+    set plot "gnuplot"
+  }
   foreach {indarg val} $args {
     switch -exact -- $indarg {
          -workdir {
@@ -89,6 +93,9 @@ proc ::SSAnalysis::ss_analysis { args } {
          }
          -sel {
             set seltext $val
+         }
+         -plot {
+            set plot $val
          }
          -showplot {
             set showplot $val
@@ -226,25 +233,27 @@ proc ::SSAnalysis::ss_analysis { args } {
     }
     puts $f "Table with secondary structure prevalence (percentage) of each residue in all frames "
     puts $f "Number of structures analyzed: $numframes.\n" 
-    puts $f [format {%10s%10s%10s%10s%10s%10s%10s%10s} "Resid_Chain" "H  " "T  " "C  " "G  " "E  " "B  " "I  "]
-    puts $f [format {%10s%10s%10s%10s%10s%10s%10s%10s} "-----" "-----" "-----" "-----" "-----" "-----" "-----" "-----"]
-    set formatNum {%10s%10.2f%10.2f%10.2f%10.2f%10.2f%10.2f%10.2f}
+    puts $f [format {%15s%15s%10s%10s%10s%10s%10s%10s%10s} "Resid_Chain" "Res_Number" "H  " "T  " "C  " "G  " "E  " "B  " "I  "]
+    puts $f [format {%15s%15s%10s%10s%10s%10s%10s%10s%10s} "-----" "-----" "-----" "-----" "-----" "-----" "-----" "-----" "-----"]
+    set formatNum {%15s%15s%10.2f%10.2f%10.2f%10.2f%10.2f%10.2f%10.2f}
     ### Iteration over all input structures to compute the occurrence of each secondary
     ### structure element (in percentage) for each residue
     set avg_seq ""
-    set plotdata [list]
-    set reslistplot [lsort -unique -real [$mainsel get resid]]
+    set xplotdata [list]
+    set yplotdata [list]
+    set reslistplot [$mainsel get resid]
     if {$onechain == 0} {
       set reslistplot $residues
     }
+    # set resnumber $residues
     for {set i 0} {$i < [llength $residues]} {incr i} {
-      set percent_H [expr [lindex $list_H $i]*1.0/$numframes*100.0]
-      set percent_T [expr [lindex $list_T $i]*1.0/$numframes*100.0]
-      set percent_C [expr [lindex $list_C $i]*1.0/$numframes*100.0]
-      set percent_G [expr [lindex $list_G $i]*1.0/$numframes*100.0]
-      set percent_E [expr [lindex $list_E $i]*1.0/$numframes*100.0]
-      set percent_B [expr [lindex $list_B $i]*1.0/$numframes*100.0]
-      set percent_I [expr [lindex $list_I $i]*1.0/$numframes*100.0]
+      set percent_H [format %.1f [expr [lindex $list_H $i]*1.0/$numframes*100.0]]
+      set percent_T [format %.1f [expr [lindex $list_T $i]*1.0/$numframes*100.0]]
+      set percent_C [format %.1f [expr [lindex $list_C $i]*1.0/$numframes*100.0]]
+      set percent_G [format %.1f [expr [lindex $list_G $i]*1.0/$numframes*100.0]]
+      set percent_E [format %.1f [expr [lindex $list_E $i]*1.0/$numframes*100.0]]
+      set percent_B [format %.1f [expr [lindex $list_B $i]*1.0/$numframes*100.0]]
+      set percent_I [format %.1f [expr [lindex $list_I $i]*1.0/$numframes*100.0]]
       set val [lsort -indices -decreasing -real [list $percent_H $percent_T $percent_C $percent_G $percent_E $percent_B $percent_I]]
       switch [lindex $val 0] {
         0 {lappend avg_seq H}
@@ -256,11 +265,12 @@ proc ::SSAnalysis::ss_analysis { args } {
         6 {lappend avg_seq I}
       }
 
-      puts $f [format $formatNum [lindex $residChain $i] $percent_H $percent_T $percent_C\
+      puts $f [format $formatNum [lindex $residChain $i] [lindex $residues $i] $percent_H $percent_T $percent_C\
        $percent_G $percent_E $percent_B $percent_I]
       
       ## store data to be plotted
-      lappend plotdata [list [lindex $reslistplot $i] $percent_H $percent_T $percent_C\
+      lappend xplotdata [lindex $reslistplot $i] 
+      lappend yplotdata [list $percent_H $percent_T $percent_C\
        $percent_G $percent_E $percent_B $percent_I]
     }
     
@@ -268,65 +278,69 @@ proc ::SSAnalysis::ss_analysis { args } {
     
 
     ### Plot the secondary structure prevalence per residue 
-    set xlabel "ResidID"
+    set xlabel "Residue ID"
     if {$onechain == 0} {
       set xlabel "Residue Number"
     }
-    set plot [multiplot -xsize 600 -ysize 400 -title "Secondary Structure" -xlabel $xlabel -ylabel "Percentage (%)" -nolines -linewidth 2 -bkgcolor \#d1efff \
-    -xmin [expr [lindex $reslistplot 0] -0.5] -xmax [expr [lindex $reslistplot end] + 0.5] -ymin 0 -ymax 100]
+    if {[catch {package require Tk}] == 0 && $plot == "multiplot"} {
+      set plot [multiplot -xsize 600 -ysize 400 -title "Secondary Structure" -xlabel $xlabel -ylabel "Percentage (%)" -nolines -linewidth 2 -bkgcolor \#d1efff \
+      -xmin [expr [lindex $reslistplot 0] - 0.5] -xmax [expr [lindex $reslistplot end] + 0.5] -ymin 0 -ymax 100]
 
 
-    set ssList [list H T C G E B I]
-    set colors [list "#eb82eb" "#469696" "#ffffff" "#1414ff" "#ffff64" "#b4b400" "#e11414"]
-    set legendList [list "Alpha Helix" "Turn" "Coil" "3-10 Helix" "Beta Sheet" "Bridge" "Pi Helix"]
-    set index 0
-    foreach ssname $ssList color $colors {
-      $plot add [expr [lindex $reslistplot 0] - 0.5] 0 -legend [lindex $legendList $index] -linecolor $color
-      incr index
-    }
-
-    $plot replot
-    foreach res $plotdata {
-      set residue [lindex $res 0]
-      set data [lrange $res 1 end]
-      set xmin [expr $residue - 0.5]
-      set xmax [expr $residue + 0.5]
-      
-      set min 0.0
-      for {set i 0} {$i < [llength $data]} {incr i} {
-        set val [expr [lindex $data $i] + $min]
-        $plot draw rectangle $xmin $min $xmax $val -fill [lindex $colors $i] -tag "${residue}ss$i"
-        set min $val
+      set ssList [list H T C G E B I]
+      set colors [list "#eb82eb" "#469696" "#ffffff" "#1414ff" "#ffff64" "#b4b400" "#e11414"]
+      set legendList [list "Alpha Helix" "Turn" "Coil" "3-10 Helix" "Beta Sheet" "Bridge" "Pi Helix"]
+      set index 0
+      foreach ssname $ssList color $colors {
+        $plot add [expr [lindex $reslistplot 0] - 0.5] 0 -legend [lindex $legendList $index] -linecolor $color
+        incr index
       }
-    }
-    $plot replot
 
-    variable [$plot namespace]::c
-    [$plot getpath].f.cf move legend -150 0
-    update
-    update idletasks
-    $c postscript -file ${output}_highest_score.ps 
-    
-    update
-    update idletasks
-    
+      $plot replot
+      for {set i 0} {$i < [llength $xplotdata]} {incr i} {
+        set residue [lindex $xplotdata $i]
+        set data [lindex $yplotdata $i]
+        set xmin [expr [lindex $xplotdata $i] - 0.5]
+        set xmax [expr [lindex $xplotdata $i] + 0.5]
+        
+        set min 0.0
+        for {set j 0} {$j < [llength $data]} {incr j} {
+          set val [expr [lindex $data $j] + $min]
+          $plot draw rectangle $xmin $min $xmax $val -fill [lindex $colors $j] -tag "${residue}ss$j"
+          set min $val
+        }
+      }
+      $plot replot
 
-    ### convert image from postscript to gif
-    ### uses ImageMagick, only available on unix machines
-    ### Windows users can use their own image editor to convert the ps file  
-    global tcl_platform env
-
-    if {$::tcl_platform(os) == "Darwin" || $::tcl_platform(os) == "Linux"} {
-      eval ::ExecTool::exec "convert ${output}_highest_score.ps gif:./${output}_highest_score.gif"
+      variable [$plot namespace]::c
+      [$plot getpath].f.cf move legend -150 0
       update
       update idletasks
-    }
+      $c postscript -file plot_${output}.ps 
+      
+      update
+      update idletasks
     
-    ### close the plot in case not intended 
-    if {$showplot == 0} {
-      $plot quit
+      ### convert image from postscript to gif
+      ### uses ImageMagick, only available on unix machines
+      ### Windows users can use their own image editor to convert the ps file  
+      global tcl_platform env
+
+      if {$::tcl_platform(os) == "Darwin" || $::tcl_platform(os) == "Linux"} {
+        eval ::ExecTool::exec "convert plot_${output}.ps gif:./plot_${output}.gif"
+        update
+        update idletasks
+      }
+      
+      ### close the plot in case not intended 
+      if {$showplot == 0} {
+        $plot quit
+      }
+    } else {
+      eval ::ExecTool::exec "gnuplot [::SSAnalysis::make_histogram_gnuplot ${xlabel} $xplotdata $yplotdata $output]"
+
+      update idletasks
     }
-    
 
     ### Identify the secondary structure sequence with most prevalence secondary structure
     set score_list ""
@@ -449,6 +463,7 @@ proc ::SSAnalysis::ss_analysis { args } {
     flush $f
   }
   close $f
+  puts "Secondary Analysis finished."
   return
 }
 
@@ -495,3 +510,73 @@ proc ::SSAnalysis::savetrajframes {mol frameslist output type} {
     
     mol delete $newmol
 }
+
+### Generate the postscript file from gnuplot based Maximilian Scheurer
+### initial script
+### xlabel - Residue ID or Residue Number 
+### xlist - list of point in the x axis Residue ID
+### ylist - list of the values of percentage for each residue in xlist
+###         in the specific order: "{{H T C G E B I} {H T C G E B I} }"
+proc ::SSAnalysis::make_histogram_gnuplot { xlabel xlist ylist output } {
+
+  set file [open plot_${output}.gp w+]
+  
+  puts $file "reset"
+  puts $file "clear"
+  puts $file "set terminal postscript enhanced color solid"
+  puts $file "set key top left outside horizontal autotitle columnhead"
+  puts $file "set output \"plot_${output}.ps\""
+  puts $file "set ytics rotate out font \",9\""
+  set min [expr [lindex $xlist 0] -1]
+  set max [expr [lindex $xlist end] +1]
+  
+  puts $file "set yrange \[ 0 : 100 \]"
+  puts $file "set xlabel \"$xlabel\""
+  puts $file "set title \"Secondary Structure\""
+  puts $file "set ylabel \"Percentage(%)\""
+  puts $file "set style data histograms"
+  puts $file "set style histogram rowstacked"
+  puts $file "set boxwidth 1"
+  puts $file "set style fill solid 1.0 border -1"
+  puts $file "set samples 1000000"
+  # puts $file "set noxtics"
+  #
+  puts $file "set autoscale xy"
+  puts $file "\n\nplot \'-\' using 2:xtic(1) linecolor rgb \"magenta\", \'-\' using 2 linecolor rgb \"sea-green\", \'-\' using 2 linecolor rgb \"gray90\", \'-\' using 2 linecolor rgb \"blue\", \'-\' using 2 linecolor rgb \"yellow\", \'-\' using 2 linecolor rgb \"dark-yellow\", \'-\' using 2 linecolor rgb \"red\""
+
+  set ssList [list H T C G E B I]
+  
+  for {set ssind 0 } {$ssind < [llength $ssList]} {incr ssind} {
+    puts $file "\"${xlabel}\"\t[lindex $ssList $ssind]"
+  
+    for {set i 0} {$i < [llength $xlist]} {incr i} {
+      puts  $file "[lindex $xlist $i]\t[lindex [lindex $ylist $i] $ssind]"
+    }
+    puts $file "e"
+  }
+  set maxx [expr round([expr [llength $xlist]*0.50])]
+  set incrint [expr int([expr [llength $xlist]/$maxx])]
+  set incrint [format %.0f [expr double(round(1*$incrint))/1]]
+  set xtics ""
+  puts "DEBUG maxx $maxx|| incr $incrint"
+  set index 0
+  for {set i [expr $min +1]} {$i < $max} {incr i $incrint} {
+    append xtics "\"$i\" $index, "
+    incr index $incrint
+  }
+  append xtics ""
+  set xtics [string trimright $xtics ", "]
+  puts $file "unset xtics"
+  puts $file "set terminal postscript enhanced color solid"
+  puts $file "set key top left outside horizontal autotitle columnhead"
+  puts $file "set output \"plot_${output}.ps\""
+  puts $file "set xtics font \",9\""
+  puts $file "set xtics rotate out"
+  puts $file "set xtics \($xtics\)"
+  puts $file "set xrange \[ -1 \: [expr $index +1] \]"
+  puts $file "refresh"
+  puts $file "quit"
+  close $file
+  return "plot_${output}.gp"
+}
+
