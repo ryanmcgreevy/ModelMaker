@@ -75,6 +75,9 @@ namespace eval ::MODELMAKER {
   variable MPINP
   variable settings
   set ::MODELMAKER::settings(username) ""
+  
+  variable DefaultModelSel "all"
+  variable DefaultModelN 1
 }
 
 proc modelmaker { args } { return [eval ::MODELMAKER::modelmaker $args] }
@@ -137,6 +140,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::get_empty_density $args]
   } elseif { $command == "ssanalysis" } {
     return [eval ::MODELMAKER::ssanalysis $args]
+  } elseif { $command == "model" } {
+    return [eval ::MODELMAKER::model $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -1781,4 +1786,105 @@ proc ::MODELMAKER::ssanalysis { args } {
     return
   }
   return [eval ss_analysis $args] 
+}
+
+proc ::MODELMAKER::model_usage { } {
+  variable DefaultModelSel
+  variable DefaultModelN
+  puts "Usage: modelmaker model -template <input pdb file> -fasta <input fasta file> -n <number of models to generate> ?options?"
+  puts "Options:"
+  puts "  -sel     <selection text for modeling> (default: $DefaultModelSel)>"
+  puts "  -helix   <list of start and end resids for helix restraints> (default: none)>"
+  puts "  -n       <number of models to generate> (default: $DefaultModelN)>"
+  
+}
+
+proc ::MODELMAKER::model { args } {
+  variable DefaultModelSel
+  variable DefaultModelN
+  
+  set nargs [llength [lindex $args 0]]
+  if {$nargs == 0} {
+    get_empty_density_usage
+    error ""
+  }
+  
+  foreach {name val} $args {
+    switch -- $name {
+      -template { set arg(template) $val }
+      -fasta { set arg(fasta) $val }
+      -sel { set arg(sel) $val }
+      -helix { set arg(helix) $val }
+      -n { set arg(n) $val }
+      default { puts "Unknown argument $name"; return  }
+    }
+  }
+  
+  if { [info exists arg(template)] } {
+    set template $arg(template)
+  } else {
+    error "input template pdb file required!"
+  }
+  
+  if { [info exists arg(fasta)] } {
+    set fasta $arg(fasta)
+  } else {
+    error "input fasta file required!"
+  }
+  
+  if { [info exists arg(sel)] } {
+    set sel $arg(sel)
+  } else {
+    set sel $DefaultModelSel
+  }
+  
+  if { [info exists arg(n)] } {
+    set n $arg(n)
+  } else {
+    set n $DefaultModelN
+  }
+  
+  if { [info exists arg(helix)] } {
+    set helix "-helix $arg(helix)"
+  } else {
+    set helix ""
+  }
+
+  set tempmol [mol new $template]
+  set worksel [atomselect $tempmol $sel]
+  
+  set resids [$worksel get resid]
+  set startres [lindex $resids 0]
+  set endres [lindex $resids end]
+  $worksel writepdb "tmp.pdb"
+  
+  if {$sel != "all"} {
+    modelmaker seqsub -i $fasta -o "tmp.fasta" -start $startres -end $endres
+    set infile [open "tmp.fasta" r]
+    set file_data [read $infile]
+    close $infile
+  } else {
+    set infile [open $fasta]
+    set file_data [read $infile]
+    close $infile 
+  }
+ 
+  set outfile [open tmp.seq w]
+  #add seq header
+  puts $outfile ">P1;tmp" 
+  puts $outfile "sequence:::::::::"
+  #remove fasta header 
+  foreach line $file_data  {
+    if { [lindex $line 0] != ">" } {
+      puts $outfile $line
+    }
+  }
+  puts $outfile "*"
+  close $outfile
+
+  set chain [lindex [$worksel get chain] 0]
+
+  exec python $::env(RosettaVMDDIR)/align2d.py -template "tmp.pdb" -sequence "tmp.seq" -chain $chain
+  exec python $::env(RosettaVMDDIR)/model-single.py -template "tmp.pdb" -sequence "tmp.seq" -alignment "alignment.aln" \
+     -n $n {*}$helix 
 }
