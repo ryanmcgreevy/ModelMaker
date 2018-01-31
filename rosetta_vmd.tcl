@@ -355,19 +355,20 @@ proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template
 	puts "current directory: [pwd]"
 	file mkdir pdb_out_aligned
 
-	if {!$cluster} {
+#originally this disctinction was made when cluster used to indicate Juan's code. Not sure why this was needed...
+#	if {!$cluster} {
 		if {$insertion != 0} {
 			align_rosetta_local 1 $nstruct ${jobname}_$mol $template $insertion $align_template $align_rosetta
 		} else {
-			align_rosetta_local 1 $nstruct ${jobname}_$mol $template $mol $align_template $align_rosetta
+ 		  align_rosetta_local 1 $nstruct ${jobname}_$mol $template $mol $align_template $align_rosetta
 		}
-	} else {
-		if {$insertion != 0} {
-			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $template $insertion $align_template $align_rosetta
-		} else {
-			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $template $mol $align_template $align_rosetta
-		}
-	}
+#	} else {
+#		if {$insertion != 0} {
+#			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $template $insertion $align_template $align_rosetta
+#		} else {
+#			align_rosetta_cluster 1 $nstruct ${jobname}_$mol $template $mol $align_template $align_rosetta
+#		}
+#	}
 
 	#SCORING MOL max_structures cluster?
 	# extra variable to run scoring on cluster folded insertion runs
