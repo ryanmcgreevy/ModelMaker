@@ -1010,7 +1010,7 @@ proc ::MODELMAKER::pdb2seq_usage { } {
   puts "Options:"
   puts "  -i <input pdb> "
   puts "  -sel <atom selection text> (default: $DefaultPDB2SeqSel)"
-  puts "  -mol <molid> (find gaps in already loaded molecule)"
+  puts "  -mol <molid> (get sequence of an already loaded molecule)"
   puts "  -o   <filename> (output sequence to a file instead)"
 
 }
@@ -1110,9 +1110,9 @@ proc ::MODELMAKER::pdb2seq {args} {
   
   if {$output != ""} {
    set f [open $output w] 
-  # foreach seq $sequence {
-    puts $f $sequence
-   #}
+   foreach seq $sequence {
+    puts -nonewline $f $seq
+   }
    close $f
   } else {
     return $sequence
