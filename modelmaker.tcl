@@ -98,6 +98,7 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  cccolor               -- calculate local cross correlations"
   puts "  ssanalysis            -- analyze the secondary structure of the generated structures" 
   puts "  get_empty_density     -- find the unassigned empty density around a structure" 
+  puts "  model                 -- generate a homology model with MODELLER" 
   return
 
 }
