@@ -1806,7 +1806,7 @@ proc ::MODELMAKER::model { args } {
   
   set nargs [llength [lindex $args 0]]
   if {$nargs == 0} {
-    get_empty_density_usage
+    model_usage
     error ""
   }
   
