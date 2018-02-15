@@ -71,8 +71,8 @@ proc ::CCColor::cccolor {MOL mapname resolution threshold spacing ss_on res_on g
 				set ss_1 [lindex $ssList [expr $id_i - $id_begin + 1]]
 				#	puts $log "$id_i"
 				if {$ss_0 != $ss_1} {
-					set ssSel [atomselect $pdb "fragment $chain and (resid $id_0 to $id_i)"]
-					if {[$ssSel num] == 0} {
+          set ssSel [atomselect $pdb "fragment $chain and (resid $id_0 to $id_i)"]
+          if {[$ssSel num] == 0} {
 						puts "no atoms in selection"
 					}
 					puts $log [$ssSel num]
@@ -95,9 +95,9 @@ proc ::CCColor::cccolor {MOL mapname resolution threshold spacing ss_on res_on g
 						puts $log "$id_0 $id_i $CCSS"
 						set id_0 [expr $id_i +1]
 					}
-				}
+        }
 			}
-			[atomselect $pdb all] writepdb $MOL-ss.pdb
+      [atomselect $pdb all] writepdb $MOL-ss.pdb
 		}
 
 		if {$res_on} {

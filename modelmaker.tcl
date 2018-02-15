@@ -1595,7 +1595,7 @@ proc ::MODELMAKER::cccolor_usage { } {
   puts "Options:"
   puts "  -threshold    <ignore density below threshold value> (default: $DefaultThreshold)>"
   puts "  -spacing      <grid spacing of simulated map> (default: matches input map)>"
-  puts "  -sel          <selection text to calculate correlations on> (default: all)>"
+  puts "  -sel          <selection text to calculate correlations on> (default: protein and noh)>"
   puts "  -mode         <calculate correlations for secondary structure (ss) or individual residue (res)> (default: ss)>"
   puts "  -ressel       <selection text of resid range if performing per-resiude calculation (e.g., resid 1 to 20) > (default: all)>"
   puts "  -bbonly       <calculate per-residue correlation for backbone atoms only (options: on or off)> (default: off)>"
@@ -1661,7 +1661,7 @@ proc ::MODELMAKER::cccolor { args } {
   if { [info exists arg(sel)] } {
     set sel $arg(sel)
   } else {
-    set sel "all"
+    set sel "protein and noh"
   }
   
   if { [info exists arg(mode)] } {
