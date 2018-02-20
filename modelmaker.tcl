@@ -99,6 +99,7 @@ proc ::MODELMAKER::modelmaker_usage { } {
   puts "  ssanalysis            -- analyze the secondary structure of the generated structures" 
   puts "  get_empty_density     -- find the unassigned empty density around a structure" 
   puts "  model                 -- generate a homology model with MODELLER" 
+  puts "  fragments             -- generate fragment files" 
   return
 
 }
@@ -143,6 +144,8 @@ proc ::MODELMAKER::modelmaker { args } {
     return [eval ::MODELMAKER::ssanalysis $args]
   } elseif { $command == "model" } {
     return [eval ::MODELMAKER::model $args]
+  } elseif { $command == "fragments" } {
+    return [eval ::MODELMAKER::fragments $args]
   } else {
     modelmaker_usage
     error "Unrecognized command."
@@ -1888,4 +1891,57 @@ proc ::MODELMAKER::model { args } {
   exec python $::env(RosettaVMDDIR)/align2d.py -template "tmp.pdb" -sequence "tmp.seq" -chain $chain
   exec python $::env(RosettaVMDDIR)/model-single.py -template "tmp.pdb" -sequence "tmp.seq" -alignment "alignment.aln" \
      -n $n {*}$helix 
+}
+
+
+proc ::MODELMAKER::fragments_usage { } {
+  puts "Usage: modelmaker fragments -fasta <input fasta file> ?options?"
+  puts "Options:"
+  puts "  -np         <Number of processors to use. MPI version only> "
+  
+}
+
+proc ::MODELMAKER::fragments { args } {
+  variable rosettaEXE
+  variable rosettaPath
+  variable rosettadbpath
+  
+  set nargs [llength [lindex $args 0]]
+  if {$nargs == 0} {
+    fragments_usage
+    error ""
+  }
+  
+  foreach {name val} $args {
+    switch -- $name {
+      -fasta { set arg(fasta) $val }
+      -np { set arg(np) $val }
+      default { puts "Unknown argument $name"; return  }
+    }
+  }
+  
+  if { [info exists arg(fasta)] } {
+    set fasta $arg(fasta)
+  } else {
+    error "input fasta file required!"
+  }
+  
+  if { [info exists arg(np)] } {
+    set mpinp $arg(np)
+  } elseif { [string match "*mpi.*" $rosettaEXE] }  {
+    error "number of processors (-np) must be specified when using MPI version of Rosetta!"
+  }
+  
+  if { [string match "*mpi*" $rosettaEXE] } {
+    set mpi_args "mpiexec -np $mpinp"      
+  } else {
+    set mpi_args ""
+  }
+  
+  exec {*}$mpi_args [glob $rosettaPath/fragment_picker.$rosettaEXE] -in:file:fasta $fasta \
+    -in:path:database $rosettadbpath \
+    -in:file:vall ${rosettadbpath}/../../tools/fragment_tools/vall.apr24.2008.extended.gz \
+    -overwrite >> fragments.log
+  
+
 }
