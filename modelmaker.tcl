@@ -1897,6 +1897,7 @@ proc ::MODELMAKER::model { args } {
 proc ::MODELMAKER::fragments_usage { } {
   puts "Usage: modelmaker fragments -fasta <input fasta file> ?options?"
   puts "Options:"
+  puts "  -o          <Prefix for fragment file output. Default taken from fasta.> "
   puts "  -np         <Number of processors to use. MPI version only> "
   
 }
@@ -1916,6 +1917,7 @@ proc ::MODELMAKER::fragments { args } {
     switch -- $name {
       -fasta { set arg(fasta) $val }
       -np { set arg(np) $val }
+      -o { set arg(o) $val }
       default { puts "Unknown argument $name"; return  }
     }
   }
@@ -1932,6 +1934,12 @@ proc ::MODELMAKER::fragments { args } {
     error "number of processors (-np) must be specified when using MPI version of Rosetta!"
   }
   
+  if { [info exists arg(o)] } {
+    set output_prefix $arg(o)
+  } else {
+    set output_prefix [file rootname $fasta]
+  }
+  
   if { [string match "*mpi*" $rosettaEXE] } {
     set mpi_args "mpiexec -np $mpinp"      
   } else {
@@ -1941,6 +1949,7 @@ proc ::MODELMAKER::fragments { args } {
   exec {*}$mpi_args [glob $rosettaPath/fragment_picker.$rosettaEXE] -in:file:fasta $fasta \
     -in:path:database $rosettadbpath \
     -in:file:vall ${rosettadbpath}/../../tools/fragment_tools/vall.apr24.2008.extended.gz \
+    -out:file:frag_prefix $output_prefix \
     -overwrite >> fragments.log
   
 
