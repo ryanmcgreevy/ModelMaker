@@ -424,16 +424,17 @@ proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template
 				set resid_stop $end
 				set chain_id $chain
 
-				set ss_file [open "run_ss.tcl" w]
-				puts $ss_file "lappend ::auto_path \"$packagePath\""
-				puts $ss_file "package require SSAnalysis"
-			#	puts $ss_file "ss_analysis $MOL $max_structures $resid_start $resid_stop $chain_id"
-			  puts $ss_file "ss_analysis -molfile ${MOL}_rosetta_scoring_min_${bestN}.pdb -sel \"resid $resid_start to $resid_stop and chain $chain_id\" -avg 1 -output \"ss_${bestN}_${resid_start}_${resid_stop}\""
-      	puts $ss_file "quit"
-				close $ss_file
+			#	set ss_file [open "run_ss.tcl" w]
+		#		puts $ss_file "lappend ::auto_path \"$packagePath\""
+	#			puts $ss_file "package require SSAnalysis"
+	#		#	puts $ss_file "ss_analysis $MOL $max_structures $resid_start $resid_stop $chain_id"
+	#		  puts $ss_file "ss_analysis -molfile ${MOL}_rosetta_scoring_min_${bestN}.pdb -sel \"resid $resid_start to $resid_stop and chain $chain_id\" -avg 1 -output \"ss_${bestN}_${resid_start}_${resid_stop}\""
+   #   	puts $ss_file "quit"
+		#		close $ss_file
 				puts "running SS analysis"
-				exec >&@stdout $vmdexe -dispdev text -e run_ss.tcl
-				evaluate_ss_analysis $bestN $start $end
+		#		exec >&@stdout $vmdexe -dispdev text -e run_ss.tcl
+		    ss_analysis -molfile ${MOL}_rosetta_scoring_min_${bestN}.pdb -sel "resid $resid_start to $resid_stop and chain $chain_id" -avg 1 -output "ss_${bestN}_${resid_start}_${resid_stop}"
+    		evaluate_ss_analysis $bestN $start $end
 				cd $::MODELMAKER::workdir/run-$jobname/analysis
 			}
 			default {
