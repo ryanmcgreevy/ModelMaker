@@ -12,7 +12,6 @@
 #   Analyze the secondary structure from one or more frames, returning 
 #   
 #  
-# package require qwikmd
 package require multiplot
  
 namespace eval ::SSAnalysis {
@@ -521,8 +520,6 @@ proc ::SSAnalysis::make_histogram_gnuplot { xlabel xlist ylist output } {
 
   set file [open plot_${output}.gp w+]
   
-  puts $file "reset"
-  puts $file "clear"
   puts $file "set terminal postscript enhanced color solid"
   puts $file "set key top left outside horizontal autotitle columnhead"
   puts $file "set output \"plot_${output}.ps\""
@@ -539,8 +536,7 @@ proc ::SSAnalysis::make_histogram_gnuplot { xlabel xlist ylist output } {
   puts $file "set boxwidth 1"
   puts $file "set style fill solid 1.0 border -1"
   puts $file "set samples 1000000"
-  # puts $file "set noxtics"
-  #
+
   puts $file "set autoscale xy"
   puts $file "\n\nplot \'-\' using 2:xtic(1) linecolor rgb \"magenta\", \'-\' using 2 linecolor rgb \"sea-green\", \'-\' using 2 linecolor rgb \"gray90\", \'-\' using 2 linecolor rgb \"blue\", \'-\' using 2 linecolor rgb \"yellow\", \'-\' using 2 linecolor rgb \"dark-yellow\", \'-\' using 2 linecolor rgb \"red\""
 
@@ -558,7 +554,6 @@ proc ::SSAnalysis::make_histogram_gnuplot { xlabel xlist ylist output } {
   set incrint [expr int([expr [llength $xlist]/$maxx])]
   set incrint [format %.0f [expr double(round(1*$incrint))/1]]
   set xtics ""
-  puts "DEBUG maxx $maxx|| incr $incrint"
   set index 0
   for {set i [expr $min +1]} {$i < $max} {incr i $incrint} {
     append xtics "\"$i\" $index, "
@@ -575,6 +570,8 @@ proc ::SSAnalysis::make_histogram_gnuplot { xlabel xlist ylist output } {
   puts $file "set xtics \($xtics\)"
   puts $file "set xrange \[ -1 \: [expr $index +1] \]"
   puts $file "refresh"
+  puts $file "reset"
+  puts $file "clear"
   puts $file "quit"
   close $file
   return "plot_${output}.gp"
