@@ -54,6 +54,7 @@ namespace eval ::MODELMAKER {
   variable DefaultNumSteps 10000
   variable DefaultMinSteps 200
   variable DefaultGScale 0.3
+  variable DefaultGridPDBSel "noh and (protein or nucleic)"
   variable DefaultDCDFreq 100
   variable DefaultTopFiles [list [file join $env(CHARMMTOPDIR) top_all36_prot.rtf] \
     [file join $env(CHARMMTOPDIR) top_all36_lipid.rtf] \
@@ -1265,11 +1266,13 @@ proc ::MODELMAKER::quick_mdff_usage { } {
   variable DefaultParFiles
   variable DefaultDCDFreq
   variable DefaultMDFFWorkDir
+  variable DefaultGridPDBSel
   
   puts "Usage: mdodelmaker mdff -pdb <input pdb file> -density <input density file> \
     -res <resolution of density in Angstroms> ?options?"
   puts "Options:"
-  puts "  -workdir    <working/project directory for job> (default: $DefaultMDFFWorkDir)>"
+  puts "  -gridpdbsel <atom selections for MDFF> (default: $DefaultGridPDBSel)"
+  puts "  -workdir    <working/project directory for job> (default: $DefaultMDFFWorkDir)"
   puts "  -jobname    <name prefix for job> (default: taken from -model) "
   puts "  -fixed      <atomselect text for fixed atoms> (default: $DefaultFixed) "
   puts "  -gscale     <grid scaling factor for fitting forces> (default: $DefaultGScale) "
@@ -1297,7 +1300,8 @@ proc ::MODELMAKER::quick_mdff { args } {
   variable DefaultParFiles
   variable DefaultDCDFreq
   variable DefaultMDFFWorkDir
-
+  variable DefaultGridPDBSel
+  
   set nargs [llength [lindex $args 0]]
   if {$nargs == 0} {
     quick_mdff_usage
@@ -1310,6 +1314,7 @@ proc ::MODELMAKER::quick_mdff { args } {
       -jobname { set arg(jobname) $val }
       -pdb { set arg(pdb) $val }
       -density { set arg(density) $val }
+      -gridpdbsel { set arg(gridpdbsel) $val }
       -fixed { set arg(fixed) $val }
       -gscale { set arg(gscale) $val }
       -density { set arg(density) $val }
@@ -1346,6 +1351,20 @@ proc ::MODELMAKER::quick_mdff { args } {
     set res $arg(res)
   } else {
     error "resolution of density must be specified!"
+  }
+  
+  if { [info exists arg(gridpdbsel)] } {
+    #if more than one map, we already should have a list
+    if {[llength $density] > 1} {
+      set gridpdbsel $arg(gridpdbsel)
+    #we have one map, so need to make this a list so the entire first entry is the atom selection text  
+    } else {
+      lappend gridpdbsel $arg(gridpdbsel)
+    }
+  } else {
+    foreach den $density {
+      lappend gridpdbsel $DefaultGridPDBSel
+    }
   }
   
   if { [info exists arg(workdir)] } {
@@ -1482,17 +1501,22 @@ proc ::MODELMAKER::quick_mdff { args } {
     }
   }
   
-  #make _potential
-	mdff griddx -i $mapname -o [file join $workdir ${mapname}_potential.dx]
 
   set mutations ""
 	auto_makepsf $pdb $topfiles $chseg $mutations
   file rename -force ${MOL}.psf $workdir
   file rename -force ${MOL}-psfout.pdb $workdir
 
-	#make grid
-	mdff gridpdb -psf [file join $workdir ${MOL}.psf] -pdb [file join $workdir ${MOL}-psfout.pdb] -o [file join $workdir ${MOL}-psfout-grid.pdb]
-
+  for {set i 0} {$i < [llength $mapname]} {incr i} {
+    #make _potential
+    set name [lindex $mapname $i]
+    set sel [lindex $gridpdbsel $i]
+    mdff griddx -i $name -o [file join $workdir ${name}_potential.dx]
+    lappend potentials "${name}_potential.dx"
+    #make grid
+    mdff gridpdb -psf [file join $workdir ${MOL}.psf] -pdb [file join $workdir ${MOL}-psfout.pdb] -o [file join $workdir ${MOL}-${name}-psfout-grid.pdb] -seltext $sel
+    lappend gridpdbs "${MOL}-${name}-psfout-grid.pdb"
+  }
 
 	#make ssrestraints
 	if { $ss == ""} {
@@ -1530,7 +1554,7 @@ proc ::MODELMAKER::quick_mdff { args } {
 	
   
   		
-  mdff setup -o $jobname -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -griddx ${mapname}_potential.dx -gridpdb ${MOL}-psfout-grid.pdb -extrab $extrab -gscale $gscale -minsteps $minsteps -numsteps $numsteps -fixpdb fixed.pdb -dir $workdir -parfiles $parfiles
+  mdff setup -o $jobname -psf ${MOL}.psf -pdb ${MOL}-psfout.pdb -griddx $potentials -gridpdb $gridpdbs -extrab $extrab -gscale $gscale -minsteps $minsteps -numsteps $numsteps -fixpdb fixed.pdb -dir $workdir -parfiles $parfiles
 			
   
   set frpdb [open [file join $workdir mdff_template.namd] "r"]
