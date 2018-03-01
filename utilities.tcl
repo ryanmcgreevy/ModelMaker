@@ -179,26 +179,6 @@ proc ::RosettaUtilities::run_clustering {mol start end bestN} \
   #auto_makepsf ${name}.pdb $topfiles "" ""
 
   exec python $env(RosettaVMDDIR)/clusterK.py -psf ${name}.psf -dcd ${name}.dcd
-#	# CLUSTER NUMBER
-#	exec /home/juan/bin/clusterN.sh cluster_input_${start}_${end}_${bestN}.dcd  -s silhouette1.txt -p dissimilarity_matrix1.png > cluster_${bestN}_out1.log
-#	set log [open cluster_${bestN}_out1.log r]
-#	set dat [read $log]
-#	close $log
-#	set lines [split $dat "\n"]
-#	set number 0
-#    foreach line $lines {
-#          if {[string match "*is the optimal number of clusters for the input dataset*" $line]} {
-#          	set number [string map {\" ""} [lindex [split $line " "] 1] ]
-#          	puts $number
-#          }
-#    }
-#    if {$number == 0} {
-#    	puts "Bad number of clusters!"
-#    	return
-#    }
-#    # RUN CLUSTERING
-#    exec /home/juan/bin/clusterN.sh cluster_input_${start}_${end}_${bestN}.dcd  -s silhouette2.txt -p dissimilarity_matrix2.png -n ${number} -c cluster_list_${bestN}.txt > cluster_${bestN}_out2.log
-#    read_cluster_file $mol $bestN $number
 }
 
 proc ::RosettaUtilities::run_vmd_clustering {mol start end bestN cutoff cluster_number} \
@@ -406,11 +386,6 @@ proc ::RosettaUtilities::get_unass_dens {MOL selection mapname cutoff outname} \
 # option 1
 }
 
-#
-#  Juan R. Perilla (c) 2012 University of Illinois Urbana-Champaign
-#  juan@ks.uiuc.edu
-#
-#
 
 #set fileout "ssfile.ss"
 #set filein "ssfile.ss"
