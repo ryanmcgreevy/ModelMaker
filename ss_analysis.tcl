@@ -570,8 +570,6 @@ proc ::SSAnalysis::make_histogram_gnuplot { xlabel xlist ylist output } {
   puts $file "set xtics \($xtics\)"
   puts $file "set xrange \[ -1 \: [expr $index +1] \]"
   puts $file "refresh"
-  puts $file "reset"
-  puts $file "clear"
   puts $file "quit"
   close $file
   return "plot_${output}.gp"
