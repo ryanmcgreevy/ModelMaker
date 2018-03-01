@@ -508,7 +508,7 @@ proc ::SSAnalysis::savetrajframes {mol frameslist output type} {
     }
     file rename -force tmp_initialpdb.$ext ${output}.$ext
     
-    mol delete $newmol
+    if {[info exists newmol]} {mol delete $newmol}
 }
 
 ### Generate the postscript file from gnuplot based Maximilian Scheurer
