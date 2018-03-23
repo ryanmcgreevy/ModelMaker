@@ -1884,7 +1884,7 @@ proc ::MODELMAKER::model { args } {
   set resids [$worksel get resid]
   set startres [lindex $resids 0]
   set endres [lindex $resids end]
-  $worksel writepdb "tmp.pdb"
+  $worksel writepdb "tmppdb.pdb"
   
   if {$sel != "all"} {
     modelmaker seqsub -i $fasta -o "tmp.fasta" -start $startres -end $endres
@@ -1897,9 +1897,9 @@ proc ::MODELMAKER::model { args } {
     close $infile 
   }
  
-  set outfile [open tmp.seq w]
+  set outfile [open tmpseq.seq w]
   #add seq header
-  puts $outfile ">P1;tmp" 
+  puts $outfile ">P1;tmpseq" 
   puts $outfile "sequence:::::::::"
   #remove fasta header 
   foreach line $file_data  {
@@ -1912,8 +1912,8 @@ proc ::MODELMAKER::model { args } {
 
   set chain [lindex [$worksel get chain] 0]
 
-  exec python $::env(RosettaVMDDIR)/align2d.py -template "tmp.pdb" -sequence "tmp.seq" -chain $chain
-  exec python $::env(RosettaVMDDIR)/model-single.py -template "tmp.pdb" -sequence "tmp.seq" -alignment "alignment.aln" \
+  exec python $::env(RosettaVMDDIR)/align2d.py -template "tmppdb.pdb" -sequence "tmpseq.seq" -chain $chain
+  exec python $::env(RosettaVMDDIR)/model-single.py -template "tmppdb.pdb" -sequence "tmpseq.seq" -alignment "alignment.aln" \
      -n $n {*}$helix 
 }
 
