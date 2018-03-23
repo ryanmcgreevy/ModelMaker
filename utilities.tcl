@@ -179,6 +179,27 @@ proc ::RosettaUtilities::run_clustering {mol start end bestN kmin kmax} \
   #auto_makepsf ${name}.pdb $topfiles "" ""
 
   exec python $env(RosettaVMDDIR)/clusterK.py -psf ${name}.psf -dcd ${name}.dcd -kmin $kmin -kmax $kmax > clustering.log
+  
+  set fp [open "clu_labels.txt" r]
+  set file_data [read $fp]
+  close $fp
+
+  #array set clusters {}
+  set data [split $file_data "\n"]
+  foreach line $data {
+    if {$line != ""} {
+      lappend ar([lindex $line 0]) [lindex $line 1]
+    }
+  }
+  
+  foreach cluster [array names ar] {
+    mol new ${name}.psf
+    foreach framenum $ar($cluster) {
+      animate read dcd ${name}.dcd beg $framenum end $framenum
+    }
+    animate write dcd "cluster-${cluster}.dcd"
+  }
+
 }
 
 proc ::RosettaUtilities::run_vmd_clustering {mol start end bestN cutoff cluster_number} \
