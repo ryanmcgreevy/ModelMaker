@@ -43,6 +43,8 @@ namespace eval ::MODELMAKER {
   variable DefaultResStart 1
   variable DefaultAlignTemplate "all"
   variable DefaultInsertion "no"
+  variable DefaultKmin 2
+  variable DefaultKmax 10
   variable DefaultWorkDir "[pwd]/workdir"
   variable DefaultMDFFWorkDir "[pwd]/mdff-workdir"
   variable workdir $DefaultWorkDir
@@ -631,6 +633,8 @@ proc ::MODELMAKER::analyze_usage { } {
   variable DefaultCluster
   variable DefaultAlignTemplate
   variable DefaultInsertion
+  variable DefaultKmin
+  variable DefaultKmax
 
   puts "Usage: modelmaker analyze -model <full length template pdb>  -nstruct <number of structures to analyze> \
     -comps <list of analysis tasks> ?options?"
@@ -642,6 +646,8 @@ proc ::MODELMAKER::analyze_usage { } {
   puts "  -insertion   <analyzing output from insertion? 'yes' or 'no'> (default: $DefaultInsertion)"
 #change these to more user-friendly designations and explain caveats
   puts "  -cluster    <clustering mode to use. 0 for Rosetta, 1 for Python> (default: $DefaultCluster)> "
+  puts "  -kmin       <Min number of clusters for silhouette calc, cluster mode 1 only> (default: $DefaultKmin)> "
+  puts "  -kmax       <Max number of clusters for silhouette calc, cluster mode 1 only> (default: $DefaultKmax)> "
 
 }
 
@@ -652,6 +658,8 @@ proc ::MODELMAKER::analyze { args } {
   variable rosettaPath
   variable DefaultAlignTemplate
   variable DefaultInsertion
+  variable DefaultKmin
+  variable DefaultKmax
 
   set nargs [llength [lindex $args 0]]
   if {$nargs == 0} {
@@ -671,6 +679,8 @@ proc ::MODELMAKER::analyze { args } {
       -align_rosetta    { set arg(align_rosetta) $val }
       -comps            { set arg(comps) $val }
       -insertion        { set arg(insertion) $val }
+      -kmin             { set arg(kmin) $val }
+      -kmax        { set arg(kmax) $val }
       default { puts "Unknown argument $name"; return  }
     }
   }
@@ -745,6 +755,18 @@ proc ::MODELMAKER::analyze { args } {
   } else {
     set cluster $DefaultCluster
   }
+  
+  if { [info exists arg(kmin)] } {
+    set kmin $arg(kmin)
+  } else {
+    set kmin $DefaultKmin
+  }
+  
+  if { [info exists arg(kmax)] } {
+    set kmax $arg(kmax)
+  } else {
+    set kmax $DefaultKmax
+  }
 
   if { [info exists arg(workdir)] } {
     set ::MODELMAKER::workdir $arg(workdir)
@@ -788,7 +810,7 @@ proc ::MODELMAKER::analyze { args } {
     }
   }
   analyze_abinitio $jobname $modelname $template $bestN $nstruct $cluster $align_template \
-    $align_rosetta $comps {*}$insert_model
+    $align_rosetta $comps $kmin $kmax {*}$insert_model
 }
 
 proc ::MODELMAKER::renumber { sel start } {

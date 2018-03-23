@@ -343,7 +343,7 @@ proc start_rosetta_insertion {jobname mol selections fragfiles fasta nstruct {cl
 	puts "Rosetta insertion folding finished."
 }
 
-proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template align_rosetta analysis_components {insertion 0} args} \
+proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template align_rosetta analysis_components kmin kmax {insertion 0} args} \
 {
 	global vmdexe
 	global packagePath
@@ -403,7 +403,7 @@ proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template
 				# run_vmd_clustering $mol $start $end $bestN 0.25 $cluster_number
 				# TODO: refine clustering settings!
 				if {$cluster} {
-					run_clustering $prefix $start $end $bestN
+					run_clustering $prefix $start $end $bestN $kmin $kmax
 				} else {
 					run_rosetta_clustering $mol $start $end $bestN -1 $cluster_number
 				}

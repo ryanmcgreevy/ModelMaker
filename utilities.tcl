@@ -141,7 +141,7 @@ proc ::RosettaUtilities::make_cluster_input {MOL start end max_structures} \
 
 }
 
-proc ::RosettaUtilities::run_clustering {mol start end bestN} \
+proc ::RosettaUtilities::run_clustering {mol start end bestN kmin kmax} \
 {
   puts "Running python clustering..."
   set name cluster_input_${start}_${end}_${bestN}
@@ -178,7 +178,7 @@ proc ::RosettaUtilities::run_clustering {mol start end bestN} \
 
   #auto_makepsf ${name}.pdb $topfiles "" ""
 
-  exec python $env(RosettaVMDDIR)/clusterK.py -psf ${name}.psf -dcd ${name}.dcd
+  exec python $env(RosettaVMDDIR)/clusterK.py -psf ${name}.psf -dcd ${name}.dcd -kmin $kmin -kmax $kmax > clustering.log
 }
 
 proc ::RosettaUtilities::run_vmd_clustering {mol start end bestN cutoff cluster_number} \
