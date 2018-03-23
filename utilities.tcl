@@ -180,24 +180,41 @@ proc ::RosettaUtilities::run_clustering {mol start end bestN kmin kmax} \
 
   exec python $env(RosettaVMDDIR)/clusterK.py -psf ${name}.psf -dcd ${name}.dcd -kmin $kmin -kmax $kmax > clustering.log
   
+  #create dcds for each cluster
   set fp [open "clu_labels.txt" r]
   set file_data [read $fp]
   close $fp
-
-  #array set clusters {}
   set data [split $file_data "\n"]
   foreach line $data {
     if {$line != ""} {
       lappend ar([lindex $line 0]) [lindex $line 1]
     }
   }
-  
   foreach cluster [array names ar] {
     mol new ${name}.psf
     foreach framenum $ar($cluster) {
       animate read dcd ${name}.dcd beg $framenum end $framenum
     }
     animate write dcd "cluster-${cluster}.dcd"
+  }
+
+  #create a pdb for each medoid
+  set fp [open "clu_medoids.txt" r]
+  set file_data [read $fp]
+  close $fp
+  set data [split $file_data "\n"]
+  foreach line $data {
+    if {$line != ""} {
+      lappend arm([lindex $line 0]) [lindex $line 1]
+    }
+  }
+  foreach cluster [array names arm] {
+    mol new ${name}.psf
+    set framenum $arm($cluster)
+    animate read dcd ${name}.dcd beg $framenum end $framenum
+    set sel [atomselect top all]
+    $sel writepdb "cluster-${cluster}-medoid.pdb"
+    $sel delete
   }
 
 }
