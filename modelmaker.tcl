@@ -1843,9 +1843,13 @@ proc ::MODELMAKER::model_usage { } {
   variable DefaultModelN
   puts "Usage: modelmaker model -template <input pdb file> -fasta <input fasta file> -n <number of models to generate> ?options?"
   puts "Options:"
-  puts "  -sel     <selection text for modeling> (default: $DefaultModelSel)>"
-  puts "  -helix   <list of start and end resids for helix restraints> (default: none)>"
-  puts "  -n       <number of models to generate> (default: $DefaultModelN)>"
+  puts "  -sel      <selection text for modeling> (default: $DefaultModelSel)>"
+  puts "  -helix    <list of start and end resids for helix restraints> (default: none)>"
+  puts "  -n        <number of models to generate> (default: $DefaultModelN)>"
+  puts "  -o        <name prefix of generated models> (default: Taken from template)>"
+  puts "  -resstart <starting residue number to use for output> (default: Taken from template)> "
+  puts "  -chain    <chain id of generated models> (default: Taken from template)>"
+  puts "  -seg      <segname of generated models> (default: Taken from template)>"
   
 }
 
@@ -1866,6 +1870,10 @@ proc ::MODELMAKER::model { args } {
       -sel { set arg(sel) $val }
       -helix { set arg(helix) $val }
       -n { set arg(n) $val }
+      -o { set arg(o) $val }
+      -resstart { set arg(resstart) $val }
+      -chain { set arg(chain) $val }
+      -seg { set arg(seg) $val }
       default { puts "Unknown argument $name"; return  }
     }
   }
@@ -1894,13 +1902,51 @@ proc ::MODELMAKER::model { args } {
     set n $DefaultModelN
   }
   
+  if { [info exists arg(o)] } {
+    set outputname $arg(o)
+  } else {
+    set outputname [file rootname [file tail $arg(template)]]
+  }
+  
+  if { [info exists arg(chain)] } {
+    set outchain $arg(chain)
+  } else {
+    set outchain "none"
+  }
+  
+  if { [info exists arg(seg)] } {
+    set outseg $arg(seg)
+  } else {
+    set outseg "none"
+  }
+  
+  if { [info exists arg(resstart)] } {
+    set resstart $arg(resstart)
+  } else {
+    set resstart "none"
+  }
+  
   if { [info exists arg(helix)] } {
     set helix "-helix $arg(helix)"
   } else {
     set helix ""
   }
 
+  
   set tempmol [mol new $template]
+  #renaming info
+  set temp_sel [atomselect $tempmol all]
+  if {$resstart == "none"} {
+    set resstart [lindex [lsort -integer [$temp_sel get resid]] 0]
+  }
+  if {$outchain == "none"} {
+    set outchain [lindex [$temp_sel get chain] 0]
+  }
+  if {$outseg == "none"} {
+    set outseg [lindex [$temp_sel get segname] 0]
+  }
+
+  #modeling info
   set worksel [atomselect $tempmol $sel]
   
   set resids [$worksel get resid]
@@ -1936,7 +1982,33 @@ proc ::MODELMAKER::model { args } {
 
   exec python $::env(RosettaVMDDIR)/align2d.py -template "tmppdb.pdb" -sequence "tmpseq.seq" -chain $chain
   exec python $::env(RosettaVMDDIR)/model-single.py -template "tmppdb.pdb" -sequence "tmpseq.seq" -alignment "alignment.aln" \
-     -n $n {*}$helix 
+     -n $n {*}$helix > modeller.log 
+  
+  set fp [open "modeller.log" r]
+  #set file_data [read $fp]
+  #close $fp
+  #set data [split $file_data "\n"]
+  #foreach line $data {
+  #}
+  while {[gets $fp line] >= 0} {
+    if {[regexp "tmpseq.*.pdb" [lindex $line 0]]} {
+      #puts "TEST PARSE: [lindex $line 1] [lindex $line 2] [lindex $line 3] [lindex $line 4]"
+     lappend scores $line 
+    }
+  }
+  close $fp
+  set ranked [lsort -index 1 $scores]
+  for {set i 0} {$i < [llength $ranked]} {incr i} {
+    set struct [lindex $ranked $i]
+    set tmpmol [mol new [lindex $struct 0]]
+    set tmpsel [atomselect $tmpmol all]
+    if {$outchain != ""} {$tmpsel set chain $outchain} 
+    if {$outseg != ""} {$tmpsel set segname $outseg}
+    renumber $tmpsel $resstart
+    $tmpsel writepdb "${outputname}-best-[expr $i+1].pdb"
+    #file rename -force [lindex $struct 0] "${outputname}-best-[expr $i+1].pdb"
+  }
+  
 }
 
 
