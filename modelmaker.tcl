@@ -1985,14 +1985,8 @@ proc ::MODELMAKER::model { args } {
      -n $n {*}$helix > modeller.log 
   
   set fp [open "modeller.log" r]
-  #set file_data [read $fp]
-  #close $fp
-  #set data [split $file_data "\n"]
-  #foreach line $data {
-  #}
   while {[gets $fp line] >= 0} {
     if {[regexp "tmpseq.*.pdb" [lindex $line 0]]} {
-      #puts "TEST PARSE: [lindex $line 1] [lindex $line 2] [lindex $line 3] [lindex $line 4]"
      lappend scores $line 
     }
   }
