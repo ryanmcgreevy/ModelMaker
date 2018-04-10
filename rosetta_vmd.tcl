@@ -381,8 +381,8 @@ proc analyze_abinitio {jobname mol template bestN nstruct cluster align_template
 
 	# ANALYSIS
 	file mkdir analysis
-	file copy ${jobname}_${mol}_rosetta_scoring_min_$bestN.dcd analysis
-	file copy ${jobname}_${mol}_rosetta_scoring_min_$bestN.pdb analysis
+	file copy -force ${jobname}_${mol}_rosetta_scoring_min_$bestN.dcd analysis
+	file copy -force ${jobname}_${mol}_rosetta_scoring_min_$bestN.pdb analysis
 	cd analysis
 
 	set prefix ${jobname}_${mol}

@@ -64,27 +64,28 @@ proc assignSS {args} \
 
 proc ::RosettaUtilities::align_rosetta_local {start end MOL template tempMol sel_temp sel_rosetta} \
 {
-	set ml [mol new $template]
+	
+  set ml [mol new $template]
 
-	set temp [atomselect $ml "($sel_temp) and backbone and noh"]
+	set temp [atomselect $ml "$sel_temp"]
 
 	for {set x $start} {$x<=$end} {incr x} {
-	  
     if {$end < 10000} {
       set offset 4
     } else {
       set offset [expr int(floor(log10($end))) + 1] 
     }
-   
-    set index [mol new ./pdb_out/${MOL}_[format %0${offset}i  $x].pdb]
-    set sel [atomselect $index "($sel_rosetta) and backbone and noh"]
-		set transformation_matrix [measure fit $sel $temp]
-		set move_sel [atomselect $index "all"]
-		$move_sel move $transformation_matrix
-		$move_sel writepdb ./pdb_out_aligned/${MOL}_${x}_0001_aligned.pdb
-		$sel delete
-		$move_sel delete
-		mol delete $index
+    if { [file exists ./pdb_out_aligned/${MOL}_${x}_0001_aligned.pdb] != 1 } {  
+      set index [mol new ./pdb_out/${MOL}_[format %0${offset}i  $x].pdb]
+      set sel [atomselect $index "$sel_rosetta"]
+      set transformation_matrix [measure fit $sel $temp]
+      set move_sel [atomselect $index "all"]
+      $move_sel move $transformation_matrix
+      $move_sel writepdb ./pdb_out_aligned/${MOL}_${x}_0001_aligned.pdb
+      $sel delete
+      $move_sel delete
+      mol delete $index
+    }
 	}
 }
 
