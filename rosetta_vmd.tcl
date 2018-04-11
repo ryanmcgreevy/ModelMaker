@@ -14,6 +14,7 @@ package require CCColor
 package require FindSelection
 package require RosettaUtilities
 package require SSAnalysis
+package require topotools 
 
 ## RosettaVMD namespace
 # main namespace for RosettaVMD package
@@ -293,6 +294,21 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
     }
 	}
 	close $logfile
+  
+#  #having problems forcing rosetta to keep sidechains fixed, so we will just replace the supposedly fixed
+#  #parts with the input template structure
+  set inpmol [mol new $mol.pdb]
+  set fixsel [atomselect $inpmol "not ($selections)"]
+  foreach struct [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] {
+    set mymol [mol new $struct]
+    set fitsel [atomselect $mymol "not ($selections)"]
+    set mat [measure fit $fixsel $fitsel]
+    $fixsel move $mat
+
+    set mysel [atomselect $mymol $selections]
+    set mol3 [::TopoTools::selections2mol "$fixsel $mysel"] 
+    animate write pdb $struct $mol3 
+  }
   puts "Rosetta abinitio finished."
 }
 
