@@ -120,7 +120,7 @@ proc ::CCColor::cccolor {MOL mapname resolution threshold spacing ss_on res_on g
 
 						#volmap mask $resSel -o mask.dx -cutoff $cutoff
 						#volutil -mult ${emdbName}_density.dx mask.dx -o compare.dx
-						set CCres [mdff ccc $resSel -i $mapname.dx -res $resolution -spacing $spacing -thresholddensity $threshold]
+						#set CCres [mdff ccc $resSel -i $mapname.dx -res $resolution -spacing $spacing -thresholddensity $threshold]
 						# set CCres [mdffi cc $resSel -mol $dens_mol -res $resolution -spacing $spacing -thresholddensity $threshold]
             if {$spacing != -1} {
              set CCres [mdffi cc $resSel -mol $dens_mol -res $resolution -spacing $spacing -thresholddensity $threshold]
