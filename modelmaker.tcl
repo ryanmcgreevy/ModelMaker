@@ -259,13 +259,13 @@ proc ::MODELMAKER::insertion { args } {
     set ::MODELMAKER::workdir $DefaultWorkDir
   }
 
-  if { [file exists $::MODELMAKER::workdir] } {
-    puts "The working directory already exists!"
-    exit 1
-  }
+#  if { [file exists $::MODELMAKER::workdir] } {
+#    puts "The working directory already exists!"
+#    exit 1
+#  }
 
 
-  file mkdir $::MODELMAKER::workdir
+  if {![file exists $::MODELMAKER::workdir]} { file mkdir $::MODELMAKER::workdir }
 
   ## preparing files ##
   # folder with all the files needed for setup/run
@@ -276,10 +276,10 @@ proc ::MODELMAKER::insertion { args } {
   set tmpsel [atomselect $tmpmol "noh"]
   $tmpsel writepdb "$::MODELMAKER::workdir/setup-$jobname/[file tail $arg(model)]"
   
-  file copy $fasta.fasta $::MODELMAKER::workdir/setup-$jobname
+  file copy -force $fasta.fasta $::MODELMAKER::workdir/setup-$jobname
   foreach fragfile $fragfiles {
     puts $fragfile
-    file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
+    file copy -force $fragfile $::MODELMAKER::workdir/setup-$jobname
   }
   set currentPWD [pwd]
 
@@ -438,13 +438,13 @@ proc ::MODELMAKER::refine { args } {
 
   }
 
-  if { [file exists $::MODELMAKER::workdir] } {
-    puts "The working directory already exists!"
-    exit 1
-  }
+#  if { [file exists $::MODELMAKER::workdir] } {
+#    puts "The working directory already exists!"
+#    exit 1
+#  }
 
 
-  file mkdir $::MODELMAKER::workdir
+  if {![file exists $::MODELMAKER::workdir]} { file mkdir $::MODELMAKER::workdir }
 
   ## preparing files ##
   # folder with all the files needed for setup/run
@@ -606,13 +606,13 @@ proc ::MODELMAKER::abinitio { args } {
 
   }
 
-  if { [file exists $::MODELMAKER::workdir] } {
-    puts "The working directory already exists!"
-    exit 1
-  }
+#  if { [file exists $::MODELMAKER::workdir] } {
+#    puts "The working directory already exists!"
+#    exit 1
+#  }
 
 
-  file mkdir $::MODELMAKER::workdir
+  if {![file exists $::MODELMAKER::workdir]} { file mkdir $::MODELMAKER::workdir }
 
   ## preparing files ##
   # folder with all the files needed for setup/run
@@ -624,7 +624,7 @@ proc ::MODELMAKER::abinitio { args } {
   $tmpsel writepdb "$::MODELMAKER::workdir/setup-$jobname/[file tail $arg(model)]"
   
   foreach fragfile [lindex $fragfiles 0] {
-    file copy $fragfile $::MODELMAKER::workdir/setup-$jobname
+    file copy -force $fragfile $::MODELMAKER::workdir/setup-$jobname
   }
   start_rosetta_abinitio $jobname $model $sel $anchor $fragfiles $nstruct $cluster $npertask $testrun
 }
@@ -1519,7 +1519,7 @@ proc ::MODELMAKER::quick_mdff { args } {
 	
    if { [info exists arg(extrab)] } {
     foreach extrab_file $arg(extrab) {
-      file copy $extrab_file $workdir
+      file copy -force $extrab_file $workdir
     }
   }
   

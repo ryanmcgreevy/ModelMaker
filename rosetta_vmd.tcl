@@ -74,7 +74,7 @@ proc start_rosetta_refine {jobname mol selections anchor cartesian mapname mapre
 	refine_with_rosetta $jobname $mol.pdb $mapname $mapresolution $score_dens $nstruct $cluster $nPerTask $ros_config $cartesian
 	file attributes $jobname.sh -permissions +x
 	file rename $jobname.sh $::MODELMAKER::workdir/run-$jobname/
-	file copy $mapname.mrc $::MODELMAKER::workdir/setup-$jobname/
+	file copy -force $mapname.mrc $::MODELMAKER::workdir/setup-$jobname/
 
 	if {!$scoreOnly} {
 		file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
@@ -139,7 +139,7 @@ proc start_rosetta_refine_sidechains_density {jobname mol selections anchor mapn
 	refine_with_rosetta $jobname $mol.pdb $mapname $mapresolution $score_dens $nstruct $cluster $nPerTask $ros_config
 	file attributes $jobname.sh -permissions +x
   file rename $jobname.sh $::MODELMAKER::workdir/run-$jobname/
-	file copy $mapname.mrc $::MODELMAKER::workdir/setup-$jobname/
+	file copy -force $mapname.mrc $::MODELMAKER::workdir/setup-$jobname/
 
 	if {!$scoreOnly} {
 		file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
@@ -274,20 +274,28 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 	mol delete all
 	######################
 
-	set username $::MODELMAKER::settings(username)
-	puts "Rosetta abinitio started."
-	rosetta_abinitio $jobname $mol.pdb $fragfiles $nstruct $cluster $nPerTask $testrun $ros_config $chain_idents
-	file attributes $::MODELMAKER::workdir/run-$jobname/$jobname.sh -permissions +x
-
 	file mkdir $::MODELMAKER::workdir/run-$jobname/sc_out
 	file mkdir $::MODELMAKER::workdir/run-$jobname/pdb_out
 	file mkdir $::MODELMAKER::workdir/run-$jobname/OUTPUT_FILES
+
+  if {[glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb] != ""} {
+    set prefix "tmp"
+  } else { 
+    set prefix ""  
+  }
+	
+  set username $::MODELMAKER::settings(username)
+	puts "Rosetta abinitio started."
+	rosetta_abinitio $jobname $mol.pdb $fragfiles $nstruct $cluster $nPerTask $testrun $ros_config $chain_idents $prefix
+	file attributes $::MODELMAKER::workdir/run-$jobname/$jobname.sh -permissions +x
+
+
 	set logfile [open $::MODELMAKER::workdir/run-$jobname/rosetta_log_$jobname.log a]
   set script [open "| $::MODELMAKER::workdir/run-$jobname/$jobname.sh $jobname $mol.pdb 2>@stderr &" r]
 	set numfiles 0
   while {[gets $script line] >= 0} {
 		puts $logfile $line
-		set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] ]
+		set current [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/${prefix}${jobname}*.pdb ] ]
     if { $current > $numfiles} {
       puts "Current number of files: $current - [expr double($current)/($nstruct) * 100.0] % complete"
       set numfiles $current
@@ -299,7 +307,7 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
 #  #parts with the input template structure
   set inpmol [mol new $mol.pdb]
   set fixsel [atomselect $inpmol "not ($selections)"]
-  foreach struct [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/*.pdb ] {
+  foreach struct [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/${prefix}${jobname}*.pdb ] {
     set mymol [mol new $struct]
     set fitsel [atomselect $mymol "not ($selections)"]
     set mat [measure fit $fixsel $fitsel]
@@ -308,6 +316,43 @@ proc start_rosetta_abinitio {jobname mol selections anchor fragfiles nstruct {cl
     set mysel [atomselect $mymol $selections]
     set mol3 [::TopoTools::selections2mol "$fixsel $mysel"] 
     animate write pdb $struct $mol3 
+  }
+
+  if {$prefix != ""} {
+    set nstruct [llength [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/${jobname}*.pdb ]]
+    if {$nstruct < 10000} {
+      set offset 4
+    } else {
+      set offset [expr int(floor(log10($end))) + 1] 
+    }
+
+    set last_pdb [lindex [lsort -decreasing [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/${jobname}*.pdb ]] 0 ]
+    set last_num [lindex [split [file rootname $last_pdb] "_"] end]
+    
+    set i 1
+    foreach tmppdb [lsort -increasing [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/pdb_out/${prefix}${jobname}*.pdb  ]] {
+     set newname $::MODELMAKER::workdir/run-$jobname/pdb_out/${jobname}_${mol}_[format %0${offset}i  [expr $last_num + $i]].pdb
+     file rename -force $tmppdb $newname     
+     foreach scorefile [glob -nocomplain $::MODELMAKER::workdir/run-$jobname/sc_out/*] {
+       set frpdb [open $scorefile "r"]
+       set spdb [read $frpdb]
+       close $frpdb
+       set fwpdb [open $scorefile "w"]
+       regsub -all [file rootname [file tail $tmppdb]] $spdb [file rootname [file tail $newname]] spdb
+       puts $fwpdb $spdb
+       close $fwpdb
+     }
+     incr i
+   }
+   set orig_score [open $::MODELMAKER::workdir/run-$jobname/sc_out/${jobname}_score.sc "a"]
+   set temp_score [open $::MODELMAKER::workdir/run-$jobname/sc_out/${prefix}${jobname}_score.sc "r"]
+   set lines [split [read $temp_score] \n]
+   for {set j 2} {$j < [llength $lines]} {incr j} {
+     puts $orig_score [lindex $lines $j]
+   }
+   close $orig_score
+   close $temp_score
+   file delete -force $::MODELMAKER::workdir/run-$jobname/sc_out/${prefix}${jobname}_score.sc
   }
   puts "Rosetta abinitio finished."
 }

@@ -252,7 +252,7 @@ proc ::RosettaInputGenerator::rosetta_basic_refinement {jobname MOL nstruct clus
 	close $script
 }
 
-proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles nstruct cluster nPerTask test configuration chain_idents} \
+proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles nstruct cluster nPerTask test configuration chain_idents {prefix ""}} \
 {
 	###############################
 	#	CONFIGURATION
@@ -371,7 +371,7 @@ proc ::RosettaInputGenerator::rosetta_abinitio {jobname MOL fragfiles nstruct cl
 	if {$test} {
 		set bashscript [make_abinitio_test_script $jobname $nstruct]
 	} elseif {!$test && !$cluster} {
-		set bashscript [make_abinitio_local_script $jobname $nstruct]
+		set bashscript [make_abinitio_local_script $jobname $nstruct $prefix]
 	}
 
 
@@ -810,7 +810,7 @@ $mpi_args $rosettapath/minirosetta.$platform \\
 "
 }
 
-proc ::RosettaInputGenerator::make_abinitio_local_script {jobname nstruct} \
+proc ::RosettaInputGenerator::make_abinitio_local_script {jobname nstruct {prefix ""}} \
 {
 	global rosettapath
 	global rosettaDBpath
@@ -834,7 +834,7 @@ fi
 $mpi_args $rosettapath/rosetta_scripts.$platform \\
     -database $rosettaDBpath \\
 	  -nstruct $nstruct \\
-    -out::prefix \${JOBNAME}_ \\
+    -out::prefix ${prefix}\${JOBNAME}_ \\
 	  -out:path:pdb $::MODELMAKER::workdir/run-$jobname/pdb_out/ \\
     -out:path:score $::MODELMAKER::workdir/run-$jobname/sc_out/ \\
     -s $::MODELMAKER::workdir/setup-$jobname/\${MOL} \\
