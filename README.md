@@ -27,6 +27,7 @@ this environment variable will usually be
 ``static.macosclangrelease``)
 
 
+
 If you want to use the parallel MPI version of Rosetta, you must compile the MPI binaries with
 the following command:
 
