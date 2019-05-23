@@ -371,7 +371,7 @@ proc ::MODELMAKER::refine { args } {
   }
 
   if { [info exists arg(sel)] } {
-    set sel $arg(sel)
+    set sel [list $arg(sel)]
   } else {
     error "An atomselection text must be specified!"
   }
